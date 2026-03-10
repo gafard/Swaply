@@ -9,8 +9,16 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Swaply | Troc sur le Campus",
-  description: "Marketplace d'échange locale",
+  title: "Swaply | Découvre & Troque",
+  description: "Plateforme de troc locale moderne à Lomé.",
+  manifest: "/manifest.json",
+  themeColor: "#4F46E5",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Swaply",
+  },
 };
 
 export default function RootLayout({
