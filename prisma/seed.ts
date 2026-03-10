@@ -24,13 +24,31 @@ async function main() {
   // 1. Create Meeting Points in Lomé
   const meetingPoints = await Promise.all([
     prisma.meetingPoint.create({
-      data: { name: "Campus Université de Lomé", zone: "Nord", description: "En face de la bibliothèque centrale." }
+      data: { 
+        name: "Campus Université de Lomé", 
+        zone: "Nord", 
+        description: "En face de la bibliothèque centrale.",
+        lat: 6.1750,
+        lng: 1.2167
+      }
     }),
     prisma.meetingPoint.create({
-      data: { name: "Adidogomé Assiyéyé", zone: "Ouest", description: "Près de l'entrée principale." }
+      data: { 
+        name: "Adidogomé Assiyéyé", 
+        zone: "Ouest", 
+        description: "Près de l'entrée principale.",
+        lat: 6.1833,
+        lng: 1.1667
+      }
     }),
     prisma.meetingPoint.create({
-      data: { name: "Déckon (Centre-ville)", zone: "Centre", description: "Boulevard Circulaire, devant la Poste." }
+      data: { 
+        name: "Déckon (Centre-ville)", 
+        zone: "Centre", 
+        description: "Boulevard Circulaire, devant la Poste.",
+        lat: 6.1333,
+        lng: 1.2167
+      }
     })
   ]);
 
