@@ -22,35 +22,34 @@ async function main() {
   await prisma.user.deleteMany();
 
   // 1. Create Meeting Points in Lomé
-  const meetingPoints = await Promise.all([
-    prisma.meetingPoint.create({
-      data: { 
-        name: "Campus Université de Lomé", 
-        zone: "Nord", 
-        description: "En face de la bibliothèque centrale.",
-        lat: 6.1735,
-        lng: 1.2147,
-      }
-    }),
-    prisma.meetingPoint.create({
-      data: { 
-        name: "Adidogomé Assiyéyé", 
-        zone: "Ouest", 
-        description: "Près de l'entrée principale.",
-        lat: 6.198,
-        lng: 1.166,
-      }
-    }),
-    prisma.meetingPoint.create({
-      data: { 
-        name: "Déckon", 
-        zone: "Centre", 
-        description: "Point de rencontre fréquent et accessible.",
-        lat: 6.1312,
-        lng: 1.2224,
-      }
-    })
-  ]);
+  // BUILD_ID: 1773117800 (Force Refresh)
+  const meetingPointData = [
+    {
+      name: "Campus Université de Lomé",
+      zone: "Nord",
+      description: "En face de la bibliothèque centrale.",
+      lat: 6.1735,
+      lng: 1.2147,
+    },
+    {
+      name: "Adidogomé Assiyéyé",
+      zone: "Ouest",
+      description: "Près de l'entrée principale.",
+      lat: 6.198,
+      lng: 1.166,
+    },
+    {
+      name: "Déckon",
+      zone: "Centre",
+      description: "Point de rencontre fréquent et accessible.",
+      lat: 6.1312,
+      lng: 1.2224,
+    }
+  ];
+
+  const meetingPoints = await Promise.all(
+    meetingPointData.map(data => prisma.meetingPoint.create({ data }))
+  );
 
   // 2. Create sample users
   const alice = await prisma.user.create({
