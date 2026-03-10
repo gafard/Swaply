@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String         @id @default(cuid())
+  username           String         @unique
+  email              String         @unique
+  credits            Int            @default(100)
+  trustScore         Int            @default(0)
+  totalExchanges     Int            @default(0)
+  createdAt          DateTime       @default(now())
+  defaultZone        String?
+  latitude           Float?
+  longitude          Float?
+  ownedExchanges     Exchange[]     @relation("OwnerExchanges")
+  requestedExchanges Exchange[]     @relation("RequesterExchanges")
+  items              Item[]         @relation("UserItems")
+  messages           Message[]
+  notifications      Notification[]
+  savedItems         Item[]         @relation("UserSavedItems")
+  reports            Report[]       @relation("ReporterReports")
+}
+
+model Item {
+  id                 String     @id @default(cuid())
+  title              String
+  description        String
+  imageUrl           String?
+  creditValue        Int        // This remains the final value chosen by the user
+  locationZone       String
+  ownerId            String
+  images             ItemImage[]
+  
+  // AI Insights - Layer 1 (Vision)
+  category           String?
+  subcategory        String?
+  brand              String?
+  condition          String?
+  rarity             String?    @default("common")
+  aiConfidence       Float?
+  
+  // AI Insights - Layer 2 (Estimation Engine)
+  suggestedValue     Int?
+  minSuggestedValue  Int?
+  maxSuggestedValue  Int?
+  aiExplanation      String?
+  
+  // Technical Details (specifically for Electronics)
+  techAge            String?    // <1 year, 1-3 years, >3 years
+  techAccessories    String?    // comma separated: box, charger, cables
+  techFunctionality  String?    // perfect, battery_low, defect
+  functionalStatus   String     @default("PERFECT") // PERFECT, DEFECTIVE, BROKEN
+  isNotifiedDefective Boolean   @default(false)
+  
+  listedValue        Int?       // Snapshotted at time of listing
+  finalExchangeValue Int?       // To be filled when exchange is completed
+  
+  fraudRisk          String?    @default("low")
+  status             ItemStatus @default(AVAILABLE)
+  reservedUntil      DateTime?
+  createdAt          DateTime   @default(now())
+  views              Int        @default(0)
+  latitude           Float?
+  longitude          Float?
+  exchanges          Exchange[]
+  reports            Report[]
+  owner              User       @relation("UserItems", fields: [ownerId], references: [id])
+  savedBy            User[]     @relation("UserSavedItems")
+
+  @@index([status, locationZone])
+  @@index([ownerId])
+}
+
+model MeetingPoint {
+  id          String     @id @default(cuid())
+  name        String
+  zone        String
+  description String?
+  createdAt   DateTime   @default(now())
+  isActive    Boolean    @default(true)
+  lat         Float
+  lng         Float
+  exchanges   Exchange[]
+
+  @@index([zone])
+}
+
+model Exchange {
+  id             String         @id @default(cuid())
+  itemId         String
+  requesterId    String
+  ownerId        String
+  meetingPointId String?
+  status         ExchangeStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  completedAt    DateTime?
+  item           Item           @relation(fields: [itemId], references: [id])
+  meetingPoint   MeetingPoint?  @relation(fields: [meetingPointId], references: [id])
+  owner          User           @relation("OwnerExchanges", fields: [ownerId], references: [id])
+  requester      User           @relation("RequesterExchanges", fields: [requesterId], references: [id])
+  messages       Message[]
+
+  @@index([itemId])
+  @@index([requesterId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  exchangeId String
+  senderId   String
+  content    String
+  createdAt  DateTime @default(now())
+  exchange   Exchange @relation(fields: [exchangeId], references: [id])
+  sender     User     @relation(fields: [senderId], references: [id])
+
+  @@index([exchangeId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, read, createdAt])
+}
+
+enum ItemStatus {
+  AVAILABLE
+  RESERVED
+  EXCHANGED
+}
+
+enum ExchangeStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum NotificationType {
+  ITEM_RESERVED
+  NEW_MESSAGE
+  EXCHANGE_CONFIRMED
+  RESERVATION_EXPIRED
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reason      String
+  description String?
+  itemId      String
+  reporterId  String
+  createdAt   DateTime @default(now())
+  
+  item        Item     @relation(fields: [itemId], references: [id])
+  reporter    User     @relation("ReporterReports", fields: [reporterId], references: [id])
+
+  @@index([itemId])
+  @@index([reporterId])
+}
+
+model ItemImage {
+  id       String @id @default(cuid())
+  itemId   String
+  url      String
+  order    Int    @default(0)
+
+  item     Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
