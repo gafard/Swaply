@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { publishItem } from "@/app/actions/item";
 import { suggestListingFromImages, analyzePhotoQuality } from "@/app/actions/ai";
-import { LOME_ZONES, findNearestZone } from "@/lib/zones";
 import { useUploadThing } from "@/lib/uploadthing";
-import { Package, Camera, Info, Sparkles, Wand2, Laptop, Clock, ShieldCheck, Headphones, Check, Star, AlertTriangle, Zap, Search, RefreshCw, ArrowRight } from "lucide-react";
+import { Package, Camera, Info, Sparkles, Wand2, Laptop, Clock, ShieldCheck, Headphones, Check, Star, AlertTriangle, Zap, Search, RefreshCw, ArrowRight, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateAIEstimation } from "@/lib/ai-engine";
-import { PhotoQualityResult } from "@/lib/validations";
+import { PhotoQualityResult, AIEstimation } from "@/lib/validations";
+import JustificationCard from "@/components/JustificationCard";
+import {
+  findNearestZoneInCity,
+  GeoCatalog,
+} from "@/lib/geo";
+import { localizeHref } from "@/lib/i18n/pathnames";
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -21,7 +29,11 @@ function readFileAsDataUrl(file: File) {
 }
 
 export default function PublishPage() {
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("publish");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -32,7 +44,12 @@ export default function PublishPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creditValue, setCreditValue] = useState(100);
-  const [selectedZone, setSelectedZone] = useState("");
+  const [geoCatalog, setGeoCatalog] = useState<GeoCatalog>([]);
+  const [isLoadingGeo, setIsLoadingGeo] = useState(true);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [selectedCountryId, setSelectedCountryId] = useState("");
+  const [selectedCityId, setSelectedCityId] = useState("");
+  const [selectedZoneId, setSelectedZoneId] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   
   // Technical Details State (Electronics)
@@ -54,13 +71,7 @@ export default function PublishPage() {
     isStockPhoto?: boolean;
     flags?: string[];
     confidence?: number;
-    estimation?: {
-      suggestedValue: number;
-      minSuggestedValue: number;
-      maxSuggestedValue: number;
-      explanation: string;
-      confidence: number;
-    };
+    estimation?: AIEstimation;
   }>({});
 
   // Guided Scanner State
@@ -68,21 +79,218 @@ export default function PublishPage() {
   const [isCheckingQuality, setIsCheckingQuality] = useState(false);
   const [qualityResults, setQualityResults] = useState<(PhotoQualityResult | null)[]>([null, null, null, null]);
 
-  const SCAN_STEPS = [
-    { label: "Photo Principale", desc: "L'objet entier, bien centré", icon: Package, guide: "Placez l'objet au centre du cadre" },
-    { label: "Face Arrière / Étiquette", desc: "Détails techniques importants", icon: Camera, guide: "Capturez les ports ou l'étiquette modèle" },
-    { label: "Détails ou Défauts", desc: "Zoom sur l'état réel", icon: Search, guide: "Rapprochez-vous des imperfections ou rayures" },
-    { label: "En fonctionnement", desc: "Objet allumé ou actif", icon: Zap, guide: "Montrez que l'appareil s'allume (écran, LED)" },
+  const scanSteps = [
+    {
+      label: t("scanner.steps.main.label"),
+      desc: t("scanner.steps.main.description"),
+      icon: Package,
+      guide: t("scanner.steps.main.guide"),
+    },
+    {
+      label: t("scanner.steps.back.label"),
+      desc: t("scanner.steps.back.description"),
+      icon: Camera,
+      guide: t("scanner.steps.back.guide"),
+    },
+    {
+      label: t("scanner.steps.details.label"),
+      desc: t("scanner.steps.details.description"),
+      icon: Search,
+      guide: t("scanner.steps.details.guide"),
+    },
+    {
+      label: t("scanner.steps.active.label"),
+      desc: t("scanner.steps.active.description"),
+      icon: Zap,
+      guide: t("scanner.steps.active.guide"),
+    },
   ];
+
+  const normalizeCategory = (value?: string | null) =>
+    (value ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const isElectronicsCategory = (value?: string | null) => {
+    const normalized = normalizeCategory(value);
+    return (
+      normalized === "electronique" ||
+      normalized === "electronics" ||
+      normalized === "electronica" ||
+      normalized === "eletronicos"
+    );
+  };
 
   const isConditionInconsistent = aiInsights.visualStatus && (
     (aiInsights.visualStatus === "BROKEN" && functionalStatus === "PERFECT") ||
     (aiInsights.visualStatus === "DEFECTIVE" && functionalStatus === "PERFECT")
   );
 
+  const selectedCountry = useMemo(
+    () => geoCatalog.find((country) => country.id === selectedCountryId) ?? null,
+    [geoCatalog, selectedCountryId]
+  );
+  const availableCities = selectedCountry?.cities ?? [];
+  const selectedCity = useMemo(
+    () => availableCities.find((city) => city.id === selectedCityId) ?? null,
+    [availableCities, selectedCityId]
+  );
+  const availableZones = selectedCity?.zones ?? [];
+  const selectedZone = useMemo(
+    () => availableZones.find((zone) => zone.id === selectedZoneId) ?? null,
+    [availableZones, selectedZoneId]
+  );
+  const isElectronics = isElectronicsCategory(aiInsights.category);
+  const conditionOptions = [
+    {
+      id: "PERFECT",
+      label: t("condition.options.perfect.label"),
+      desc: t("condition.options.perfect.description"),
+      icon: ShieldCheck,
+      color: "text-emerald-500",
+      bg: "bg-emerald-50",
+      border: "border-emerald-100",
+      techId: "perfect",
+    },
+    ...(isElectronics
+      ? [
+          {
+            id: "BATTERY_LOW",
+            label: t("condition.options.batteryLow.label"),
+            desc: t("condition.options.batteryLow.description"),
+            icon: Clock,
+            color: "text-blue-500",
+            bg: "bg-blue-50",
+            border: "border-blue-100",
+            techId: "battery_low",
+          },
+        ]
+      : []),
+    {
+      id: "DEFECTIVE",
+      label: t("condition.options.defective.label"),
+      desc: t("condition.options.defective.description"),
+      icon: Info,
+      color: "text-amber-500",
+      bg: "bg-amber-50",
+      border: "border-amber-100",
+      techId: "defect",
+    },
+    {
+      id: "BROKEN",
+      label: t("condition.options.broken.label"),
+      desc: t("condition.options.broken.description"),
+      icon: AlertTriangle,
+      color: "text-rose-500",
+      bg: "bg-rose-50",
+      border: "border-rose-100",
+      techId: "defect",
+    },
+  ];
+  const ageOptions = [
+    { id: "less_than_1_year", label: t("technical.age.lessThanOneYear") },
+    { id: "1_3_years", label: t("technical.age.oneToThreeYears") },
+    { id: "more_than_3_years", label: t("technical.age.moreThanThreeYears") },
+  ];
+  const accessoryOptions = [
+    { id: "box", label: t("technical.accessories.box") },
+    { id: "charger", label: t("technical.accessories.charger") },
+    { id: "cables", label: t("technical.accessories.cables") },
+  ];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadGeoCatalog() {
+      setIsLoadingGeo(true);
+      setGeoError(null);
+
+      try {
+        const response = await fetch("/api/geo", { cache: "no-store" });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.error || t("errors.loadGeo"));
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        const countries = (payload?.countries ?? []) as GeoCatalog;
+        const currentLocation = payload?.currentLocation;
+        setGeoCatalog(countries);
+
+        const initialCountryId = currentLocation?.countryId ?? countries[0]?.id ?? "";
+        const initialCountry =
+          countries.find((country) => country.id === initialCountryId) ?? countries[0] ?? null;
+        const initialCityId =
+          currentLocation?.cityId ?? initialCountry?.cities[0]?.id ?? "";
+        const initialCity =
+          initialCountry?.cities.find((city) => city.id === initialCityId) ??
+          initialCountry?.cities[0] ??
+          null;
+        const initialZoneId =
+          currentLocation?.zoneId ?? initialCity?.zones[0]?.id ?? "";
+
+        setSelectedCountryId(initialCountryId);
+        setSelectedCityId(initialCityId);
+        setSelectedZoneId(initialZoneId);
+      } catch (error) {
+        if (isMounted) {
+          setGeoError(
+            error instanceof Error
+              ? error.message
+              : t("errors.loadGeo")
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingGeo(false);
+        }
+      }
+    }
+
+    loadGeoCatalog();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [t]);
+
+  useEffect(() => {
+    if (availableCities.length === 0) {
+      if (selectedCityId) {
+        setSelectedCityId("");
+      }
+      if (selectedZoneId) {
+        setSelectedZoneId("");
+      }
+      return;
+    }
+
+    if (!availableCities.some((city) => city.id === selectedCityId)) {
+      setSelectedCityId(availableCities[0]?.id ?? "");
+    }
+  }, [availableCities, selectedCityId, selectedZoneId]);
+
+  useEffect(() => {
+    if (availableZones.length === 0) {
+      if (selectedZoneId) {
+        setSelectedZoneId("");
+      }
+      return;
+    }
+
+    if (!availableZones.some((zone) => zone.id === selectedZoneId)) {
+      setSelectedZoneId(availableZones[0]?.id ?? "");
+    }
+  }, [availableZones, selectedZoneId]);
+
   // Recalculate estimation when tech details change (only for electronics)
   const refreshEstimation = async (updatedInsights = aiInsights, age = techAge, func = techFunctionality, accs = techAccessories) => {
-    if (updatedInsights.category === "Électronique" && updatedInsights.confidence) {
+    if (isElectronicsCategory(updatedInsights.category) && updatedInsights.confidence) {
        // We need to pass the base suggestion to the engine
        const suggestion = {
          category: updatedInsights.category as any,
@@ -155,7 +363,7 @@ export default function PublishPage() {
         setCreditValue(suggestion.estimation.suggestedValue);
       }
 
-      if (suggestion.category === "Électronique") {
+      if (isElectronicsCategory(suggestion.category)) {
         await refreshEstimation(insights);
       }
       
@@ -179,7 +387,7 @@ export default function PublishPage() {
     const filesToUpload = files.slice(0, remainingSlots);
 
     if (filesToUpload.length === 0) {
-      setUploadError("Maximum 4 photos autorisées.");
+      setUploadError(t("errors.maxPhotos"));
       return;
     }
 
@@ -188,9 +396,9 @@ export default function PublishPage() {
       navigator.geolocation.getCurrentPosition((pos) => {
         const { latitude, longitude } = pos.coords;
         setCoords({ lat: latitude, lng: longitude });
-        const nearest = findNearestZone(latitude, longitude);
-        if (nearest && nearest !== "Tout Lomé") {
-          setSelectedZone(nearest);
+        const nearest = findNearestZoneInCity(availableZones, latitude, longitude);
+        if (nearest) {
+          setSelectedZoneId(nearest.id);
         }
       });
     }
@@ -299,27 +507,77 @@ export default function PublishPage() {
     creditValue > aiInsights.estimation.maxSuggestedValue
   );
 
-      const removeImage = (index: number) => {
-        setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-        setImageUrls(prev => prev.filter((_, i) => i !== index));
-      };
+  const getPublishErrorMessage = (code: string) => {
+    switch (code) {
+      case "auth_required":
+        return t("errors.authRequired");
+      case "title_invalid":
+        return t("errors.titleInvalid");
+      case "description_invalid":
+        return t("errors.descriptionInvalid");
+      case "price_invalid":
+        return t("errors.priceInvalid");
+      case "images_required":
+        return t("errors.imagesRequired");
+      case "location_unavailable":
+        return t("errors.locationUnavailable");
+      default:
+        return t("errors.generic");
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const result = await publishItem(new FormData(event.currentTarget));
+      if (!result.ok) {
+        toast.error(getPublishErrorMessage(result.code));
+        return;
+      }
+
+      toast.success(
+        result.data?.awardedFirstPublishBonus ? t("successWithBonus") : t("success")
+      );
+      router.push(
+        localizeHref(
+          locale,
+          result.data?.itemId ? `/item/${result.data.itemId}` : "/profile/items"
+        )
+      );
+    } catch {
+      toast.error(t("errors.generic"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <main className="min-h-screen bg-background flex flex-col pb-24 sm:pb-8">
       
       {/* 1. App Header */}
       <div className="bg-surface/80 backdrop-blur-xl px-5 pt-12 pb-5 sticky top-0 z-40 border-b border-border flex items-center justify-between shadow-sm">
-        <h1 className="text-xl font-semibold text-foreground tracking-tight">Publier un objet</h1>
+        <h1 className="text-xl font-semibold text-foreground tracking-tight">{t("title")}</h1>
         <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 transition-colors">
            <Package className="w-4.5 h-4.5 text-primary" />
         </div>
       </div>
       
       <div className="flex-1 w-full px-5 pt-8 z-10">
-        <form action={publishItem} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <input type="hidden" name="imageUrls" value={JSON.stringify(imageUrls)} />
           <input type="hidden" name="latitude" value={coords?.lat || ""} />
           <input type="hidden" name="longitude" value={coords?.lng || ""} />
+          <input type="hidden" name="countryId" value={selectedCountryId} />
+          <input type="hidden" name="cityId" value={selectedCityId} />
+          <input type="hidden" name="zoneId" value={selectedZoneId} />
+          <input type="hidden" name="locationZone" value={selectedZone?.name || ""} />
           
           {/* AI insights hidden fields */}
           <input type="hidden" name="category" value={aiInsights.category || ""} />
@@ -333,7 +591,7 @@ export default function PublishPage() {
           <input type="hidden" name="suggestedValue" value={aiInsights.estimation?.suggestedValue || ""} />
           <input type="hidden" name="minSuggestedValue" value={aiInsights.estimation?.minSuggestedValue || ""} />
           <input type="hidden" name="maxSuggestedValue" value={aiInsights.estimation?.maxSuggestedValue || ""} />
-          <input type="hidden" name="aiExplanation" value={aiInsights.estimation?.explanation || ""} />
+          <input type="hidden" name="aiExplanation" value={aiInsights.estimation ? JSON.stringify(aiInsights.estimation.details) : ""} />
           
           {/* Technical and Functional hidden fields */}
           <input type="hidden" name="techAge" value={techAge} />
@@ -347,18 +605,29 @@ export default function PublishPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between px-1">
               <div className="flex flex-col">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted">Scanner Objet</label>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
+                  {t("scanner.title")}
+                </label>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-foreground font-semibold">Étape {currentStep + 1} / 4</span>
+                  <span className="text-sm text-foreground font-semibold">
+                    {t("scanner.stepCounter", {
+                      current: currentStep + 1,
+                      total: scanSteps.length,
+                    })}
+                  </span>
                   <span className="w-1 h-1 rounded-full bg-border" />
-                  <span className="text-[10px] text-primary font-bold uppercase tracking-tight italic">Assisté par IA</span>
+                  <span className="text-[10px] text-primary font-bold uppercase tracking-tight italic">
+                    {t("scanner.aiAssisted")}
+                  </span>
                 </div>
               </div>
               
               {isCheckingQuality && (
                 <div className="flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-full border border-primary/10 shadow-sm animate-pulse">
                   <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Vision...</span>
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    {t("scanner.vision")}
+                  </span>
                 </div>
               )}
             </div>
@@ -397,10 +666,12 @@ export default function PublishPage() {
                             </div>
                             <div>
                                <p className="text-[11px] font-bold uppercase tracking-wider leading-none">
-                                 {qualityResults[currentStep]?.qualityScore! > 0.7 ? "Qualité Excellente" : "Attention"}
+                                 {qualityResults[currentStep]?.qualityScore! > 0.7
+                                   ? t("scanner.quality.excellent")
+                                   : t("scanner.quality.warning")}
                                </p>
                                <p className="text-[10px] opacity-80 font-medium leading-none mt-1.5">
-                                 {qualityResults[currentStep]?.suggestions[0] || "Prêt pour la suite"}
+                                 {qualityResults[currentStep]?.suggestions[0] || t("scanner.quality.ready")}
                                </p>
                             </div>
                          </div>
@@ -413,14 +684,14 @@ export default function PublishPage() {
                     <div className="w-full h-full relative group">
                       <img 
                         src={photoPreviews[currentStep]} 
-                        alt="Preview" 
+                        alt={t("scanner.previewAlt")} 
                         className="w-full h-full object-cover" 
                       />
                       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
                          <div className="relative">
                             <button className="px-8 py-4 bg-white text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all">
                                <RefreshCw className="w-5 h-5 text-indigo-600" />
-                               Reprendre cette photo
+                               {t("scanner.retakePhoto")}
                             </button>
                             <input 
                               type="file" 
@@ -436,7 +707,7 @@ export default function PublishPage() {
                               onClick={() => setCurrentStep(prev => prev + 1)}
                               className="px-8 py-4 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all"
                             >
-                               Aller à l&apos;étape suivante
+                               {t("scanner.nextStep")}
                                <ArrowRight className="w-5 h-5" />
                             </button>
                          )}
@@ -463,16 +734,16 @@ export default function PublishPage() {
                             className="w-20 h-20 rounded-[28px] bg-primary/20 backdrop-blur-xl border border-white/10 flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/10"
                           >
                              {(() => {
-                               const Icon = SCAN_STEPS[currentStep].icon;
+                               const Icon = scanSteps[currentStep].icon;
                                return <Icon className="w-10 h-10 text-white" />;
                              })()}
                           </motion.div>
                           <div className="px-4">
                             <h3 className="text-xl font-semibold text-white tracking-tight mb-2">
-                              {SCAN_STEPS[currentStep].label}
+                              {scanSteps[currentStep].label}
                             </h3>
                             <p className="text-sm text-white/40 font-medium leading-relaxed">
-                              {SCAN_STEPS[currentStep].desc}
+                              {scanSteps[currentStep].desc}
                             </p>
                           </div>
                        </div>
@@ -482,7 +753,7 @@ export default function PublishPage() {
                           <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] space-y-4 shadow-popup">
                             <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center justify-center gap-2">
                                 <Sparkles className="w-3.5 h-3.5" />
-                                {SCAN_STEPS[currentStep].guide}
+                                {scanSteps[currentStep].guide}
                             </p>
                             <div className="relative">
                               <button
@@ -490,7 +761,7 @@ export default function PublishPage() {
                                 className="w-full py-4 bg-white rounded-2xl text-foreground font-bold text-sm uppercase tracking-widest shadow-cta flex items-center justify-center gap-3 active:scale-95 transition-all"
                               >
                                 <Camera className="w-5 h-5 text-primary" />
-                                Scanner l&apos;objet
+                                {t("scanner.scanObject")}
                               </button>
                               <input 
                                 type="file" 
@@ -510,7 +781,7 @@ export default function PublishPage() {
 
             {/* Steps & Thumbnails Strip */}
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 px-1">
-               {SCAN_STEPS.map((step, idx) => (
+               {scanSteps.map((step, idx) => (
                  <button
                    key={idx}
                    type="button"
@@ -532,7 +803,7 @@ export default function PublishPage() {
                       <>
                         <step.icon className={cn("w-5 h-5", currentStep === idx ? "text-indigo-600" : "text-slate-300")} />
                         <span className={cn("text-[8px] font-black uppercase tracking-tighter", currentStep === idx ? "text-indigo-900" : "text-slate-400")}>
-                          Pass {idx + 1}
+                          {t("scanner.stepBadge", { index: idx + 1 })}
                         </span>
                       </>
                     )}
@@ -560,7 +831,7 @@ export default function PublishPage() {
               <div className="p-4 bg-rose-50 border border-rose-100 rounded-3xl flex items-start gap-3 mx-1">
                  <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
                  <p className="text-[11px] font-bold text-rose-800 leading-tight">
-                    {uploadError || "L'IA a besoin d'une photo plus nette pour identifier l'objet. Veuillez réessayer."}
+                    {uploadError || t("errors.aiPhotoQuality")}
                  </p>
               </div>
             )}
@@ -575,30 +846,29 @@ export default function PublishPage() {
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-slate-900 tracking-tight">Transparence Technique</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Confiance absolue Swaply</p>
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                      {t("condition.title")}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      {t("condition.subtitle")}
+                    </p>
                   </div>
                 </div>
                 <div className="px-3 py-1 rounded-full bg-rose-50 border border-rose-100">
-                  <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest leading-none">Obligatoire</span>
+                  <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest leading-none">
+                    {t("condition.required")}
+                  </span>
                 </div>
               </div>
               
               <div className="flex flex-col gap-3">
-                {[
-                  { id: "PERFECT", label: "État Parfait", desc: "Comme neuf, aucun souci", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-100", techId: "perfect" },
-                  ...(aiInsights.category === "Électronique" ? [
-                    { id: "BATTERY_LOW", label: "Batterie faible", desc: "Autonomie réduite", icon: Clock, color: "text-blue-500", bg: "bg-blue-50", border: "border-blue-100", techId: "battery_low" }
-                  ] : []),
-                  { id: "DEFECTIVE", label: "Défaut Mineur", desc: "ex: bouton, port USB", icon: Info, color: "text-amber-500", bg: "bg-amber-50", border: "border-amber-100", techId: "defect" },
-                  { id: "BROKEN", label: "Hors d'usage", desc: "Pour pièces uniquement", icon: AlertTriangle, color: "text-rose-500", bg: "bg-rose-50", border: "border-rose-100", techId: "defect" }
-                ].map((status) => (
+                {conditionOptions.map((status) => (
                   <button
                     key={status.id}
                     type="button"
                     onClick={() => {
                       setFunctionalStatus(status.id as any);
-                      if (aiInsights.category === "Électronique") {
+                      if (isElectronics) {
                         setTechFunctionality(status.techId);
                         refreshEstimation(aiInsights, techAge, status.techId);
                       }
@@ -644,11 +914,20 @@ export default function PublishPage() {
                   <div className="flex-1">
                     <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
                        <Sparkles className="w-3.5 h-3.5" />
-                       Alerte Cohérence IA
+                       {t("condition.consistencyAlertTitle")}
                     </p>
                     <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
-                      Notre analyse visuelle détecte un objet <span className="underline decoration-amber-400 decoration-2 underline-offset-2">{aiInsights.visualStatus === "BROKEN" ? "CASSÉ" : "DÉFECTUEUX"}</span>. 
-                      Êtes-vous sûr de votre choix ?
+                      {t.rich("condition.consistencyAlertBody", {
+                        status:
+                          aiInsights.visualStatus === "BROKEN"
+                            ? t("condition.visualStatus.broken")
+                            : t("condition.visualStatus.defective"),
+                        strong: (chunks) => (
+                          <span className="underline decoration-amber-400 decoration-2 underline-offset-2">
+                            {chunks}
+                          </span>
+                        ),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -660,9 +939,15 @@ export default function PublishPage() {
                     <Camera className="w-6 h-6 text-slate-300" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1.5">Photo Catalogue</p>
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1.5">
+                      {t("catalogPhoto.title")}
+                    </p>
                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                      Les annonces avec des photos réelles sont réservées <span className="text-white font-black underline">3 fois plus vite</span> à Lomé.
+                      {t.rich("catalogPhoto.body", {
+                        strong: (chunks) => (
+                          <span className="text-white font-black underline">{chunks}</span>
+                        ),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -678,12 +963,18 @@ export default function PublishPage() {
                   <Info className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground tracking-tight">Détails de l&apos;objet</h3>
-                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest">Informations générales</p>
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight">
+                    {t("details.title")}
+                  </h3>
+                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest">
+                    {t("details.subtitle")}
+                  </p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="title">Titre</label>
+                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="title">
+                  {t("details.fields.title")}
+                </label>
                 <input 
                   type="text" 
                   id="title" 
@@ -692,13 +983,15 @@ export default function PublishPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm" 
-                  placeholder="ex. Chaussures de sport Nike" 
+                  placeholder={t("details.placeholders.title")} 
                 />
               </div>
 
               {/* Description Input */}
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="description">Description (Optionnel)</label>
+                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="description">
+                  {t("details.fields.descriptionOptional")}
+                </label>
                 <textarea 
                   id="description" 
                   name="description" 
@@ -706,7 +999,7 @@ export default function PublishPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm resize-none" 
-                  placeholder="État de l'objet, caractéristiques..." 
+                  placeholder={t("details.placeholders.description")} 
                 />
               </div>
                   </div>
@@ -718,49 +1011,67 @@ export default function PublishPage() {
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-2">
                          <Sparkles className="w-4 h-4 text-primary" />
-                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Analyses Hybride IA</span>
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                           {t("ai.title")}
+                         </span>
                        </div>
                        {isAnalyzing && (
-                         <span className="text-[10px] font-bold text-primary animate-pulse">Extraction...</span>
+                         <span className="text-[10px] font-bold text-primary animate-pulse">
+                           {t("ai.extracting")}
+                         </span>
                        )}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                        <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Type détecté</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            {t("ai.detectedType")}
+                          </p>
                           <p className="text-[12px] font-bold text-foreground leading-tight">
                             {aiInsights.subcategory || aiInsights.category || "---"}
                           </p>
                        </div>
                        <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Marque</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            {t("ai.brand")}
+                          </p>
                           <p className="text-[12px] font-bold text-foreground truncate">
-                            {aiInsights.brand && aiInsights.brand !== "unknown" ? aiInsights.brand : "Générique"}
+                            {aiInsights.brand && aiInsights.brand !== "unknown"
+                              ? aiInsights.brand
+                              : t("ai.genericBrand")}
                           </p>
                        </div>
                        <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">État visuel</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            {t("ai.visualState")}
+                          </p>
                           <p className="text-[12px] font-bold text-foreground capitalize">{aiInsights.condition || "---"}</p>
                        </div>
                        <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rareté</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            {t("ai.rarity")}
+                          </p>
                           <p className="text-[12px] font-bold text-primary capitalize font-bold">{aiInsights.rarity || "---"}</p>
                        </div>
                     </div>
 
                  {/* Technical Details (specific for Electronics) */}
-                 {aiInsights.category === "Électronique" && (
+                 {isElectronics && (
                    <div className="pt-4 border-t border-slate-100 space-y-5">
                       <div className="flex items-center gap-2">
                          <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center">
                             <Laptop className="w-3.5 h-3.5 text-indigo-600" />
                          </div>
-                         <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">Détails Techniques</span>
+                         <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">
+                           {t("technical.title")}
+                         </span>
                       </div>
 
                       {/* Model Guess & Confirmation */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Modèle identifié</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
+                          {t("technical.model")}
+                        </label>
                         <div className="relative">
                           <input 
                             type="text"
@@ -768,25 +1079,23 @@ export default function PublishPage() {
                             value={modelGuess}
                             onChange={(e) => setModelGuess(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[12px] font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            placeholder="ex: Sony WH-1000XM4"
+                            placeholder={t("technical.modelPlaceholder")}
                           />
                           <Wand2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 opacity-50" />
                         </div>
                         <p className="text-[9px] text-slate-400 italic pl-1 flex items-center gap-1">
                           <Info className="w-2.5 h-2.5" />
-                          L&apos;IA a détecté ce modèle. Modifiez si besoin.
+                          {t("technical.modelHint")}
                         </p>
                       </div>
 
                       {/* Age Selection */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Âge de l&apos;appareil</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
+                          {t("technical.ageLabel")}
+                        </label>
                         <div className="grid grid-cols-3 gap-2">
-                           {[
-                             { id: "less_than_1_year", label: "< 1 an" },
-                             { id: "1_3_years", label: "1-3 ans" },
-                             { id: "more_than_3_years", label: "> 3 ans" }
-                           ].map(age => (
+                           {ageOptions.map((age) => (
                              <button
                                key={age.id}
                                type="button"
@@ -804,13 +1113,11 @@ export default function PublishPage() {
 
                       {/* Accessories */}
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Accessoires inclus</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
+                          {t("technical.accessoriesLabel")}
+                        </label>
                         <div className="flex flex-wrap gap-2">
-                           {[
-                             { id: "box", label: "Boîte d'origine" },
-                             { id: "charger", label: "Chargeur" },
-                             { id: "cables", label: "Câblage complet" }
-                           ].map(acc => {
+                           {accessoryOptions.map(acc => {
                              const isSelected = techAccessories.includes(acc.id);
                              return (
                                <button
@@ -838,23 +1145,32 @@ export default function PublishPage() {
                    </div>
                  )}
 
-                 {/* Advanced Estimation Dashboard */}
+                 {/* Advanced Estimation Dashboard (Prix Juste) */}
                  {aiInsights.estimation && !isAnalyzing && (
-                   <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50 space-y-4">
-                      <div className="flex items-center justify-between">
-                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Estimation Recommandée</span>
-                            <span className="text-2xl font-black text-slate-900">{aiInsights.estimation.suggestedValue} <span className="text-sm opacity-50">CR</span></span>
-                         </div>
-                         <div className="text-right">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase block">Fourchette</span>
-                            <span className="text-[12px] font-black text-indigo-600">{aiInsights.estimation.minSuggestedValue} – {aiInsights.estimation.maxSuggestedValue} CR</span>
-                         </div>
-                      </div>
-
-                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic border-l-2 border-indigo-200 pl-3 py-1">
-                        &quot;{aiInsights.estimation.explanation}&quot;
-                      </p>
+                   <div className="space-y-4">
+                     <div className="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100/50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                           <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                             {t("pricing.recommendedEstimation")}
+                           </span>
+                           <span className="text-2xl font-black text-slate-900">
+                             {aiInsights.estimation.suggestedValue}{" "}
+                             <span className="text-sm opacity-50 font-black">
+                               {t("pricing.creditsShort")}
+                             </span>
+                           </span>
+                        </div>
+                        <div className="text-right">
+                           <span className="text-[9px] font-bold text-slate-400 uppercase block">
+                             {t("pricing.range")}
+                           </span>
+                           <span className="text-[12px] font-black text-indigo-600">
+                             {aiInsights.estimation.minSuggestedValue} – {aiInsights.estimation.maxSuggestedValue} {t("pricing.creditsShort")}
+                           </span>
+                        </div>
+                     </div>
+                     
+                     <JustificationCard estimation={aiInsights.estimation} />
                    </div>
                  )}
 
@@ -867,10 +1183,12 @@ export default function PublishPage() {
                       <Info className={cn("w-4 h-4 mt-0.5", aiInsights.fraudRisk === "high" ? "text-rose-500" : "text-amber-500")} />
                       <div>
                         <p className={cn("text-[11px] font-bold", aiInsights.fraudRisk === "high" ? "text-rose-700" : "text-amber-700")}>
-                          {aiInsights.fraudRisk === "high" ? "Qualité insuffisante" : "Annonce sous surveillance"}
+                          {aiInsights.fraudRisk === "high"
+                            ? t("ai.qualityInsufficient")
+                            : t("ai.listingUnderWatch")}
                         </p>
                         <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
-                          {aiInsights.flags?.join(", ") || "Critères de qualité non respectés."}
+                          {aiInsights.flags?.join(", ") || t("ai.qualityCriteriaNotMet")}
                         </p>
                       </div>
                    </div>
@@ -881,12 +1199,12 @@ export default function PublishPage() {
              {/* Guided Credit Value (Hybrid Slider) */}
              <div>
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <label className="text-sm font-bold text-gray-800">Prix de l&apos;objet (Crédits)</label>
+                  <label className="text-sm font-bold text-gray-800">{t("pricing.title")}</label>
                   <div className={cn(
                     "px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest",
                     isOutOfRange ? "bg-amber-100 text-amber-700 animate-pulse" : "bg-emerald-100 text-emerald-700"
                   )}>
-                    {isOutOfRange ? "⚠️ Prix atypique" : "✅ Prix cohérent"}
+                    {isOutOfRange ? t("pricing.outlier") : t("pricing.coherent")}
                   </div>
                 </div>
 
@@ -894,7 +1212,9 @@ export default function PublishPage() {
                    <div className="flex items-center justify-center">
                       <div className="text-center">
                         <span className="text-5xl font-black text-slate-900">{creditValue}</span>
-                        <span className="text-sm font-black text-indigo-600 ml-2 uppercase">Crédits</span>
+                        <span className="text-sm font-black text-indigo-600 ml-2 uppercase">
+                          {t("pricing.credits")}
+                        </span>
                       </div>
                    </div>
 
@@ -910,8 +1230,8 @@ export default function PublishPage() {
                        className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                      />
                      <div className="flex justify-between mt-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                        <span>Accessible</span>
-                        <span>Premium</span>
+                        <span>{t("pricing.accessible")}</span>
+                        <span>{t("pricing.premium")}</span>
                      </div>
                    </div>
                    
@@ -919,61 +1239,141 @@ export default function PublishPage() {
                      <div className="flex items-start gap-2 bg-amber-50 p-3 rounded-2xl border border-amber-100">
                         <Info className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
                         <p className="text-[10px] text-amber-700 font-bold leading-tight">
-                          Ce prix s&apos;éloigne de la fourchette conseillée par l&apos;IA ({aiInsights.estimation.minSuggestedValue} – {aiInsights.estimation.maxSuggestedValue} CR). <br/>
-                          <span className="opacity-70">Des prix trop élevés peuvent ralentir l&apos;échange.</span>
+                          {t("pricing.outlierHelp", {
+                            min: aiInsights.estimation.minSuggestedValue,
+                            max: aiInsights.estimation.maxSuggestedValue,
+                            credits: t("pricing.creditsShort"),
+                          })}{" "}
+                          <br />
+                          <span className="opacity-70">{t("pricing.outlierHint")}</span>
                         </p>
                      </div>
                    )}
                 </div>
              </div>
 
-             {/* Location Select App Style */}
-             <div>
-               <label className="block text-sm font-bold text-gray-800 mb-2" htmlFor="location">Zone de Campus (Lomé)</label>
-               <div className="relative">
-                 <select 
-                   id="location" 
-                   name="locationZone" 
-                   required 
-                   value={selectedZone}
-                   onChange={(e) => setSelectedZone(e.target.value)}
-                   className="w-full bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 px-4 py-3.5 text-sm transition-all appearance-none shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
-                 >
-                   <option value="" disabled>Sélectionnez une zone...</option>
-                   {LOME_ZONES.filter(z => z !== "Tout Lomé").map(zone => (
-                     <option key={zone} value={zone}>{zone}</option>
-                   ))}
-                 </select>
-                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                 </div>
+             {/* DB-backed Location */}
+             <div className="space-y-4">
+               <div className="flex items-center justify-between mb-1 px-1">
+                 <label className="text-sm font-bold text-gray-800">{t("location.title")}</label>
+                 {selectedZone && (
+                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                     {selectedZone.name}
+                   </span>
+                 )}
                </div>
-               {coords && !selectedZone && (
-                 <p className="text-[10px] text-primary mt-2 font-bold animate-pulse">Détection de votre zone en cours...</p>
+
+               {geoError ? (
+                 <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-[11px] font-bold text-rose-700">
+                   {geoError}
+                 </div>
+               ) : isLoadingGeo ? (
+                 <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 animate-pulse">
+                   <div className="h-11 rounded-2xl bg-slate-100" />
+                   <div className="h-11 rounded-2xl bg-slate-100" />
+                   <div className="h-11 rounded-2xl bg-slate-100" />
+                 </div>
+               ) : (
+                 <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
+                   <div className="grid gap-4 sm:grid-cols-2">
+                     <div>
+                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                         {t("country")}
+                       </label>
+                       <select
+                         required
+                         value={selectedCountryId}
+                         onChange={(e) => setSelectedCountryId(e.target.value)}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500"
+                       >
+                         <option value="" disabled>{t("selectCountry")}</option>
+                         {geoCatalog.map((country) => (
+                           <option key={country.id} value={country.id}>
+                             {country.name}
+                           </option>
+                         ))}
+                       </select>
+                     </div>
+
+                     <div>
+                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                         {t("city")}
+                       </label>
+                       <select
+                         required
+                         value={selectedCityId}
+                         onChange={(e) => setSelectedCityId(e.target.value)}
+                         disabled={availableCities.length === 0}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50"
+                       >
+                         <option value="" disabled>{t("selectCity")}</option>
+                         {availableCities.map((city) => (
+                           <option key={city.id} value={city.id}>
+                             {city.name}
+                           </option>
+                         ))}
+                       </select>
+                     </div>
+                   </div>
+
+                   <div>
+                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                       {t("zone")}
+                     </label>
+                     <select
+                       required
+                       value={selectedZoneId}
+                       onChange={(e) => setSelectedZoneId(e.target.value)}
+                       disabled={availableZones.length === 0}
+                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50"
+                     >
+                       <option value="" disabled>{t("selectZone")}</option>
+                       {availableZones.map((zone) => (
+                         <option key={zone.id} value={zone.id}>
+                           {zone.name}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+                 </div>
+               )}
+
+               {coords && !selectedZoneId && !isLoadingGeo && (
+                 <p className="text-[10px] text-primary mt-2 font-bold animate-pulse">
+                   {t("detectingZone")}
+                 </p>
                )}
              </div>
 
           <div className="pt-2 pb-12 space-y-5">
             <button
               type="submit"
-              disabled={isUploading || isAnalyzing || photoPreviews.length < 2}
+              disabled={isSubmitting || isUploading || isAnalyzing || photoPreviews.length < 2 || isLoadingGeo || !selectedZoneId}
               className={cn(
                 "w-full flex justify-center items-center py-5 px-4 rounded-[20px] shadow-cta text-[16px] font-bold text-white bg-primary hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
                 photoPreviews.length < 2 && "opacity-60 grayscale-[0.5]"
               )}
             >
-               {isUploading ? "Upload en cours..." : isAnalyzing ? "Analyse IA..." : photoPreviews.length < 2 ? "2 photos requises" : "Publier l'objet"}
+               {isSubmitting
+                 ? t("submitting")
+                 : isUploading
+                   ? t("uploading")
+                   : isAnalyzing
+                     ? t("analyzing")
+                     : photoPreviews.length < 2
+                       ? t("twoPhotosRequired")
+                       : t("submit")}
             </button>
             
             {photoPreviews.length > 0 && photoPreviews.length < 2 && (
               <div className="flex items-center justify-center gap-2 animate-bounce">
                 <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                  Ajoutez encore 1 photo 📸
+                  {t("addOneMorePhoto")}
                 </p>
               </div>
             )}
             <p className="text-[10px] text-center mt-6 text-muted font-bold uppercase tracking-widest px-8 leading-relaxed opacity-60">
-              En publiant, vous acceptez nos conditions de sécurité pour la ville de Lomé.
+              {t("terms")}
             </p>
           </div>
         </form>

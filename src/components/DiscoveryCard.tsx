@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { MapPin, Package, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Item {
   id: string;
   title: string;
-  imageUrl?: string | null;
+  images?: Array<{ url: string; order: number }> | null;
   creditValue: number;
   locationZone: string;
   owner: {
@@ -32,6 +33,8 @@ export default function DiscoveryCard({
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-180, 180], [-8, 8]);
   const opacity = useTransform(x, [-250, -200, 0, 200, 250], [0, 1, 1, 1, 0]);
+  const primaryImage = item.images?.[0]?.url;
+  const t = useTranslations("discoveryCard");
 
   // Dynamic feedback labels
   const reserveOpacity = useTransform(x, [60, 150], [0, 1]);
@@ -72,21 +75,21 @@ export default function DiscoveryCard({
         style={{ opacity: reserveOpacity, scale: reserveScale }}
         className="absolute left-6 top-8 z-40 rounded-2xl border border-emerald-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-emerald-500 uppercase tracking-widest shadow-lg rotate-[-12deg]"
       >
-        Réserver
+        {t("reserve")}
       </motion.div>
 
       <motion.div
         style={{ opacity: skipOpacity, scale: skipScale }}
         className="absolute right-6 top-8 z-40 rounded-2xl border border-rose-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-rose-500 uppercase tracking-widest shadow-lg rotate-[12deg]"
       >
-        Passer
+        {t("skip")}
       </motion.div>
 
       {/* Main Image Layer */}
       <div className="relative h-full w-full bg-slate-50">
-        {item.imageUrl ? (
+        {primaryImage ? (
           <img
-            src={item.imageUrl}
+            src={primaryImage}
             alt={item.title}
             className="h-full w-full object-cover select-none pointer-events-none"
           />
@@ -119,7 +122,7 @@ export default function DiscoveryCard({
                      </span>
                   </div>
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/10 border border-white/5">
-                    <span className="text-[10px] font-bold text-white tracking-tight">📍 0.8 KM</span>
+                    <span className="text-[10px] font-bold text-white tracking-tight">{t("nearby")}</span>
                   </div>
                 </div>
               </div>

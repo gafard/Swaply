@@ -1,0 +1,682 @@
+{
+  "meta": {
+    "title": "Swaply | Descobrir e trocar",
+    "description": "Plataforma moderna de troca local, pronta para vários países e cidades."
+  },
+  "bottomNav": {
+    "explore": "Explorar",
+    "discover": "Descobrir",
+    "publish": "Publicar",
+    "messages": "Mensagens",
+    "profile": "Perfil"
+  },
+  "topNav": {
+    "greeting": "Olá, {name} 👋",
+    "friend": "Amigo",
+    "login": "Entrar",
+    "signup": "Criar conta",
+    "searchPlaceholder": "Pesquisar um item, uma categoria..."
+  },
+  "localeSwitcher": {
+    "label": "Idioma",
+    "error": "Não foi possível mudar o idioma."
+  },
+  "profile": {
+    "notConnected": "Não conectado",
+    "notConnectedDescription": "Entre para ver seu perfil e seus itens.",
+    "login": "Entrar",
+    "title": "Meu perfil",
+    "trustScore": "{value} Trust Score",
+    "wallet": "Minha Wallet",
+    "items": "Itens",
+    "exchanges": "Trocas",
+    "swapsActivity": "Atividade Swaps",
+    "seeAll": "Ver tudo",
+    "noTransactions": "Nenhuma transação recente.",
+    "activities": "Minhas atividades",
+    "manageItems": "Gerenciar meus itens",
+    "favorites": "Favoritos",
+    "history": "Histórico de trocas",
+    "moderation": "Moderação",
+    "reportsPending": "{count} relatório(s) pendentes",
+    "logout": "Sair"
+  },
+  "wallet": {
+    "title": "Minha Wallet Swaps",
+    "currentBalance": "Saldo atual",
+    "transfersClosed": "Transferências fechadas",
+    "history": "Histórico",
+    "recentHistory": "Histórico recente",
+    "noTransactions": "Nenhuma transação por enquanto.",
+    "buySwaps": "Comprar Swaps",
+    "undefinedMarket": "Mercado não definido",
+    "noPackage": "Nenhum pacote disponível",
+    "configureCountry": "Defina seu país no onboarding para carregar métodos de recarga compatíveis.",
+    "popular": "Popular",
+    "rules": "Regras",
+    "noWithdrawal": "Sem saque",
+    "noWithdrawalBody": "Dinheiro → Swaps • Swaps → Itens • Itens → Swaps. Mas nunca Swaps → Dinheiro.",
+    "localEconomy": "Economia local",
+    "localEconomyBody": "Uma economia circular local conectada ao seu país e aos provedores compatíveis.",
+    "pack": {
+      "global": "Pacote Global",
+      "trader": "Pacote Trader",
+      "pro": "Pacote Pro",
+      "standard": "Pacote Standard",
+      "starter": "Pacote Inicial"
+    },
+    "recharge": {
+      "title": "Recarregar {amount} SC",
+      "package": "Pacote",
+      "paymentNumber": "Número de pagamento",
+      "phonePlaceholder": "90 00 00 00",
+      "invalidPhone": "Número inválido",
+      "pay": "Pagar {price}",
+      "processing": "Processando...",
+      "waitingProvider": "Aguardando o provedor...",
+      "redirecting": "Redirecionando para o provedor...",
+      "serverError": "Erro no pagamento",
+      "webhookPending": "Webhook pendente",
+      "confirmPhone": "Confirme a transação no seu telefone e volte se necessário.",
+      "creditAfterWebhook": "A wallet será creditada assim que a confirmação do provedor chegar.",
+      "confirmed": "Pagamento confirmado",
+      "credited": "+{amount} SC adicionados ao saldo",
+      "close": "Fechar",
+      "errors": {
+        "authRequired": "Entre para iniciar um pagamento.",
+        "countryRequired": "Escolha seu país primeiro no onboarding.",
+        "packageRequired": "Pacote inválido.",
+        "providerRequired": "Provedor inválido.",
+        "phoneInvalid": "Número de telefone inválido.",
+        "paymentNotFound": "Transação de pagamento não encontrada.",
+        "providerResponseIncomplete": "Resposta incompleta do provedor.",
+        "paymentFailed": "O pagamento não foi confirmado.",
+        "rateLimited": "Muitas tentativas. Tente novamente em {seconds}s."
+      }
+    }
+  },
+  "justification": {
+    "title": "Preço justo com IA",
+    "certified": "Certificado pela Swaply",
+    "estimatedNewPrice": "Preço novo estimado",
+    "estimatedAge": "Idade estimada",
+    "visualCondition": "Estado visual",
+    "detectedWear": "Desgaste detectado",
+    "marketComparison": "Comparação de mercado (troca)",
+    "similarTransactions": "{count} transações semelhantes",
+    "resaleValue": "Valor de revenda",
+    "prestige": "Prestígio",
+    "transparency": "Transparência",
+    "transparencyBody": "Este preço é calculado para favorecer uma troca rápida no seu mercado local. Ele considera o desgaste e a demanda atual da sua região."
+  },
+  "home": {
+    "seeAll": "Ver tudo",
+    "newBadge": "Novo",
+    "discoverModeTitle": "🔥 Modo descobrir",
+    "discoverModeBody": "Deslize para combinar itens",
+    "nearbyTitle": "Novidades perto de você",
+    "popularTitle": "Itens populares",
+    "dealsTitle": "Boas ofertas"
+  },
+  "discover": {
+    "searchPlaceholder": "Pesquisar por nome, descrição...",
+    "results": "{count, plural, one {# resultado} other {# resultados}}",
+    "loading": "Carregando...",
+    "emptyTitle": "Nenhum resultado",
+    "emptyBody": "Tente mudar seus filtros ou sua busca.",
+    "endOfResults": "Fim dos resultados",
+    "loadingParams": "Carregando parâmetros..."
+  },
+  "filters": {
+    "title": "Filtros",
+    "country": "País",
+    "city": "Cidade",
+    "zone": "Zona",
+    "category": "Categoria",
+    "price": "Preço (Swaps)",
+    "allCountries": "Todos os países",
+    "allCities": "Todas as cidades",
+    "allZones": "Todas as zonas",
+    "allCategories": "Todas as categorias",
+    "reset": "Redefinir filtros",
+    "ranges": {
+      "all": "Todos",
+      "under50": "< 50 SC",
+      "range50to150": "50-150 SC",
+      "range150to300": "150-300 SC",
+      "over300": "> 300 SC"
+    },
+    "categories": {
+      "electronics": "Eletrônica",
+      "clothing": "Roupas",
+      "shoes": "Sapatos",
+      "books": "Livros",
+      "accessories": "Acessórios",
+      "home": "Casa",
+      "sports": "Esporte",
+      "other": "Outro"
+    }
+  },
+  "messages": {
+    "lockedTitle": "Mensagens indisponíveis",
+    "lockedBody": "Entre para recuperar suas conversas e trocas.",
+    "login": "Entrar",
+    "title": "Mensagens",
+    "subtitle": "Todas as suas conversas ativas e passadas",
+    "emptyTitle": "Nenhuma conversa",
+    "emptyBody": "Reserve um item para abrir um espaço de conversa seguro.",
+    "explore": "Explorar itens",
+    "noMessage": "Nenhuma mensagem enviada ainda.",
+    "open": "Abrir",
+    "statuses": {
+      "pending": "Em andamento",
+      "confirmed": "Confirmado",
+      "completed": "Concluído",
+      "cancelled": "Cancelado",
+      "expired": "Expirado",
+      "disputed": "Disputa"
+    }
+  },
+  "notifications": {
+    "loginPrompt": "Entre para ver suas notificações.",
+    "title": "Notificações",
+    "empty": "Nenhuma notificação por enquanto.",
+    "fallbackTitle": "Notificação"
+  },
+  "onboarding": {
+    "brand": "Swaply Global",
+    "marketTitle": "Escolha seu mercado local",
+    "marketBody": "Seu feed, seus pontos de encontro e seus métodos de recarga se adaptam a este país, cidade e zona.",
+    "country": "País",
+    "city": "Cidade",
+    "zone": "Zona",
+    "selectCountry": "Selecione um país",
+    "selectCity": "Selecione uma cidade",
+    "selectZone": "Selecione uma zona",
+    "activeZone": "Zona ativa",
+    "activeZoneFallback": "Nenhuma zona selecionada",
+    "activeZoneBody": "O feed local e os pagamentos compatíveis seguirão essa escolha.",
+    "saving": "Salvando...",
+    "activateMarket": "Ativar este mercado",
+    "skip": "Pular",
+    "continue": "Continuar",
+    "start": "Começar",
+    "slides": {
+      "publish": {
+        "title": "Publique um item",
+        "description": "Troque o que você não usa mais por créditos e dê uma segunda vida ao item."
+      },
+      "discover": {
+        "title": "Descubra perto de você",
+        "description": "Deslize para encontrar achados no seu bairro e depois amplie cidade por cidade."
+      },
+      "secure": {
+        "title": "Troque com segurança",
+        "description": "Reserve seus itens favoritos e troque-os em nossas zonas seguras."
+      }
+    },
+    "errors": {
+      "load": "Não foi possível carregar o onboarding.",
+      "save": "Não foi possível salvar sua localização.",
+      "authRequired": "Entre para configurar seu mercado.",
+      "locationInvalid": "Seleção de localização inválida."
+    }
+  },
+  "reportItem": {
+    "button": "Denunciar este item",
+    "title": "Denúncia de moderação",
+    "description": "Uma denúncia cria um registro em base e destaca o item nas ferramentas de revisão.",
+    "reason": "Motivo",
+    "details": "Detalhes",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "success": "Denúncia enviada.",
+    "helpers": {
+      "default": "Adicione um contexto útil para a equipe de moderação.",
+      "suspectedScam": "Descreva o que parece incoerente ou arriscado.",
+      "forbiddenItem": "Explique por que o item viola as regras da plataforma."
+    },
+    "reasons": {
+      "misleading_listing": "Anúncio enganoso",
+      "forbidden_item": "Item proibido",
+      "suspected_scam": "Suspeita de golpe",
+      "offensive_content": "Conteúdo ofensivo",
+      "other": "Outro"
+    },
+    "errors": {
+      "authRequired": "Entre para denunciar um item.",
+      "rateLimited": "Muitas denúncias. Tente novamente em {seconds}s.",
+      "invalidReason": "Motivo de denúncia inválido.",
+      "itemNotFound": "Item não encontrado.",
+      "ownItem": "Você não pode denunciar seu próprio item.",
+      "alreadyReported": "Você já denunciou este item.",
+      "generic": "Não foi possível enviar a denúncia."
+    }
+  },
+  "exchange": {
+    "reserve": {
+      "hybridTitle": "Troca híbrida",
+      "disableHybrid": "Desativar",
+      "adjustHybrid": "Ajustar",
+      "hybridBody": "Adicione Swaps para equilibrar a troca se o seu item valer menos.",
+      "swapsLabel": "Swaps (SC)",
+      "hybridExtra": "Você pagará {amount} SC extras",
+      "acceptAndReserve": "Aceitar e reservar",
+      "reserveThisItem": "Reservar esta troca",
+      "success": "Reserva concluída.",
+      "errors": {
+        "authRequired": "Entre para reservar.",
+        "rateLimited": "Muitas reservas. Tente novamente em {seconds}s.",
+        "itemNotFound": "Item não encontrado.",
+        "itemUnavailable": "Item indisponível.",
+        "ownItem": "Você não pode reservar seu próprio item.",
+        "insufficientSwaps": "Swaps insuficientes para cobrir a reserva.",
+        "generic": "Erro ao reservar."
+      }
+    },
+    "qr": {
+      "ownerTitle": "Código de validação",
+      "ownerBody": "Mostre este código ao solicitante durante o encontro físico para finalizar a troca.",
+      "readyToScan": "Pronto para escanear",
+      "generate": "Gerar QR code",
+      "requesterTitle": "Validar a troca",
+      "requesterBody": "Escaneie o QR code mostrado pelo proprietário para confirmar o recebimento do item.",
+      "scanToValidate": "Escanear para validar",
+      "scannerTitle": "Escaneie o QR code",
+      "scannerBody": "Posicione o código no centro da moldura",
+      "generateSuccess": "Código de validação gerado.",
+      "confirmSuccess": "Troca validada com sucesso.",
+      "completedTitle": "Troca concluída",
+      "completedBody": "Os créditos foram transferidos e o item agora é seu.",
+      "leaveReview": "Deixar avaliação",
+      "errors": {
+        "authRequired": "Entre para fazer isso.",
+        "exchangeNotFound": "Troca não encontrada.",
+        "ownerOnly": "Só o proprietário pode gerar o código.",
+        "requesterOnly": "Só o solicitante pode validar.",
+        "exchangeNotPending": "Esta troca não está mais pendente.",
+        "invalidToken": "Código de validação inválido.",
+        "generic": "Não foi possível processar a validação."
+      }
+    },
+    "review": {
+      "title": "Como foi a troca?",
+      "body": "Sua nota impacta diretamente o Trust Score do seu parceiro.",
+      "placeholder": "Um pequeno comentário sobre a troca (opcional)...",
+      "submit": "Publicar avaliação",
+      "success": "Obrigado pela sua avaliação.",
+      "successTitle": "Obrigado!",
+      "successBody": "Sua opinião ajuda a manter a comunidade Swaply segura e confiável.",
+      "errors": {
+        "authRequired": "Entre para deixar uma avaliação.",
+        "ratingMissing": "Selecione uma nota.",
+        "ratingInvalid": "Nota inválida.",
+        "exchangeNotFound": "Troca não encontrada.",
+        "exchangeNotCompleted": "A troca precisa estar concluída antes de deixar uma avaliação.",
+        "reviewAlreadyExists": "Você já deixou uma avaliação.",
+        "generic": "Não foi possível enviar sua avaliação."
+      }
+    },
+    "meeting": {
+      "title": "Ponto de encontro",
+      "secure": "Seguro",
+      "chooseSafeSpot": "Escolher um Swap Spot seguro",
+      "swapSpot": "Swap Spot",
+      "distance": "• a {amount} km",
+      "confirmed": "Confirmado",
+      "fallbackDescription": "Ponto de encontro seguro recomendado pela Swaply para uma troca mais tranquila.",
+      "updating": "Atualizando...",
+      "alreadySelected": "Local já selecionado",
+      "confirm": "Confirmar este local",
+      "success": "Ponto de encontro atualizado.",
+      "errors": {
+        "generic": "Não foi possível atualizar o local."
+      }
+    }
+  },
+  "discoverStack": {
+    "title": "Descobrir",
+    "items": "itens",
+    "localMarket": "Mercado local",
+    "reserved": "Item reservado",
+    "saved": "Adicionado aos favoritos",
+    "unsaved": "Removido dos favoritos",
+    "saveError": "Não foi possível salvar o item.",
+    "reserveError": "Não foi possível reservar o item.",
+    "emptyTitle": "Sem mais itens por agora",
+    "emptyBody": "Volte mais tarde para descobrir novos itens perto de você.",
+    "backHome": "Voltar ao início",
+    "skip": "Pular",
+    "save": "Salvar",
+    "reserve": "Reservar",
+    "goToChat": "Ir para o chat"
+  },
+  "publish": {
+    "title": "Publicar um item",
+    "country": "País",
+    "city": "Cidade",
+    "zone": "Zona",
+    "selectCountry": "Selecione um país",
+    "selectCity": "Selecione uma cidade",
+    "selectZone": "Selecione uma zona",
+    "detectingZone": "Detectando sua zona...",
+    "submit": "Publicar item",
+    "submitting": "Publicando...",
+    "uploading": "Enviando...",
+    "analyzing": "Análise IA...",
+    "twoPhotosRequired": "2 fotos obrigatórias",
+    "addOneMorePhoto": "Adicione mais uma foto",
+    "terms": "Ao publicar, você aceita as regras de segurança do seu mercado local.",
+    "success": "Item publicado com sucesso.",
+    "successWithBonus": "Item publicado com sucesso. Bônus da primeira publicação adicionado.",
+    "scanner": {
+      "title": "Scanner do objeto",
+      "stepCounter": "Etapa {current} / {total}",
+      "aiAssisted": "Assistido por IA",
+      "vision": "Visão...",
+      "previewAlt": "Pré-visualização da foto",
+      "retakePhoto": "Refazer esta foto",
+      "nextStep": "Ir para a próxima etapa",
+      "scanObject": "Escanear item",
+      "stepBadge": "Foto {index}",
+      "quality": {
+        "excellent": "Qualidade excelente",
+        "warning": "Atenção",
+        "ready": "Pronto para continuar"
+      },
+      "steps": {
+        "main": {
+          "label": "Foto principal",
+          "description": "O objeto inteiro, bem centralizado",
+          "guide": "Posicione o objeto no centro do quadro"
+        },
+        "back": {
+          "label": "Parte traseira / etiqueta",
+          "description": "Detalhes técnicos importantes",
+          "guide": "Capture as portas ou a etiqueta do modelo"
+        },
+        "details": {
+          "label": "Detalhes ou defeitos",
+          "description": "Zoom no estado real",
+          "guide": "Aproxime-se de riscos ou imperfeições"
+        },
+        "active": {
+          "label": "Em funcionamento",
+          "description": "Item ligado ou ativo",
+          "guide": "Mostre que o aparelho liga (tela, LED)"
+        }
+      }
+    },
+    "condition": {
+      "title": "Transparência técnica",
+      "subtitle": "Confiança total Swaply",
+      "required": "Obrigatório",
+      "consistencyAlertTitle": "Alerta de coerência IA",
+      "consistencyAlertBody": "Nossa análise visual detecta um item <strong>{status}</strong>. Tem certeza da sua escolha?",
+      "visualStatus": {
+        "broken": "quebrado",
+        "defective": "defeituoso"
+      },
+      "options": {
+        "perfect": {
+          "label": "Estado perfeito",
+          "description": "Como novo, sem problema"
+        },
+        "batteryLow": {
+          "label": "Bateria fraca",
+          "description": "Autonomia reduzida"
+        },
+        "defective": {
+          "label": "Defeito menor",
+          "description": "ex.: botão, porta USB"
+        },
+        "broken": {
+          "label": "Sem funcionamento",
+          "description": "Apenas para peças"
+        }
+      }
+    },
+    "catalogPhoto": {
+      "title": "Foto de catálogo",
+      "body": "Anúncios com fotos reais são reservados <strong>3 vezes mais rápido</strong> no mercado local."
+    },
+    "details": {
+      "title": "Detalhes do item",
+      "subtitle": "Informações gerais",
+      "fields": {
+        "title": "Título",
+        "descriptionOptional": "Descrição (opcional)"
+      },
+      "placeholders": {
+        "title": "ex.: Tênis Nike para corrida",
+        "description": "Estado do item, características..."
+      }
+    },
+    "ai": {
+      "title": "Análises híbridas IA",
+      "extracting": "Extraindo...",
+      "detectedType": "Tipo detectado",
+      "brand": "Marca",
+      "genericBrand": "Genérico",
+      "visualState": "Estado visual",
+      "rarity": "Raridade",
+      "qualityInsufficient": "Qualidade insuficiente",
+      "listingUnderWatch": "Anúncio em observação",
+      "qualityCriteriaNotMet": "Critérios de qualidade não atendidos."
+    },
+    "technical": {
+      "title": "Detalhes técnicos",
+      "model": "Modelo identificado",
+      "modelPlaceholder": "ex.: Sony WH-1000XM4",
+      "modelHint": "A IA detectou este modelo. Ajuste se necessário.",
+      "ageLabel": "Idade do aparelho",
+      "age": {
+        "lessThanOneYear": "< 1 ano",
+        "oneToThreeYears": "1-3 anos",
+        "moreThanThreeYears": "> 3 anos"
+      },
+      "accessoriesLabel": "Acessórios incluídos",
+      "accessories": {
+        "box": "Caixa original",
+        "charger": "Carregador",
+        "cables": "Cabeamento completo"
+      }
+    },
+    "pricing": {
+      "title": "Preço do item (créditos)",
+      "recommendedEstimation": "Estimativa recomendada",
+      "creditsShort": "CR",
+      "credits": "Créditos",
+      "range": "Faixa",
+      "coherent": "Preço coerente",
+      "outlier": "Preço atípico",
+      "accessible": "Acessível",
+      "premium": "Premium",
+      "outlierHelp": "Este preço está fora da faixa recomendada pela IA ({min} – {max} {credits}).",
+      "outlierHint": "Preços muito altos podem desacelerar a troca."
+    },
+    "location": {
+      "title": "Localização"
+    },
+    "errors": {
+      "loadGeo": "Não foi possível carregar as localizações.",
+      "maxPhotos": "Máximo de 4 fotos permitido.",
+      "aiPhotoQuality": "A IA precisa de uma foto mais nítida para identificar o item. Tente novamente.",
+      "authRequired": "Faça login para publicar um item.",
+      "titleInvalid": "Título inválido.",
+      "descriptionInvalid": "Descrição inválida.",
+      "priceInvalid": "Valor em Swaps inválido.",
+      "imagesRequired": "Adicione pelo menos 2 fotos.",
+      "locationUnavailable": "Localização indisponível.",
+      "generic": "Não foi possível publicar o item."
+    }
+  },
+  "moderation": {
+    "restrictedTitle": "Acesso restrito",
+    "restrictedBody": "Esta página é reservada para contas de moderação e administração.",
+    "backToProfile": "Voltar ao perfil",
+    "title": "Moderação",
+    "subtitle": "Relatórios recebidos e sinais de uso do catálogo",
+    "unknownZone": "Zona desconhecida",
+    "withoutZone": "Sem zona",
+    "stats": {
+      "pending": "Pendentes",
+      "removals": "Remoções",
+      "reportedItems": "Itens denunciados",
+      "watchedItems": "Itens monitorados"
+    },
+    "queue": {
+      "title": "Fila de revisão",
+      "subtitle": "Prioridade para denúncias abertas e itens ainda ativos",
+      "emptyTitle": "Nenhuma denúncia pendente",
+      "emptyBody": "A fila de moderação está vazia no momento.",
+      "reportedBy": "Denunciado por {reporter} • {owner} • {time}",
+      "reportsCount": "{count} denúncia(s)",
+      "uniqueViews": "{count} visitantes únicos",
+      "favoritesCount": "{count} favoritos"
+    },
+    "topReported": {
+      "title": "Itens mais denunciados",
+      "subtitle": "Visão rápida por nível de risco",
+      "empty": "Sem histórico de denúncias.",
+      "metric": "denúncias"
+    },
+    "topViewed": {
+      "title": "Itens mais vistos",
+      "subtitle": "Cruza volume e pressão de moderação",
+      "empty": "Nenhuma visualização registrada.",
+      "metric": "únicos"
+    },
+    "recent": {
+      "title": "Últimas decisões",
+      "empty": "Nenhuma decisão recente.",
+      "byReporter": "{reporter} • {time}"
+    },
+    "statuses": {
+      "report": {
+        "pending": "Pendente",
+        "reviewed": "Revisado",
+        "rejected": "Rejeitado",
+        "actioned": "Acionado"
+      },
+      "item": {
+        "draft": "Rascunho",
+        "available": "Ativo",
+        "reserved": "Reservado",
+        "exchanged": "Trocado",
+        "removed": "Removido"
+      }
+    },
+    "reasonLabels": {
+      "misleading_listing": "Anúncio enganoso",
+      "forbidden_item": "Item proibido",
+      "suspected_scam": "Suspeita de golpe",
+      "offensive_content": "Conteúdo ofensivo",
+      "other": "Outro"
+    },
+    "actions": {
+      "reviewWithoutAction": "Revisado sem ação",
+      "reject": "Rejeitar",
+      "removeListing": "Remover anúncio",
+      "loading": "Processando...",
+      "success": {
+        "updated": "Denúncia atualizada.",
+        "removed": "Anúncio removido e denúncia atualizada."
+      },
+      "errors": {
+        "authRequired": "Faça login para moderar.",
+        "forbidden": "Acesso de moderação negado.",
+        "reportNotFound": "Denúncia não encontrada.",
+        "invalidStatus": "Status inválido.",
+        "invalidAction": "Ação do item inválida.",
+        "generic": "Não foi possível atualizar a denúncia."
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Entre na sua conta",
+      "subtitle": "Bom te ver de novo. Informe seus dados.",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Senha",
+      "submit": "Entrar",
+      "loading": "Carregando...",
+      "separator": "- Ou continuar com -",
+      "noAccount": "Ainda não tem conta?",
+      "createAccount": "Criar uma conta",
+      "errors": {
+        "generic": "Nao foi possivel entrar agora."
+      }
+    },
+    "signup": {
+      "title": "Criar uma conta",
+      "subtitle": "Entre no Swaply e comece a descobrir boas oportunidades.",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Senha",
+      "submit": "Cadastrar-se",
+      "loading": "Criando...",
+      "separator": "- Ou cadastrar com -",
+      "alreadyAccount": "Ja tem uma conta?",
+      "login": "Entrar",
+      "success": "Conta criada com sucesso. Agora voce pode entrar.",
+      "errors": {
+        "generic": "Nao foi possivel criar a conta agora."
+      }
+    }
+  },
+  "explorePage": {
+    "label": "Explorar",
+    "title": "Encontre um item perto de voce",
+    "body": "Descubra os itens disponiveis no seu mercado local e reserve em segundos.",
+    "discoverMode": "Modo descoberta",
+    "localMarket": "Mercado local",
+    "availableNow": "Disponiveis agora",
+    "filters": "Filtros",
+    "chips": {
+      "all": "Todos",
+      "nearYou": "Perto de voce",
+      "swaps20": "20 swaps",
+      "swaps100": "100 swaps",
+      "swaps300": "300 swaps",
+      "electronics": "Eletronicos",
+      "home": "Casa"
+    },
+    "recentItems": "Itens recentes",
+    "results": "{count, plural, one {# resultado} other {# resultados}}",
+    "swipeTitle": "Descobrir com swipe",
+    "swipeBody": "Navegacao rapida pelos itens ao seu redor",
+    "open": "Abrir"
+  },
+  "favoritesPage": {
+    "title": "Meus favoritos",
+    "emptyTitle": "Nenhum favorito ainda",
+    "emptyBody": "Salve os itens que voce gosta para encontra-los aqui depois.",
+    "exploreItems": "Explorar itens"
+  },
+  "itemDetail": {
+    "unknownZone": "Zona desconhecida",
+    "backHome": "Voltar ao inicio",
+    "aiEstimate": "Estimativa de IA",
+    "aiSuggestion": "Sugestao da IA: {amount} SC",
+    "confidence": "confianca {value}%",
+    "description": "Descricao",
+    "noDescription": "Nenhuma descricao fornecida.",
+    "views": "Visualizacoes",
+    "uniqueVisitors": "{count, plural, one {# visitante unico} other {# visitantes unicos}}",
+    "favorites": "Favoritos",
+    "realInterest": "Sinais reais de interesse",
+    "trustScore": "Trust score: {value}",
+    "openMessages": "Abrir mensagens"
+  },
+  "itemCard": {
+    "available": "Disponivel",
+    "reserved": "Reservado",
+    "by": "Por {name}"
+  },
+  "discoveryCard": {
+    "reserve": "Reservar",
+    "skip": "Pular",
+    "nearby": "Perto de voce"
+  }
+}

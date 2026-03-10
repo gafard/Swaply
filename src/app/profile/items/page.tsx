@@ -8,15 +8,19 @@ import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer"
 import { ArrowLeft, ChevronRight, Package, PlusCircle } from "lucide-react";
 
 const statusStyles: Record<ItemStatus, string> = {
+  DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
   AVAILABLE: "bg-emerald-50 text-emerald-700 border-emerald-100",
   RESERVED: "bg-amber-50 text-amber-700 border-amber-100",
   EXCHANGED: "bg-slate-100 text-slate-700 border-slate-200",
+  REMOVED: "bg-rose-50 text-rose-700 border-rose-100",
 };
 
 const statusLabels: Record<ItemStatus, string> = {
+  DRAFT: "Brouillon",
   AVAILABLE: "Disponible",
   RESERVED: "Réservé",
   EXCHANGED: "Échangé",
+  REMOVED: "Retiré",
 };
 
 export default async function ProfileItemsPage() {
@@ -45,6 +49,9 @@ export default async function ProfileItemsPage() {
   const items = await prisma.item.findMany({
     where: { ownerId: user.id },
     include: {
+      city: true,
+      zone: true,
+      metric: true,
       exchanges: {
         where: { status: "PENDING" },
         orderBy: { createdAt: "desc" },
@@ -118,16 +125,28 @@ export default async function ProfileItemsPage() {
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     <div className="rounded-2xl bg-slate-50 px-3 py-3">
                       <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">Crédits</p>
-                      <p className="text-sm font-extrabold text-indigo-600">{item.creditValue}</p>
+                      <p className="text-sm font-extrabold text-indigo-600">{item.priceSwaps}</p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-3 py-3">
                       <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">Zone</p>
-                      <p className="text-sm font-bold text-gray-900 line-clamp-1">{item.locationZone}</p>
+                      <p className="text-sm font-bold text-gray-900 line-clamp-1">
+                        {item.zone?.name ?? item.city?.name ?? "Zone inconnue"}
+                      </p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-3 py-3">
-                      <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">Vues</p>
-                      <p className="text-sm font-bold text-gray-900">{item.views}</p>
+                      <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">IA</p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {typeof item.aiConfidence === "number"
+                          ? `${Math.round(item.aiConfidence * 100)}%`
+                          : "--"}
+                      </p>
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 mb-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <span>Vues: {item.metric?.totalViews ?? 0}</span>
+                    <span>Favoris: {item.metric?.favoritesCount ?? 0}</span>
+                    <span>Signalements: {item.metric?.reportsCount ?? 0}</span>
                   </div>
 
                   {pendingExchange ? (

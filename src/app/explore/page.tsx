@@ -3,11 +3,15 @@ import prisma from "@/lib/prisma";
 import TopNav from "@/components/TopNav";
 import ItemCard from "@/components/ItemCard";
 import Link from "next/link";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Compass, MapPin, SlidersHorizontal, Sparkles } from "lucide-react";
 import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer";
+import { presentItem } from "@/lib/item-presenter";
+import { localizeHref } from "@/lib/i18n/pathnames";
 
 export default async function ExplorePage() {
   const user = await getCurrentUser();
+  const [locale, t] = await Promise.all([getLocale(), getTranslations("explorePage")]);
 
   const unreadCount = user
     ? await prisma.notification.count({
@@ -26,8 +30,15 @@ export default async function ExplorePage() {
           trustScore: true,
         },
       },
+      city: { select: { name: true } },
+      zone: { select: { name: true } },
+      metric: true,
+      images: { orderBy: { orderIndex: "asc" }, take: 1 },
     },
   });
+
+  const presentedItems = items.map(presentItem);
+  const discoverHref = localizeHref(locale, "/discover");
 
   return (
     <main className="min-h-screen bg-[#F7F7F5] pb-24 font-sans sm:pb-8">
@@ -40,13 +51,13 @@ export default async function ExplorePage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
-                  Explorer
+                  {t("label")}
                 </p>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-                  Trouve un objet près de toi
+                  {t("title")}
                 </h1>
                 <p className="mt-2 text-sm leading-5 text-white/70">
-                  Découvre les objets disponibles à Lomé et réserve en quelques secondes.
+                  {t("body")}
                 </p>
               </div>
 
@@ -57,16 +68,16 @@ export default async function ExplorePage() {
 
             <div className="mt-5 flex items-center gap-3">
               <Link
-                href="/discover"
+                href={discoverHref}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
               >
                 <Compass className="h-4 w-4" />
-                Mode découverte
+                {t("discoverMode")}
               </Link>
 
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/80">
                 <MapPin className="h-3.5 w-3.5" />
-                Lomé
+                {user?.city?.name ?? t("localMarket")}
               </div>
             </div>
           </div>
@@ -76,17 +87,25 @@ export default async function ExplorePage() {
         <AnimatedContainer initialY={10} delay={0.05} className="mb-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-              Disponibles maintenant
+              {t("availableNow")}
             </h2>
 
             <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
               <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtres
+              {t("filters")}
             </button>
           </div>
 
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {["Tous", "Près de vous", "20 crédits", "100 crédits", "300 crédits", "Électronique", "Maison"].map(
+            {[
+              t("chips.all"),
+              t("chips.nearYou"),
+              t("chips.swaps20"),
+              t("chips.swaps100"),
+              t("chips.swaps300"),
+              t("chips.electronics"),
+              t("chips.home"),
+            ].map(
               (filter, i) => (
                 <AnimatedItem key={filter} index={i}>
                   <button
@@ -108,15 +127,15 @@ export default async function ExplorePage() {
         <section>
           <AnimatedContainer initialY={10} delay={0.1} className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold tracking-tight text-slate-900">
-              Objets récents
+              {t("recentItems")}
             </h3>
             <p className="text-xs font-medium text-slate-400">
-              {items.length} résultats
+              {t("results", { count: presentedItems.length })}
             </p>
           </AnimatedContainer>
 
           <div className="grid grid-cols-2 gap-3">
-            {items.map((item, i) => (
+            {presentedItems.map((item, i) => (
               <div
                 key={item.id}
                 style={{ animationDelay: `${i * 70}ms` }}
@@ -131,20 +150,20 @@ export default async function ExplorePage() {
         {/* CTA bas de page */}
         <AnimatedContainer initialY={10} delay={0.15} className="mt-8">
           <Link
-            href="/discover"
+            href={discoverHref}
             className="flex items-center justify-between rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm transition hover:border-slate-300"
           >
             <div>
               <p className="text-sm font-semibold text-slate-900">
-                Découvrir en swipe
+                {t("swipeTitle")}
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Parcours rapide des objets autour de toi
+                {t("swipeBody")}
               </p>
             </div>
 
             <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white">
-              Ouvrir
+              {t("open")}
             </div>
           </Link>
         </AnimatedContainer>

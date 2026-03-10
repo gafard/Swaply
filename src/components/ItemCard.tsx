@@ -1,17 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Star, Package, MapPin, Eye, Heart, AlertTriangle } from "lucide-react";
+import { Star, Package, MapPin, Eye, Heart } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { toggleSaveItem } from "@/app/actions/item";
 import { AnimatedItem } from "@/components/AnimatedContainer";
+import { localizeHref } from "@/lib/i18n/pathnames";
 import { cn } from "@/lib/utils";
 
  interface Item {
   id: string;
   title: string;
-  imageUrl?: string | null;
+  images?: Array<{ url: string; order: number }> | null;
   creditValue: number;
   locationZone: string;
   owner: {
@@ -19,9 +20,7 @@ import { cn } from "@/lib/utils";
     trustScore: number;
   };
   views?: number;
-  _count?: {
-    savedBy: number;
-  };
+  favoritesCount?: number;
   distance?: number;
   functionalStatus?: string;
   status?: string;
@@ -29,18 +28,21 @@ import { cn } from "@/lib/utils";
 
 export default function ItemCard({ item, index }: { item: Item, index: number }) {
   const [isSaved, setIsSaved] = useState(false); // Potential improvement: fetch actual state from prop
+  const locale = useLocale();
+  const t = useTranslations("itemCard");
+  const primaryImage = item.images?.[0]?.url;
 
   return (
     <AnimatedItem index={index}>
-      <Link href={`/item/${item.id}`} className="group block h-full">
+      <Link href={localizeHref(locale, `/item/${item.id}`)} className="group block h-full">
         <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-card hover:shadow-popup hover:-translate-y-1 transition-all duration-500 h-full flex flex-col group/card">
           {/* Image Container - Larger & Fill */}
           <div className="aspect-[3/4] overflow-hidden bg-slate-50 relative">
-            {item.imageUrl ? (
-              <img 
-                src={item.imageUrl} 
-                alt={item.title} 
-                className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700" 
+            {primaryImage ? (
+              <img
+                src={primaryImage}
+                alt={item.title}
+                className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-700"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -56,7 +58,7 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                    ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
                    : "bg-amber-50 text-amber-700 border border-amber-100"
                )}>
-                  {item.status === "AVAILABLE" ? "Disponible" : "Réservé"}
+                  {item.status === "AVAILABLE" ? t("available") : t("reserved")}
                </div>
             </div>
 
@@ -102,9 +104,20 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
             <h3 className="font-semibold text-sm text-slate-900 line-clamp-1 tracking-tight group-hover/card:text-primary transition-colors leading-tight">
               {item.title}
             </h3>
+
+            <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {item.views ?? 0}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Heart className="w-3 h-3" />
+                {item.favoritesCount ?? 0}
+              </span>
+            </div>
             
             <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
-               <p className="text-[11px] font-medium text-slate-500">Par {item.owner.username}</p>
+               <p className="text-[11px] font-medium text-slate-500">{t("by", { name: item.owner.username })}</p>
                <div className="flex items-center gap-0.5">
                   <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
                   <span className="text-[10px] font-bold text-slate-700">{item.owner.trustScore}</span>

@@ -24,44 +24,42 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
 
-  const expiredItems = await prisma.item.findMany({
+  const expiredExchanges = await prisma.exchange.findMany({
     where: {
-      status: ItemStatus.RESERVED,
+      status: ExchangeStatus.PENDING,
       reservedUntil: { lt: now },
     },
     include: {
+      item: true,
       owner: true,
-      exchanges: {
-        where: { status: ExchangeStatus.PENDING },
-        include: { requester: true }
-      }
+      requester: true,
     },
   });
 
-  const itemIds = expiredItems.map((item) => item.id);
+  const itemIds = [...new Set(expiredExchanges.map((exchange) => exchange.itemId))];
 
   if (itemIds.length === 0) {
     return NextResponse.json({ ok: true, expired: 0 });
   }
 
-  for (const item of expiredItems) {
+  for (const exchange of expiredExchanges) {
     await notifyUser({
-      userId: item.owner.id,
-      email: item.owner.email,
-      title: "Réservation expirée ⏱️",
-      body: `La réservation pour "${item.title}" a expiré. L'objet est à nouveau disponible.`,
-      type: "RESERVATION_EXPIRED"
+      userId: exchange.owner.id,
+      email: exchange.owner.email ?? undefined,
+      template: "reservation_expired_owner",
+      payload: {
+        itemTitle: exchange.item.title,
+      },
     });
 
-    for (const exchange of item.exchanges) {
-      await notifyUser({
-        userId: exchange.requester.id,
-        email: exchange.requester.email,
-        title: "Réservation expirée ⏱️",
-        body: `Votre réservation pour "${item.title}" a expiré.`,
-        type: "RESERVATION_EXPIRED"
-      });
-    }
+    await notifyUser({
+      userId: exchange.requester.id,
+      email: exchange.requester.email ?? undefined,
+      template: "reservation_expired_requester",
+      payload: {
+        itemTitle: exchange.item.title,
+      },
+    });
   }
 
   await prisma.$transaction([
@@ -69,16 +67,13 @@ export async function GET(request: NextRequest) {
       where: { id: { in: itemIds } },
       data: {
         status: ItemStatus.AVAILABLE,
-        reservedUntil: null,
       },
     }),
     prisma.exchange.updateMany({
-      where: {
-        itemId: { in: itemIds },
-        status: ExchangeStatus.PENDING,
-      },
+      where: { id: { in: expiredExchanges.map((exchange) => exchange.id) } },
       data: {
         status: ExchangeStatus.EXPIRED,
+        reservedUntil: null,
       },
     }),
   ]);

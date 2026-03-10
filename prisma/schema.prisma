@@ -6,140 +6,18 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id                 String         @id @default(cuid())
-  username           String         @unique
-  email              String         @unique
-  credits            Int            @default(100)
-  trustScore         Int            @default(0)
-  totalExchanges     Int            @default(0)
-  createdAt          DateTime       @default(now())
-  defaultZone        String?
-  latitude           Float?
-  longitude          Float?
-  ownedExchanges     Exchange[]     @relation("OwnerExchanges")
-  requestedExchanges Exchange[]     @relation("RequesterExchanges")
-  items              Item[]         @relation("UserItems")
-  messages           Message[]
-  notifications      Notification[]
-  savedItems         Item[]         @relation("UserSavedItems")
-  reports            Report[]       @relation("ReporterReports")
-}
-
-model Item {
-  id                 String     @id @default(cuid())
-  title              String
-  description        String
-  imageUrl           String?
-  creditValue        Int        // This remains the final value chosen by the user
-  locationZone       String
-  ownerId            String
-  images             ItemImage[]
-  
-  // AI Insights - Layer 1 (Vision)
-  category           String?
-  subcategory        String?
-  brand              String?
-  condition          String?
-  rarity             String?    @default("common")
-  aiConfidence       Float?
-  
-  // AI Insights - Layer 2 (Estimation Engine)
-  suggestedValue     Int?
-  minSuggestedValue  Int?
-  maxSuggestedValue  Int?
-  aiExplanation      String?
-  
-  // Technical Details (specifically for Electronics)
-  techAge            String?    // <1 year, 1-3 years, >3 years
-  techAccessories    String?    // comma separated: box, charger, cables
-  techFunctionality  String?    // perfect, battery_low, defect
-  functionalStatus   String     @default("PERFECT") // PERFECT, DEFECTIVE, BROKEN
-  isNotifiedDefective Boolean   @default(false)
-  
-  listedValue        Int?       // Snapshotted at time of listing
-  finalExchangeValue Int?       // To be filled when exchange is completed
-  
-  fraudRisk          String?    @default("low")
-  status             ItemStatus @default(AVAILABLE)
-  reservedUntil      DateTime?
-  createdAt          DateTime   @default(now())
-  views              Int        @default(0)
-  latitude           Float?
-  longitude          Float?
-  exchanges          Exchange[]
-  reports            Report[]
-  owner              User       @relation("UserItems", fields: [ownerId], references: [id])
-  savedBy            User[]     @relation("UserSavedItems")
-
-  @@index([status, locationZone])
-  @@index([ownerId])
-}
-
-model MeetingPoint {
-  id          String     @id @default(cuid())
-  name        String
-  zone        String
-  description String?
-  createdAt   DateTime   @default(now())
-  isActive    Boolean    @default(true)
-  lat         Float
-  lng         Float
-  exchanges   Exchange[]
-
-  @@index([zone])
-}
-
-model Exchange {
-  id             String         @id @default(cuid())
-  itemId         String
-  requesterId    String
-  ownerId        String
-  meetingPointId String?
-  status         ExchangeStatus @default(PENDING)
-  createdAt      DateTime       @default(now())
-  completedAt    DateTime?
-  item           Item           @relation(fields: [itemId], references: [id])
-  meetingPoint   MeetingPoint?  @relation(fields: [meetingPointId], references: [id])
-  owner          User           @relation("OwnerExchanges", fields: [ownerId], references: [id])
-  requester      User           @relation("RequesterExchanges", fields: [requesterId], references: [id])
-  messages       Message[]
-
-  @@index([itemId])
-  @@index([requesterId])
-  @@index([ownerId])
-  @@index([status])
-}
-
-model Message {
-  id         String   @id @default(cuid())
-  exchangeId String
-  senderId   String
-  content    String
-  createdAt  DateTime @default(now())
-  exchange   Exchange @relation(fields: [exchangeId], references: [id])
-  sender     User     @relation(fields: [senderId], references: [id])
-
-  @@index([exchangeId, createdAt])
-}
-
-model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  title     String
-  body      String
-  type      NotificationType
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id])
-
-  @@index([userId, read, createdAt])
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
 }
 
 enum ItemStatus {
+  DRAFT
   AVAILABLE
   RESERVED
   EXCHANGED
+  REMOVED
 }
 
 enum ExchangeStatus {
@@ -148,37 +26,504 @@ enum ExchangeStatus {
   COMPLETED
   CANCELLED
   EXPIRED
+  DISPUTED
 }
 
-enum NotificationType {
-  ITEM_RESERVED
-  NEW_MESSAGE
-  EXCHANGE_CONFIRMED
-  RESERVATION_EXPIRED
+enum WalletTxnType {
+  SIGNUP_BONUS
+  REFERRAL_BONUS
+  TOPUP
+  EXCHANGE_IN
+  EXCHANGE_OUT
+  EXCHANGE_FEE
+  BOOST_SPEND
+  INSURANCE_SPEND
+  WISHLIST_SPEND
+  ADJUSTMENT
+  REFUND
 }
 
-model Report {
-  id          String   @id @default(cuid())
-  reason      String
-  description String?
-  itemId      String
-  reporterId  String
-  createdAt   DateTime @default(now())
-  
-  item        Item     @relation(fields: [itemId], references: [id])
-  reporter    User     @relation("ReporterReports", fields: [reporterId], references: [id])
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
 
-  @@index([itemId])
-  @@index([reporterId])
+enum ReviewRating {
+  ONE
+  TWO
+  THREE
+  FOUR
+  FIVE
+}
+
+enum ItemReportStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+  ACTIONED
+}
+
+model Country {
+  id               String   @id @default(cuid())
+  code             String   @unique // TG, BJ, FR
+  name             String
+  defaultLanguage  String   @default("fr")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  cities           City[]
+  paymentProviders PaymentProvider[]
+  users            User[]
+  items            Item[]
+  meetingPoints    MeetingPoint[]
+  wishlists        Wishlist[]
+  topupPackages    TopupPackage[]
+  paymentTransactions PaymentTransaction[]
+
+  @@index([isActive])
+}
+
+model City {
+  id         String   @id @default(cuid())
+  countryId  String
+  name       String
+  slug       String
+  lat        Float?
+  lng        Float?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  country    Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  zones      Zone[]
+  users      User[]
+  items      Item[]
+  meetingPoints MeetingPoint[]
+  wishlists     Wishlist[]
+
+  @@unique([countryId, slug])
+  @@index([countryId, isActive])
+}
+
+model Zone {
+  id         String   @id @default(cuid())
+  cityId     String
+  name       String
+  slug       String
+  lat        Float?
+  lng        Float?
+  radiusKm   Float?   // utile pour micro-market auto-generated
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  city         City           @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  users        User[]
+  items        Item[]
+  meetingPoints MeetingPoint[]
+  wishlists     Wishlist[]
+
+  @@unique([cityId, slug])
+  @@index([cityId, isActive])
+}
+
+model User {
+  id               String    @id @default(cuid())
+  authUserId       String?   @unique // id Supabase/Auth provider
+  email            String?   @unique
+  username         String    @unique
+  avatarUrl        String?
+  role             UserRole  @default(USER)
+
+  countryId        String?
+  cityId           String?
+  zoneId           String?
+
+  lat              Float?
+  lng              Float?
+
+  preferredLanguage String?  @default("fr")
+  trustScore       Int       @default(0)
+  isVerified       Boolean   @default(false)
+  isActive         Boolean   @default(true)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  country          Country?  @relation(fields: [countryId], references: [id])
+  city             City?     @relation(fields: [cityId], references: [id])
+  zone             Zone?     @relation(fields: [zoneId], references: [id])
+
+  items            Item[]
+  wallet           Wallet?
+  sentMessages     Message[] @relation("MessageSender")
+  reviewsGiven     Review[]  @relation("ReviewAuthor")
+  reviewsReceived  Review[]  @relation("ReviewTarget")
+
+  ownerExchanges     Exchange[] @relation("ExchangeOwner")
+  requesterExchanges Exchange[] @relation("ExchangeRequester")
+
+  notifications    Notification[]
+  wishlists        Wishlist[]
+  payments         PaymentTransaction[]
+  itemViews        ItemView[]
+  itemReports      ItemReport[]
+
+  @@index([countryId])
+  @@index([cityId])
+  @@index([zoneId])
+  @@index([isActive])
+}
+
+model Wallet {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  balanceSwaps    Int      @default(0)
+  promoSwaps      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    WalletTransaction[]
+
+  @@index([balanceSwaps])
+}
+
+model WalletTransaction {
+  id              String         @id @default(cuid())
+  walletId        String
+  type            WalletTxnType
+  amount          Int
+  promoAmount     Int            @default(0)
+  description     String?
+  referenceId     String?        // exchangeId, paymentId, boostId...
+  createdAt       DateTime       @default(now())
+
+  wallet          Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt])
+  @@index([type])
+  @@index([referenceId])
+}
+
+model Item {
+  id              String      @id @default(cuid())
+  ownerId         String
+
+  countryId       String
+  cityId          String
+  zoneId          String?
+
+  lat             Float?
+  lng             Float?
+
+  title           String
+  description     String?
+  category        String?
+  brand           String?
+  conditionLabel  String?
+  status          ItemStatus  @default(AVAILABLE)
+
+  priceSwaps      Int
+  aiSuggestedSwaps Int?
+  aiConfidence    Float?
+  fraudRisk       String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  owner           User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  country         Country     @relation(fields: [countryId], references: [id])
+  city            City        @relation(fields: [cityId], references: [id])
+  zone            Zone?       @relation(fields: [zoneId], references: [id])
+
+  images          ItemImage[]
+  exchanges       Exchange[]
+  wishlistMatches WishlistMatch[]
+  metric          ItemMetric?
+  views           ItemView[]
+  reports         ItemReport[]
+
+  @@index([ownerId])
+  @@index([countryId, cityId])
+  @@index([zoneId, status])
+  @@index([status, createdAt])
+  @@index([priceSwaps])
 }
 
 model ItemImage {
-  id       String @id @default(cuid())
-  itemId   String
-  url      String
-  order    Int    @default(0)
+  id          String   @id @default(cuid())
+  itemId       String
+  url          String
+  orderIndex   Int      @default(0)
+  createdAt    DateTime @default(now())
 
-  item     Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  item         Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, orderIndex])
+}
+
+model ItemMetric {
+  id             String   @id @default(cuid())
+  itemId         String   @unique
+  totalViews     Int      @default(0)
+  uniqueViews    Int      @default(0)
+  favoritesCount Int      @default(0)
+  reportsCount   Int      @default(0)
+  lastViewedAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  item           Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model ItemView {
+  id            String   @id @default(cuid())
+  itemId        String
+  viewerId      String?
+  sessionId     String?
+  viewCount     Int      @default(1)
+  firstViewedAt DateTime @default(now())
+  lastViewedAt  DateTime @updatedAt
+
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  viewer        User?    @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+
+  @@unique([itemId, viewerId])
+  @@unique([itemId, sessionId])
+  @@index([itemId, lastViewedAt])
+  @@index([viewerId])
+}
+
+model ItemReport {
+  id         String           @id @default(cuid())
+  itemId      String
+  reporterId  String
+  reason      String
+  details     String?
+  status      ItemReportStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  item        Item             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  reporter    User             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, reporterId])
+  @@index([status, createdAt])
+  @@index([reporterId, createdAt])
+}
+
+model MeetingPoint {
+  id           String   @id @default(cuid())
+  countryId    String
+  cityId       String
+  zoneId       String?
+
+  name         String
+  description  String?
+  lat          Float
+  lng          Float
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  country      Country  @relation(fields: [countryId], references: [id])
+  city         City     @relation(fields: [cityId], references: [id])
+  zone         Zone?    @relation(fields: [zoneId], references: [id])
+
+  exchanges    Exchange[]
+
+  @@index([countryId, cityId])
+  @@index([zoneId, isActive])
+}
+
+model Exchange {
+  id              String         @id @default(cuid())
+  itemId          String
+  ownerId         String
+  requesterId     String
+
+  meetingPointId  String?
+
+  status          ExchangeStatus @default(PENDING)
+
+  ownerSwaps      Int            @default(0)
+  requesterSwaps  Int            @default(0)
+  feeSwaps        Int            @default(0)
+
+  qrToken         String?        @unique
+  reservedUntil   DateTime?
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  item            Item           @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  owner           User           @relation("ExchangeOwner", fields: [ownerId], references: [id])
+  requester       User           @relation("ExchangeRequester", fields: [requesterId], references: [id])
+  meetingPoint    MeetingPoint?  @relation(fields: [meetingPointId], references: [id])
+
+  messages        Message[]
+  reviews         Review[]
 
   @@index([itemId])
+  @@index([ownerId])
+  @@index([requesterId])
+  @@index([status, reservedUntil])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  exchangeId     String
+  senderId       String
+  body           String
+  createdAt      DateTime @default(now())
+
+  exchange       Exchange @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  sender         User     @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([exchangeId, createdAt])
+  @@index([senderId])
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  exchangeId       String
+  authorId         String
+  targetUserId     String
+  rating           ReviewRating
+  comment          String?
+  createdAt        DateTime    @default(now())
+
+  exchange         Exchange    @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  author           User        @relation("ReviewAuthor", fields: [authorId], references: [id])
+  targetUser       User        @relation("ReviewTarget", fields: [targetUserId], references: [id])
+
+  @@index([exchangeId])
+  @@index([targetUserId, createdAt])
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  userId         String
+  type           String?
+  payload        Json?
+  title          String?
+  body           String?
+  link           String?
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
+
+model Wishlist {
+  id            String   @id @default(cuid())
+  userId         String
+
+  countryId      String
+  cityId         String
+  zoneId         String?
+
+  title          String
+  description    String?
+  category       String?
+  targetSwaps    Int?
+  isActive       Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country        Country  @relation(fields: [countryId], references: [id])
+  city           City        @relation(fields: [cityId], references: [id])
+  zone           Zone?    @relation(fields: [zoneId], references: [id])
+
+  matches        WishlistMatch[]
+
+  @@index([userId])
+  @@index([countryId, cityId])
+  @@index([zoneId, isActive])
+}
+
+model WishlistMatch {
+  id            String   @id @default(cuid())
+  wishlistId     String
+  itemId         String
+  createdAt      DateTime @default(now())
+
+  wishlist       Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  item           Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, itemId])
+  @@index([itemId])
+}
+
+model PaymentProvider {
+  id             String   @id @default(cuid())
+  countryId       String
+  code            String   // flooz, tmoney, stripe, paypal
+  name            String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  country         Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  packages        TopupPackage[]
+  payments        PaymentTransaction[]
+
+  @@unique([countryId, code])
+  @@index([countryId, isActive])
+}
+
+model TopupPackage {
+  id               String   @id @default(cuid())
+  paymentProviderId String
+  countryId         String
+
+  localAmount       Int
+  currencyCode      String
+  swapsAmount       Int
+
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  paymentProvider   PaymentProvider @relation(fields: [paymentProviderId], references: [id], onDelete: Cascade)
+  country           Country         @relation(fields: [countryId], references: [id])
+  payments          PaymentTransaction[]
+
+  @@index([countryId, isActive])
+  @@index([paymentProviderId])
+}
+
+model PaymentTransaction {
+  id               String        @id @default(cuid())
+  userId           String
+  countryId        String
+  providerId       String
+  packageId        String?
+
+  localAmount      Int
+  currencyCode     String
+  swapsAmount      Int
+
+  providerRef      String?       @unique
+  status           PaymentStatus @default(PENDING)
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country          Country       @relation(fields: [countryId], references: [id])
+  provider         PaymentProvider @relation(fields: [providerId], references: [id])
+  package          TopupPackage? @relation(fields: [packageId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([countryId, providerId])
 }

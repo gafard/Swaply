@@ -15,6 +15,7 @@ const statusStyles: Record<ExchangeStatus, string> = {
   COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-100",
   CANCELLED: "bg-rose-50 text-rose-700 border-rose-100",
   EXPIRED: "bg-slate-100 text-slate-600 border-slate-200",
+  DISPUTED: "bg-rose-50 text-rose-700 border-rose-100",
 };
 
 const statusLabels: Record<ExchangeStatus, string> = {
@@ -23,6 +24,7 @@ const statusLabels: Record<ExchangeStatus, string> = {
   COMPLETED: "Terminé",
   CANCELLED: "Annulé",
   EXPIRED: "Expiré",
+  DISPUTED: "Litige",
 };
 
 export default async function ProfileHistoryPage() {
@@ -116,7 +118,7 @@ export default async function ProfileHistoryPage() {
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="rounded-2xl bg-slate-50 px-3 py-3">
                       <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">Valeur</p>
-                      <p className="text-sm font-extrabold text-indigo-600">{exchange.item.creditValue} CR</p>
+                      <p className="text-sm font-extrabold text-indigo-600">{exchange.requesterSwaps} CR</p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-3 py-3">
                       <p className="text-[11px] uppercase tracking-wider text-gray-400 font-bold mb-1">Lieu</p>

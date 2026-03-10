@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
 import { 
   Compass, 
   Plus, 
@@ -11,29 +12,34 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { localizeHref, stripLocalePrefix } from "@/lib/i18n/pathnames";
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations("bottomNav");
+  const cleanPathname = stripLocalePrefix(pathname);
 
   const navItems = [
-    { href: "/", label: "Explorer", icon: Compass },
-    { href: "/discover", label: "Découvrir", icon: LayoutGrid },
-    { href: "/publish", label: "Publier", icon: Plus, isAction: true },
-    { href: "/messages", label: "Messages", icon: MessageSquare },
-    { href: "/profile", label: "Profil", icon: User },
+    { href: "/", label: t("explore"), icon: Compass },
+    { href: "/discover", label: t("discover"), icon: LayoutGrid },
+    { href: "/publish", label: t("publish"), icon: Plus, isAction: true },
+    { href: "/messages", label: t("messages"), icon: MessageSquare },
+    { href: "/profile", label: t("profile"), icon: User },
   ];
 
   return (
     <nav className="fixed bottom-0 inset-x-0 bg-surface border-t border-border px-2 pt-2.5 pb-[env(safe-area-inset-bottom,20px)] sm:pb-3 flex justify-between items-end z-50 shadow-card">
       {navItems.map((item) => {
         const isActive =
-          pathname === item.href ||
-          (item.href !== "/" && pathname.startsWith(`${item.href}/`)) ||
-          (item.href === "/messages" && pathname.startsWith("/exchange/"));
+          cleanPathname === item.href ||
+          (item.href !== "/" && cleanPathname.startsWith(`${item.href}/`)) ||
+          (item.href === "/messages" && cleanPathname.startsWith("/exchange/"));
+        const href = localizeHref(locale, item.href);
 
         if (item.isAction) {
           return (
-            <Link key={item.href} href={item.href} className="flex-1 flex flex-col items-center">
+            <Link key={item.href} href={href} className="flex-1 flex flex-col items-center">
               <div className="relative -top-5">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -56,7 +62,7 @@ export default function BottomNav() {
         return (
           <Link 
             key={item.href} 
-            href={item.href} 
+            href={href} 
             className="flex-1 flex flex-col items-center justify-center pb-1 group"
           >
             <div className="flex flex-col items-center gap-1.5 transition-all duration-300">

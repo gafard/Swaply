@@ -1,19 +1,71 @@
-import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
-import { NotificationType } from "@prisma/client";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
-import { ArrowLeft, BellRing, MessageCircle, PackageOpen, CheckCircle2, Clock } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import {
+  ArrowLeft,
+  BellRing,
+  CheckCircle2,
+  Clock,
+  MessageCircle,
+  PackageOpen,
+  ShieldAlert,
+} from "lucide-react";
+
 import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer";
+import { getCurrentUser } from "@/lib/auth";
+import { formatRelativeTime } from "@/lib/i18n/format";
+import { localizeHref } from "@/lib/i18n/pathnames";
+import {
+  buildNotificationContent,
+  isNotificationTemplate,
+  parseNotificationPayload,
+} from "@/lib/notification-templates";
+import prisma from "@/lib/prisma";
+
+function getIcon(type: string | null | undefined, fallbackTitle?: string | null) {
+  switch (type) {
+    case "new_message":
+      return <MessageCircle className="h-5 w-5 text-blue-500" />;
+    case "exchange_reserved":
+    case "new_local_item":
+      return <PackageOpen className="h-5 w-5 text-indigo-500" />;
+    case "exchange_confirmed":
+      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+    case "reservation_expired_owner":
+    case "reservation_expired_requester":
+      return <Clock className="h-5 w-5 text-rose-500" />;
+    case "item_reported_owner":
+    case "item_removed_after_review":
+    case "report_reviewed_without_action":
+      return <ShieldAlert className="h-5 w-5 text-amber-500" />;
+    default: {
+      const normalized = fallbackTitle?.toLowerCase() ?? "";
+
+      if (normalized.includes("message")) {
+        return <MessageCircle className="h-5 w-5 text-blue-500" />;
+      }
+      if (normalized.includes("reserve")) {
+        return <PackageOpen className="h-5 w-5 text-indigo-500" />;
+      }
+      if (normalized.includes("valide") || normalized.includes("confirmed")) {
+        return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      }
+      if (normalized.includes("expire")) {
+        return <Clock className="h-5 w-5 text-rose-500" />;
+      }
+
+      return <BellRing className="h-5 w-5 text-indigo-500" />;
+    }
+  }
+}
 
 export default async function NotificationsPage() {
   const user = await getCurrentUser();
+  const [locale, t] = await Promise.all([getLocale(), getTranslations("notifications")]);
 
   if (!user) {
     return (
-      <main className="p-6 h-screen flex items-center justify-center">
-        <p className="text-gray-500">Connectez-vous pour voir vos notifications.</p>
+      <main className="flex h-screen items-center justify-center p-6">
+        <p className="text-gray-500">{t("loginPrompt")}</p>
       </main>
     );
   }
@@ -23,7 +75,6 @@ export default async function NotificationsPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Mark all as read when visited
   if (notifications.some((notification) => !notification.read)) {
     await prisma.notification.updateMany({
       where: { userId: user.id, read: false },
@@ -31,59 +82,100 @@ export default async function NotificationsPage() {
     });
   }
 
-  const getIcon = (type: NotificationType) => {
-    switch (type) {
-      case "NEW_MESSAGE": return <MessageCircle className="w-5 h-5 text-blue-500" />;
-      case "ITEM_RESERVED": return <PackageOpen className="w-5 h-5 text-indigo-500" />;
-      case "EXCHANGE_CONFIRMED": return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
-      case "RESERVATION_EXPIRED": return <Clock className="w-5 h-5 text-rose-500" />;
-      default: return <BellRing className="w-5 h-5 text-indigo-500" />;
-    }
-  };
-
   return (
     <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans sm:pb-8">
-      <AnimatedContainer initialY={-20} className="bg-white/80 backdrop-blur-xl px-5 pt-12 pb-4 sticky top-0 z-40 border-b border-gray-100/50 flex items-center gap-3 shadow-[0_4px_30px_-15px_rgba(0,0,0,0.05)]">
-        <Link href="/">
-          <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-gray-100 text-gray-700 hover:bg-gray-50 active:scale-95 transition-all">
-            <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
+      <AnimatedContainer
+        initialY={-20}
+        className="sticky top-0 z-40 flex items-center gap-3 border-b border-gray-100/50 bg-white/80 px-5 pb-4 pt-12 shadow-[0_4px_30px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl"
+      >
+        <Link href={localizeHref(locale, "/")}>
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-700 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] transition-all hover:bg-gray-50 active:scale-95">
+            <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
           </div>
         </Link>
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">Notifications</h1>
+        <h1 className="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-xl font-bold text-transparent">
+          {t("title")}
+        </h1>
       </AnimatedContainer>
 
-      <div className="px-5 space-y-4 pt-6">
+      <div className="space-y-4 px-5 pt-6">
         {notifications.length === 0 ? (
-          <AnimatedContainer delay={0.1} className="text-center py-20">
-            <div className="w-20 h-20 mx-auto bg-gray-50 rounded-full flex items-center justify-center mb-4">
-              <BellRing className="w-8 h-8 text-gray-300" />
+          <AnimatedContainer delay={0.1} className="py-20 text-center">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-50">
+              <BellRing className="h-8 w-8 text-gray-300" />
             </div>
-            <p className="text-gray-500 font-medium">Aucune notification pour le moment.</p>
+            <p className="font-medium text-gray-500">{t("empty")}</p>
           </AnimatedContainer>
         ) : (
-          notifications.map((n, i) => (
-            <AnimatedItem key={n.id} index={i} className={`relative overflow-hidden rounded-[1.5rem] border p-4 shadow-sm transition-all duration-300 ${!n.read ? 'bg-white border-indigo-100 shadow-[0_4px_20px_-5px_rgba(79,70,229,0.15)] ring-1 ring-indigo-50' : 'bg-white/60 border-gray-100/60 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.05)] hover:bg-white'}`}>
-              
-              {!n.read && (
-                 <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
-              )}
-              
-              <div className="flex gap-4">
-                <div className={`w-12 h-12 shrink-0 rounded-[1.25rem] flex items-center justify-center border shadow-inner ${!n.read ? 'bg-indigo-50 border-indigo-100/50' : 'bg-gray-50 border-gray-100'}`}>
-                   {getIcon(n.type)}
-                </div>
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="flex justify-between items-start gap-4 mb-1">
-                    <span className={`font-bold text-[14px] leading-snug ${!n.read ? 'text-gray-900' : 'text-gray-700'}`}>{n.title}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 whitespace-nowrap mt-0.5">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: fr })}
-                    </span>
+          notifications.map((notification, index) => {
+            const payload = isNotificationTemplate(notification.type)
+              ? parseNotificationPayload(notification.payload)
+              : null;
+            const localized =
+              isNotificationTemplate(notification.type) && payload
+                ? buildNotificationContent(locale, notification.type, payload)
+                : null;
+            const title = localized?.title ?? notification.title ?? t("fallbackTitle");
+            const body = localized?.body ?? notification.body ?? "";
+            const card = (
+              <AnimatedItem
+                key={notification.id}
+                index={index}
+                className={`relative overflow-hidden rounded-[1.5rem] border p-4 shadow-sm transition-all duration-300 ${
+                  !notification.read
+                    ? "border-indigo-100 bg-white shadow-[0_4px_20px_-5px_rgba(79,70,229,0.15)] ring-1 ring-indigo-50"
+                    : "border-gray-100/60 bg-white/60 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.05)] hover:bg-white"
+                }`}
+              >
+                {!notification.read && (
+                  <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-indigo-500 to-purple-500" />
+                )}
+
+                <div className="flex gap-4">
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.25rem] border shadow-inner ${
+                      !notification.read
+                        ? "border-indigo-100/50 bg-indigo-50"
+                        : "border-gray-100 bg-gray-50"
+                    }`}
+                  >
+                    {getIcon(notification.type, title)}
                   </div>
-                  <p className={`text-[13px] leading-relaxed ${!n.read ? 'text-gray-600 font-medium' : 'text-gray-500'}`}>{n.body}</p>
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="mb-1 flex items-start justify-between gap-4">
+                      <span
+                        className={`text-[14px] font-bold leading-snug ${
+                          !notification.read ? "text-gray-900" : "text-gray-700"
+                        }`}
+                      >
+                        {title}
+                      </span>
+                      <span className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                        {formatRelativeTime(locale, notification.createdAt)}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-[13px] leading-relaxed ${
+                        !notification.read ? "font-medium text-gray-600" : "text-gray-500"
+                      }`}
+                    >
+                      {body}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </AnimatedItem>
-          ))
+              </AnimatedItem>
+            );
+
+            if (!notification.link) {
+              return card;
+            }
+
+            return (
+              <Link key={notification.id} href={localizeHref(locale, notification.link)}>
+                {card}
+              </Link>
+            );
+          })
         )}
       </div>
     </main>

@@ -1,0 +1,170 @@
+"use client";
+
+import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { Loader2, MinusCircle, PlusCircle, Wallet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+import { reserveItem } from "@/app/actions/exchange";
+import { localizeHref } from "@/lib/i18n/pathnames";
+import { cn } from "@/lib/utils";
+
+interface ReserveButtonProps {
+  itemId: string;
+  itemTitle: string;
+  isDefective: boolean;
+  userSwaps: number;
+}
+
+export default function ReserveButton({
+  itemId,
+  itemTitle,
+  isDefective,
+  userSwaps,
+}: ReserveButtonProps) {
+  const [loading, setLoading] = useState(false);
+  const [isHybridMode, setIsHybridMode] = useState(false);
+  const [swapsBalance, setSwapsBalance] = useState(0);
+  const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("exchange.reserve");
+
+  const getErrorMessage = (
+    code: string,
+    data?: {
+      retryAfterSeconds?: number;
+    } | {
+      exchangeId?: string;
+    }
+  ) => {
+    switch (code) {
+      case "auth_required":
+        return t("errors.authRequired");
+      case "rate_limited":
+        return t("errors.rateLimited", { seconds: (data as any)?.retryAfterSeconds ?? 0 });
+      case "item_not_found":
+        return t("errors.itemNotFound");
+      case "item_unavailable":
+        return t("errors.itemUnavailable");
+      case "own_item_forbidden":
+        return t("errors.ownItem");
+      case "insufficient_swaps":
+        return t("errors.insufficientSwaps");
+      default:
+        return t("errors.generic");
+    }
+  };
+
+  const handleReserve = async () => {
+    setLoading(true);
+
+    try {
+      const result = await reserveItem(itemId, swapsBalance);
+      if (!result.ok || !result.data) {
+        toast.error(getErrorMessage(result.code, result.data));
+        return;
+      }
+
+      toast.success(t("success"));
+      router.push(localizeHref(locale, `/exchange/${result.data.exchangeId}`));
+    } catch {
+      toast.error(t("errors.generic"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const adjustSwaps = (amount: number) => {
+    const newVal = swapsBalance + amount;
+    if (newVal < 0 && Math.abs(newVal) > 1000) return;
+    setSwapsBalance(newVal);
+  };
+
+  return (
+    <div className="w-full max-w-md space-y-4">
+      <div className="mb-2 flex flex-col gap-3 rounded-3xl border border-border bg-slate-50/50 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500">
+              <Wallet className="h-4 w-4" />
+            </div>
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+              {t("hybridTitle")}
+            </span>
+          </div>
+          <button
+            onClick={() => setIsHybridMode(!isHybridMode)}
+            className={cn(
+              "rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all",
+              isHybridMode ? "bg-indigo-500 text-white" : "bg-slate-200 text-slate-500"
+            )}
+          >
+            {isHybridMode ? t("disableHybrid") : t("adjustHybrid")}
+          </button>
+        </div>
+
+        {isHybridMode && (
+          <div className="animate-in slide-in-from-top-2 pt-2 duration-300 fade-in">
+            <p className="mb-3 text-center text-[10px] font-bold italic text-slate-400">
+              {t("hybridBody")}
+            </p>
+            <div className="mb-4 flex items-center justify-center gap-6">
+              <button
+                onClick={() => adjustSwaps(-50)}
+                className="text-slate-400 transition-colors hover:text-indigo-500"
+              >
+                <MinusCircle className="h-8 w-8" />
+              </button>
+              <div className="min-w-[80px] text-center">
+                <span
+                  className={cn(
+                    "text-2xl font-black tabular-nums",
+                    swapsBalance === 0 ? "text-slate-300" : "text-indigo-600"
+                  )}
+                >
+                  {swapsBalance > 0 ? "+" : ""}
+                  {swapsBalance}
+                </span>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  {t("swapsLabel")}
+                </p>
+              </div>
+              <button
+                onClick={() => adjustSwaps(50)}
+                className="text-slate-400 transition-colors hover:text-indigo-500"
+              >
+                <PlusCircle className="h-8 w-8" />
+              </button>
+            </div>
+            {swapsBalance > 0 && (
+              <div className="rounded-2xl border border-indigo-100/50 bg-indigo-50 p-3 text-center text-[10px] font-bold text-indigo-600">
+                {t("hybridExtra", { amount: swapsBalance })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={handleReserve}
+        disabled={loading}
+        className={cn(
+          "flex w-full items-center justify-center gap-3 rounded-[20px] py-5 text-[14px] font-black uppercase tracking-widest text-white shadow-cta transition-all active:scale-[0.98]",
+          loading ? "cursor-not-allowed opacity-70" : "",
+          isDefective
+            ? "bg-amber-500 shadow-amber-100/50 hover:bg-amber-600"
+            : "bg-slate-900 shadow-slate-100/50 hover:bg-black"
+        )}
+      >
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : isDefective ? (
+          t("acceptAndReserve")
+        ) : (
+          t("reserveThisItem")
+        )}
+      </button>
+    </div>
+  );
+}

@@ -1,11 +1,14 @@
 {
   "name": "Swaply",
   "short_name": "Swaply",
-  "description": "Plateforme de troc locale moderne à Lomé.",
+  "description": "Plateforme de troc locale moderne, prête pour plusieurs pays et villes.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F8F9FA",
+  "orientation": "portrait",
+  "background_color": "#F7F7F5",
   "theme_color": "#4F46E5",
+  "categories": ["shopping", "lifestyle", "social"],
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -18,6 +21,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

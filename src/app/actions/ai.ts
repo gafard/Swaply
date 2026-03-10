@@ -17,7 +17,7 @@ export async function suggestListingFromImages(imagesBase64: string[]): Promise<
         {
           role: "system",
           content: `
-Tu es l'expert IA de Swaply, une application de troc à Lomé.
+Tu es l'expert IA de Swaply, une application de troc locale multi-pays.
 Ton rôle est d'analyser plusieurs photos d'un même objet (différents angles : face, arrière, détails, allumé) pour extraire ses attributs visuels précis et détecter toute fraude ou dommage :
 
 1. CLASSIFICATION : Catégorie parmi : ${ITEM_CATEGORIES.join(", ")}.

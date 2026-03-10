@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Bell, Search, Hexagon } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Bell, Search } from "lucide-react";
+
+import AppLogo from "@/components/AppLogo";
+import { localizeHref } from "@/lib/i18n/pathnames";
 
 export default function TopNav({ unreadCount, user }: { unreadCount: number, user: any }) {
+  const locale = useLocale();
+  const t = useTranslations("topNav");
+
   return (
     <motion.div 
       initial={{ y: -20, opacity: 0 }}
@@ -12,18 +19,29 @@ export default function TopNav({ unreadCount, user }: { unreadCount: number, use
       className="bg-background/80 backdrop-blur-xl px-5 pt-10 pb-6 sticky top-0 z-40 border-b border-border/50"
     >
       <div className="flex items-center justify-between mb-6">
-        <div className="flex flex-col">
-           <span className="text-muted text-[11px] font-bold uppercase tracking-wider">Bonjour, {user?.username || "Ami"} 👋</span>
-           <div className="flex items-center gap-2 mt-0.5">
-             <span className="text-2xl font-semibold text-foreground tracking-tight">{user?.credits || 0}</span>
-             <span className="text-[10px] font-bold text-primary bg-[#EEF2FF] px-2.5 py-1 rounded-full uppercase tracking-tight">Crédits</span>
-           </div>
+        <div className="flex items-center gap-3">
+          <Link href={localizeHref(locale, "/")} className="shrink-0">
+            <AppLogo
+              size={44}
+              className="h-11 w-11 rounded-2xl border border-slate-200 bg-white shadow-sm"
+              priority
+            />
+          </Link>
+          <div className="flex flex-col">
+             <span className="text-muted text-[11px] font-bold uppercase tracking-wider">
+               {t("greeting", {name: user?.username || t("friend")})}
+             </span>
+             <div className="flex items-center gap-2 mt-0.5">
+               <span className="text-2xl font-black text-foreground tracking-tighter">{user?.swaps ?? user?.credits ?? 0}</span>
+               <span className="text-[10px] font-black text-[#854d0e] bg-[#fefce8] border border-[#fef08a] px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">Swaps ✨</span>
+             </div>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/notifications" className="relative group">
+              <Link href={localizeHref(locale, "/notifications")} className="relative group">
                 <motion.div 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -42,16 +60,16 @@ export default function TopNav({ unreadCount, user }: { unreadCount: number, use
           ) : (
             <div className="flex items-center gap-2">
               <Link 
-                href="/login" 
+                href={localizeHref(locale, "/login")} 
                 className="text-[11px] font-bold text-muted uppercase tracking-widest px-3 py-2 hover:text-primary transition-colors"
               >
-                Connexion
+                {t("login")}
               </Link>
               <Link 
-                href="/signup" 
+                href={localizeHref(locale, "/signup")} 
                 className="text-[11px] font-bold text-white bg-primary uppercase tracking-widest px-5 py-2.5 rounded-2xl shadow-cta active:scale-95 transition-all"
               >
-                S&apos;inscrire
+                {t("signup")}
               </Link>
             </div>
           )}
@@ -66,7 +84,7 @@ export default function TopNav({ unreadCount, user }: { unreadCount: number, use
           <Search className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
           <input 
             type="text" 
-            placeholder="Rechercher un objet, une catégorie..." 
+            placeholder={t("searchPlaceholder")} 
             className="bg-transparent border-none outline-none w-full text-sm font-medium text-foreground placeholder:text-muted"
           />
         </motion.div>

@@ -10,7 +10,7 @@ type MessageRow = {
   id: string;
   exchangeId: string;
   senderId: string;
-  content: string;
+  body: string;
   createdAt: string;
 };
 
@@ -85,7 +85,7 @@ export default function RealtimeMessages({
               {
                 id: message.id,
                 senderId: message.senderId,
-                content: message.content,
+                content: message.body,
                 sender: {
                   username: resolveSenderUsername(message, owner, requester),
                 },

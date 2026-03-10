@@ -1,20 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import DiscoveryCard from "@/components/DiscoveryCard";
-import { reserveItem } from "@/app/actions/exchange";
-import { toggleSaveItem } from "@/app/actions/item";
 import {
   CheckCircle2,
-  Heart,
+  MapPin,
   MessageSquare,
   RefreshCw,
-  X,
-  MapPin,
   Star,
+  X,
 } from "lucide-react";
-import Link from "next/link";
+
+import { reserveItem } from "@/app/actions/exchange";
+import { toggleSaveItem } from "@/app/actions/item";
+import DiscoveryCard from "@/components/DiscoveryCard";
+import { localizeHref } from "@/lib/i18n/pathnames";
 
 interface Item {
   id: string;
@@ -45,33 +47,45 @@ export default function DiscoveryStack({
     text: "",
     type: "SAVE",
   });
+  const locale = useLocale();
+  const t = useTranslations("discoverStack");
 
   const currentItem = items[currentIndex];
+  const currentLocationLabel = currentItem?.locationZone || t("localMarket");
 
   const handleSwipeRight = async () => {
-    if (!currentItem) return;
+    if (!currentItem) {
+      return;
+    }
 
     try {
       const result = await reserveItem(currentItem.id);
+      if (!result.ok || !result.data) {
+        alert(t("reserveError"));
+        return;
+      }
+
       setToast({
         show: true,
-        text: "Objet réservé",
+        text: t("reserved"),
         type: "RESERVE",
-        exchangeId: result.id,
+        exchangeId: result.data.exchangeId,
       });
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Erreur lors de la réservation");
+    } catch {
+      alert(t("reserveError"));
     }
   };
 
   const handleSave = async () => {
-    if (!currentItem) return;
+    if (!currentItem) {
+      return;
+    }
 
     try {
       const { saved } = await toggleSaveItem(currentItem.id);
       setToast({
         show: true,
-        text: saved ? "Ajouté aux favoris" : "Retiré des favoris",
+        text: saved ? t("saved") : t("unsaved"),
         type: "SAVE",
       });
 
@@ -79,7 +93,7 @@ export default function DiscoveryStack({
         setToast((prev) => ({ ...prev, show: false }));
       }, 1800);
     } catch {
-      alert("Erreur lors de la sauvegarde");
+      alert(t("saveError"));
     }
   };
 
@@ -99,39 +113,42 @@ export default function DiscoveryStack({
         </div>
 
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Plus d’objets pour le moment
+          {t("emptyTitle")}
         </h2>
-        <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-          Reviens plus tard pour découvrir de nouveaux objets disponibles près de toi.
-        </p>
+        <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">{t("emptyBody")}</p>
 
         <Link
-          href="/"
+          href={localizeHref(locale, "/")}
           className="mt-8 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
         >
-          Retour à l’accueil
+          {t("backHome")}
         </Link>
       </motion.div>
     );
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col px-standard pb-12 pt-6 bg-background">
-      <header className="flex items-center justify-between mb-10 px-1">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background px-standard pb-12 pt-6">
+      <header className="mb-10 flex items-center justify-between px-1">
         <div className="space-y-0.5">
-          <h1 className="text-xl font-semibold text-foreground tracking-tight leading-tight">
-            Découverte
+          <h1 className="text-xl font-semibold leading-tight tracking-tight text-foreground">
+            {t("title")}
           </h1>
           <div className="flex items-center gap-1.5 opacity-60">
-             <MapPin className="w-3.5 h-3.5 text-primary" />
-             <span className="text-[11px] font-semibold text-muted uppercase tracking-wider">Lomé, Togo</span>
+            <MapPin className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+              {currentLocationLabel}
+            </span>
           </div>
         </div>
 
-        <div className="px-4 py-2 bg-foreground rounded-full shadow-card border border-white/5">
-           <p className="text-[11px] font-bold text-white uppercase tracking-wider whitespace-nowrap">
-             {currentIndex + 1} <span className="text-white/30">/</span> {items.length} <span className="ml-1 opacity-50 text-[10px] font-medium uppercase tracking-tight">objets</span>
-           </p>
+        <div className="rounded-full border border-white/5 bg-foreground px-4 py-2 shadow-card">
+          <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-white">
+            {currentIndex + 1} <span className="text-white/30">/</span> {items.length}{" "}
+            <span className="ml-1 text-[10px] font-medium uppercase tracking-tight opacity-50">
+              {t("items")}
+            </span>
+          </p>
         </div>
       </header>
 
@@ -155,28 +172,27 @@ export default function DiscoveryStack({
         </AnimatePresence>
       </div>
 
-      {/* Style C Actions (❌ ⭐ 💬) - Sized for mobile thumbs */}
       <div className="relative z-50 mt-12 flex items-center justify-center gap-8">
         <button
           onClick={handleSwipeLeft}
-          className="group flex h-14 w-14 items-center justify-center rounded-2xl bg-surface text-muted border border-border shadow-card transition-all active:scale-95 hover:bg-rose-50 hover:text-danger hover:border-rose-100"
-          aria-label="Passer"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-card transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-danger"
+          aria-label={t("skip")}
         >
-          <X className="h-6 w-6 transition-transform group-hover:rotate-90 duration-500" />
+          <X className="h-6 w-6 transition-transform duration-500 group-hover:rotate-90" />
         </button>
 
         <button
           onClick={handleSave}
           className="group flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-3xl bg-primary text-white shadow-cta transition-all active:scale-95 hover:bg-blue-700"
-          aria-label="Sauvegarder"
+          aria-label={t("save")}
         >
-          <Star className="h-7 w-7 transition-transform group-hover:scale-110 duration-500" />
+          <Star className="h-7 w-7 transition-transform duration-500 group-hover:scale-110" />
         </button>
 
         <button
           onClick={handleSwipeRight}
-          className="group flex h-14 w-14 items-center justify-center rounded-2xl bg-surface text-muted border border-border shadow-card transition-all active:scale-95 hover:bg-emerald-50 hover:text-success hover:border-emerald-100"
-          aria-label="Réserver"
+          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-card transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-success"
+          aria-label={t("reserve")}
         >
           <MessageSquare className="h-6 w-6 transition-all group-hover:scale-110" />
         </button>
@@ -191,7 +207,7 @@ export default function DiscoveryStack({
             className="pointer-events-none absolute inset-x-4 bottom-28 z-[60] flex justify-center"
           >
             <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-popup">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50">
                 <CheckCircle2 className="h-5 w-5 text-success" />
               </div>
 
@@ -200,10 +216,10 @@ export default function DiscoveryStack({
 
                 {toast.type === "RESERVE" && toast.exchangeId && (
                   <Link
-                    href={`/exchange/${toast.exchangeId}`}
+                    href={localizeHref(locale, `/exchange/${toast.exchangeId}`)}
                     className="mt-0.5 text-xs font-semibold text-primary hover:underline underline-offset-2"
                   >
-                    Aller au chat
+                    {t("goToChat")}
                   </Link>
                 )}
               </div>

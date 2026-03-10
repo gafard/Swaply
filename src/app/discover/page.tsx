@@ -1,58 +1,190 @@
-import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import DiscoveryStack from "../../components/DiscoveryStack";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+"use client";
 
-export default async function DiscoverPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Loader2, Package } from "lucide-react";
 
-  // Fetch items for the stack - Using our intelligent ranking logic
-  const rawItems = await prisma.item.findMany({
-    where: { 
-      status: "AVAILABLE",
-      ownerId: { not: user.id } // Don't show own items
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      owner: { select: { username: true, trustScore: true } },
-    }
+import FilterBar from "@/components/FilterBar";
+import ItemCard from "@/components/ItemCard";
+import SearchBar from "@/components/SearchBar";
+import TopNav from "@/components/TopNav";
+
+interface Item {
+  id: string;
+  title: string;
+  images?: Array<{ url: string; order: number }> | null;
+  creditValue: number;
+  locationZone: string;
+  owner: {
+    username: string;
+    trustScore: number;
+  };
+  status?: string;
+}
+
+interface FilterState {
+  country: string;
+  city: string;
+  zone: string;
+  category: string;
+  minPrice: string;
+  maxPrice: string;
+}
+
+function DiscoverContent() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<FilterState>({
+    country: "",
+    city: "",
+    zone: "",
+    category: "",
+    minPrice: "",
+    maxPrice: "",
   });
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const t = useTranslations("discover");
 
-  // Ranking (duplicated logic from home for now, could be abstracted)
-  const items = rawItems.map((item) => {
-    const userZone = user.defaultZone || "";
-    const isSameZone = item.locationZone === userZone;
-    const daysSincePost = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-    const freshnessScore = Math.max(0, 7 - daysSincePost);
-    const score = (item.owner.trustScore * 2) + item.views + freshnessScore + (isSameZone ? 20 : 0);
-    return { ...item, _score: score };
-  })
-  .sort((a, b) => b._score - a._score)
-  .slice(0, 20); // Keep top 20 for the stack
+  const fetchItems = useCallback(
+    async (cursor?: string | null, append = false) => {
+      try {
+        if (!append) {
+          setLoading(true);
+        }
+
+        const params = new URLSearchParams();
+        if (searchQuery) params.set("q", searchQuery);
+        if (filters.country) params.set("country", filters.country);
+        if (filters.city) params.set("city", filters.city);
+        if (filters.zone) params.set("zone", filters.zone);
+        if (filters.category) params.set("category", filters.category);
+        if (filters.minPrice) params.set("minPrice", filters.minPrice);
+        if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+        if (cursor) params.set("cursor", cursor);
+        params.set("take", "12");
+
+        const response = await fetch(`/api/search?${params}`);
+        const data = await response.json();
+
+        if (append) {
+          setItems((prev) => [...prev, ...data.items]);
+        } else {
+          setItems(data.items);
+        }
+
+        setNextCursor(data.nextCursor);
+        setHasMore(data.hasMore);
+        setLoadingMore(false);
+      } catch (error) {
+        console.error("Failed to fetch items:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters, searchQuery]
+  );
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      fetchItems();
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [filters]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setLoadingMore(true);
+          fetchItems(nextCursor, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [fetchItems, hasMore, loading, loadingMore, nextCursor]);
 
   return (
-    <main className="h-screen bg-slate-50 flex flex-col relative overflow-hidden font-sans">
-      {/* Header */}
-      <div className="px-6 py-6 flex items-center justify-between z-50">
-        <Link href="/" className="bg-white w-10 h-10 rounded-2xl flex items-center justify-center text-gray-900 shadow-sm border border-gray-100 active:scale-95 transition-transform">
-          <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
-        </Link>
-        <div className="flex flex-col items-center">
-          <h1 className="text-lg font-black text-gray-900 uppercase tracking-tight">Découverte</h1>
-          <div className="flex items-center gap-1">
-             <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-pulse" />
-             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">En direct près de vous</span>
-          </div>
-        </div>
-        <div className="w-10" /> {/* Spacer */}
-      </div>
+    <div className="space-y-4 px-5 pt-4">
+      <SearchBar onSearch={setSearchQuery} placeholder={t("searchPlaceholder")} />
+      <FilterBar onFilterChange={setFilters} />
 
-      <div className="flex-1 relative px-4 pb-32 sm:pb-24">
-        <DiscoveryStack items={items} />
-      </div>
+      {!loading && items.length > 0 && (
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+          {t("results", { count: items.length })}
+        </p>
+      )}
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="mb-4 h-8 w-8 animate-spin text-indigo-500" />
+          <p className="text-sm font-medium text-slate-500">{t("loading")}</p>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Package className="mb-4 h-16 w-16 text-slate-200" />
+          <h3 className="mb-1 text-lg font-bold text-slate-700">{t("emptyTitle")}</h3>
+          <p className="text-center text-sm text-slate-400">{t("emptyBody")}</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            {items.map((item, index) => (
+              <ItemCard key={item.id} item={item} index={index} />
+            ))}
+          </div>
+
+          <div ref={observerTarget} className="py-8">
+            {loadingMore && (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+              </div>
+            )}
+            {!hasMore && items.length > 0 && (
+              <p className="text-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                {t("endOfResults")}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function DiscoverPage() {
+  const t = useTranslations("discover");
+
+  return (
+    <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
+      <TopNav unreadCount={0} user={null} />
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-indigo-500" />
+            <p className="text-sm font-medium text-slate-500">{t("loadingParams")}</p>
+          </div>
+        }
+      >
+        <DiscoverContent />
+      </Suspense>
     </main>
   );
 }

@@ -6,13 +6,13 @@ import { AISuggestion, AIEstimation, ItemCategory } from "./validations";
 // Formula: Base Category * Brand Coeff * Condition Coeff * Rarity Coeff
 
 const CATEGORY_BASE_VALUES: Record<ItemCategory, number> = {
-  "Électronique": 100,
-  "Vêtements": 40,
-  "Chaussures": 60,
-  "Livres": 20,
-  "Accessoires": 30,
-  "Maison": 50,
-  "Sport": 70,
+  "Électronique": 160, // Standard category for estimation, will be refined by brand/condition
+  "Vêtements": 20,     // Micro
+  "Chaussures": 40,    // Petit
+  "Livres": 20,        // Micro
+  "Accessoires": 40,   // Petit
+  "Maison": 80,        // Standard
+  "Sport": 80,         // Standard
   "Autre": 30
 };
 
@@ -107,14 +107,50 @@ export async function calculateAIEstimation(
   const min = Math.max(10, Math.round(estimated * 0.85));
   const max = Math.round(estimated * 1.15);
 
-  // Generate Explanation
-  const explanation = `Basé sur : ${category} (${suggestion.subcategory || 'générique'}), marque ${brand === 'unknown' ? 'générique' : brand}, état ${condition} et rareté ${rarity}.`;
+  // --- Prix Juste Simulated Data ---
+  const CATEGORY_NEW_PRICES: Record<ItemCategory, number> = {
+    "Électronique": 150000,
+    "Vêtements": 25000,
+    "Chaussures": 45000,
+    "Livres": 10000,
+    "Accessoires": 15000,
+    "Maison": 80000,
+    "Sport": 60000,
+    "Autre": 30000
+  };
+
+  const basePriceNew = CATEGORY_NEW_PRICES[category] || 30000;
+  const brandMultiplier = BRAND_COEFFICIENTS[brandKey] || 1.0;
+  const estimatedNewPrice = Math.round(basePriceNew * brandMultiplier);
+  
+  const marketMin = Math.round(estimatedNewPrice * 0.45);
+  const marketMax = Math.round(estimatedNewPrice * 0.65);
+
+  const wearLevel = condition === "new" || condition === "good" ? "Faible" : 
+                    condition === "fair" ? "Moyen" : "Élevé";
+  
+  const visualConditionMap: Record<string, string> = {
+    "new": "Comme neuf",
+    "good": "Bon état",
+    "fair": "État moyen",
+    "poor": "Usé"
+  };
+
+  const ageLabel = condition === "new" ? "< 6 mois" : 
+                   condition === "good" ? "1-2 ans" : "3 ans+";
 
   return {
     suggestedValue: estimated,
     minSuggestedValue: min,
     maxSuggestedValue: max,
-    explanation,
-    confidence
+    confidence,
+    details: {
+      estimatedNewPrice,
+      marketValueRange: { min: marketMin, max: marketMax },
+      ageEstimate: techDetails?.age ? (techDetails.age === "less_than_1_year" ? "< 1 an" : techDetails.age === "1_3_years" ? "1-3 ans" : "> 3 ans") : ageLabel,
+      wearLevel: wearLevel as any,
+      visualCondition: visualConditionMap[condition] || "Correct",
+      similarTransactionsCount: Math.floor(Math.random() * 50) + 10
+    }
   };
 }

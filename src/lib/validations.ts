@@ -1,5 +1,3 @@
-export const CREDIT_VALUES = [20, 100, 300] as const;
-
 export const ITEM_CATEGORIES = [
   "Électronique",
   "Vêtements",
@@ -43,18 +41,16 @@ export type AIEstimation = {
   suggestedValue: number;
   minSuggestedValue: number;
   maxSuggestedValue: number;
-  explanation: string;
   confidence: number;
-  techSignals?: {
-    age?: string;
-    accessories?: string[];
-    functionality?: string;
+  details: {
+    estimatedNewPrice: number;     // FCFA
+    marketValueRange: { min: number; max: number }; // FCFA
+    ageEstimate: string;           // "3 ans", "6 mois", etc.
+    wearLevel: "Faible" | "Moyen" | "Élevé";
+    visualCondition: string;       // "Bon", "Excellent", etc.
+    similarTransactionsCount: number;
   };
 };
-
-export function isValidCreditValue(value: number) {
-  return CREDIT_VALUES.includes(value as (typeof CREDIT_VALUES)[number]);
-}
 
 export function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {
