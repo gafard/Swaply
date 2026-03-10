@@ -1,7 +1,7 @@
 "use server";
 
 import { getOpenAI } from "@/lib/openai";
-import { ITEM_CATEGORIES, AISuggestion, AIEstimation } from "@/lib/validations";
+import { ITEM_CATEGORIES, AISuggestion, AIEstimation, PhotoQualityResult } from "@/lib/validations";
 import { calculateAIEstimation } from "@/lib/ai-engine";
 
 function getErrorMessage(error: unknown) {

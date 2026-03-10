@@ -33,7 +33,7 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
   return (
     <AnimatedItem index={index}>
       <Link href={`/item/${item.id}`} className="group block h-full">
-        <div className="bg-white rounded-[24px] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 h-full flex flex-col group/card">
+        <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-card hover:shadow-popup hover:-translate-y-1 transition-all duration-500 h-full flex flex-col group/card">
           {/* Image Container - Larger & Fill */}
           <div className="aspect-[3/4] overflow-hidden bg-slate-50 relative">
             {item.imageUrl ? (
@@ -49,28 +49,30 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
             )}
             
             {/* Status & Price Overlay */}
-            <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+            <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                <div className={cn(
-                 "px-2 py-0.5 rounded-full shadow-sm",
-                 item.status === "AVAILABLE" ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
+                 "px-3 py-1 rounded-full shadow-sm text-[10px] font-semibold tracking-wide",
+                 item.status === "AVAILABLE" 
+                   ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
+                   : "bg-amber-50 text-amber-700 border border-amber-100"
                )}>
-                  <p className="text-[8px] font-black uppercase tracking-widest">
-                    {item.status === "AVAILABLE" ? "Disponible" : "Réservé"}
-                  </p>
+                  {item.status === "AVAILABLE" ? "Disponible" : "Réservé"}
                </div>
             </div>
 
-            <div className="absolute top-2 right-2">
-               <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl shadow-sm border border-white/50">
-                  <span className="text-xs font-black text-slate-900">{item.creditValue} <span className="text-[9px] text-indigo-600">CR</span></span>
+            <div className="absolute top-3 right-3">
+               <div className="bg-slate-900 border border-white/10 px-3 py-1.5 rounded-xl shadow-sm">
+                  <span className="text-xs font-semibold text-white">
+                    {item.creditValue} <span className="text-[10px] opacity-70">CR</span>
+                  </span>
                </div>
             </div>
 
             {/* Zone Overlay (Bottom Left) */}
-            <div className="absolute bottom-2 left-2">
-               <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-                  <MapPin className="w-2.5 h-2.5 text-white/80" />
-                  <span className="text-[9px] font-black text-white uppercase tracking-wider">
+            <div className="absolute bottom-3 left-3">
+               <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+                  <MapPin className="w-3 h-3 text-slate-400" />
+                  <span className="text-[10px] font-medium text-slate-600 uppercase tracking-tight">
                     {item.locationZone}
                   </span>
                </div>
@@ -85,10 +87,10 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                 toggleSaveItem(item.id);
               }}
               className={cn(
-                "absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all",
+                "absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all border shadow-sm",
                 isSaved 
-                  ? "bg-rose-500 text-white shadow-lg" 
-                  : "bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-rose-500"
+                  ? "bg-rose-500 border-rose-600 text-white" 
+                  : "bg-white border-slate-200 text-slate-400 hover:text-rose-500"
               )}
             >
               <Heart className={cn("w-4 h-4", isSaved && "fill-white")} />
@@ -96,16 +98,16 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
           </div>
 
           {/* Content - Compact & Discrete Seller */}
-          <div className="p-3 flex-1 flex flex-col gap-1">
-            <h3 className="font-bold text-[13px] text-slate-900 line-clamp-1 tracking-tight group-hover/card:text-indigo-600 transition-colors leading-tight">
+          <div className="p-4 flex-1 flex flex-col gap-1.5">
+            <h3 className="font-semibold text-sm text-slate-900 line-clamp-1 tracking-tight group-hover/card:text-primary transition-colors leading-tight">
               {item.title}
             </h3>
             
-            <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-slate-50">
-               <p className="text-[10px] font-medium text-slate-400">Par {item.owner.username}</p>
+            <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100">
+               <p className="text-[11px] font-medium text-slate-500">Par {item.owner.username}</p>
                <div className="flex items-center gap-0.5">
                   <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                  <span className="text-[9px] font-black text-slate-600">{item.owner.trustScore}</span>
+                  <span className="text-[10px] font-bold text-slate-700">{item.owner.trustScore}</span>
                </div>
             </div>
           </div>

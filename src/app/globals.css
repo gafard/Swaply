@@ -1,19 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
-  --surface: #F9FAFB;
+  --background: #F7F7F5;
+  --surface: #FFFFFF;
   --foreground: #0F172A;
-  --primary: #4F46E5; /* Indigo 600 */
-  --secondary: #6366F1;
-  --accent: #F59E0B; /* Amber 500 */
-  --success: #10B981; /* Emerald 500 */
-  --error: #EF4444;
+  --muted: #64748B;
+  --primary: #2563EB;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #E11D48;
   --border: #E2E8F0;
+  
+  /* Soft accents */
+  --indigo-soft-bg: #EEF2FF;
+  --indigo-soft-text: #4338CA;
+  --emerald-soft-bg: #ECFDF5;
+  --emerald-soft-text: #047857;
+  --amber-soft-bg: #FFFBEB;
+  --amber-soft-text: #B45309;
 }
 
 @theme inline {
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-border: var(--border);
+
+  /* Radius Tokens */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-2xl: 32px;
+  
+  /* Spacing Tokens */
+  --spacing-dense: 12px;
+  --spacing-standard: 16px;
+  --spacing-block: 20px;
+  --spacing-section: 32px;
+  --spacing-wide: 40px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --shadow-popup: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-cta: 0 6px 20px rgba(37, 99, 235, 0.18);
 }
 
 body {

@@ -65,21 +65,21 @@ export default function DiscoveryCard({
       onDragEnd={handleDragEnd}
       whileDrag={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="absolute inset-0 overflow-hidden rounded-[3.2rem] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-white/20 touch-none"
+      className="absolute inset-0 overflow-hidden rounded-[32px] bg-white shadow-popup border border-white/20 touch-none"
     >
       {/* Swipe Feedback Labels - Smaller and more subtle */}
       <motion.div
         style={{ opacity: reserveOpacity, scale: reserveScale }}
-        className="absolute left-6 top-8 z-40 rounded-xl border-2 border-emerald-500 bg-white/20 backdrop-blur-xl px-4 py-1.5 text-sm font-black text-emerald-500 uppercase tracking-[0.2em] shadow-xl rotate-[-12deg]"
+        className="absolute left-6 top-8 z-40 rounded-2xl border border-emerald-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-emerald-500 uppercase tracking-widest shadow-lg rotate-[-12deg]"
       >
-        RÉSERVER
+        Réserver
       </motion.div>
 
       <motion.div
         style={{ opacity: skipOpacity, scale: skipScale }}
-        className="absolute right-6 top-8 z-40 rounded-xl border-2 border-rose-500 bg-white/20 backdrop-blur-xl px-4 py-1.5 text-sm font-black text-rose-500 uppercase tracking-[0.2em] shadow-xl rotate-[12deg]"
+        className="absolute right-6 top-8 z-40 rounded-2xl border border-rose-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-rose-500 uppercase tracking-widest shadow-lg rotate-[12deg]"
       >
-        PASSER
+        Passer
       </motion.div>
 
       {/* Main Image Layer */}
@@ -101,38 +101,38 @@ export default function DiscoveryCard({
 
         {/* Floating Info (Style C - Minimalist & Premium) */}
         <div className="absolute inset-x-4 bottom-4 z-30">
-          <div className="bg-black/20 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-5 shadow-2xl space-y-3 overflow-hidden">
+          <div className="bg-black/10 backdrop-blur-3xl border border-white/10 rounded-[28px] p-5 shadow-2xl space-y-3 overflow-hidden">
             <div className="flex items-end justify-between">
               <div className="space-y-1.5">
-                <h2 className="text-xl font-black text-white tracking-tight leading-tight">
+                <h2 className="text-xl font-semibold text-white tracking-tight leading-tight">
                   {item.title}
                 </h2>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-black text-white">
+                  <span className="text-lg font-bold text-white">
                     {item.creditValue} <span className="text-[10px] text-white/50 font-medium tracking-tighter">CR</span>
                   </span>
                   <div className="w-1 h-1 rounded-full bg-white/20" />
                   <div className="flex items-center gap-1.5 opacity-80">
                      <MapPin className="w-3 h-3 text-white/60" />
-                     <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">
+                     <span className="text-[10px] font-medium text-white uppercase tracking-tight leading-none">
                        {item.locationZone}
                      </span>
                   </div>
                   <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/10 border border-white/5">
-                    <span className="text-[8px] font-black text-white tracking-widest">📍 0.8 KM</span>
+                    <span className="text-[10px] font-bold text-white tracking-tight">📍 0.8 KM</span>
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-2 group/seller">
                  <div className="text-right">
-                    <p className="text-[9px] font-black text-white tracking-wide leading-none">{item.owner.username}</p>
+                    <p className="text-[10px] font-bold text-white tracking-wide leading-none">{item.owner.username}</p>
                     <div className="flex items-center gap-0.5 mt-0.5 justify-end">
                        <Star className="w-2 h-2 fill-amber-400 border-none" />
-                       <span className="text-[8px] font-bold text-white/60 truncate max-w-[40px]">{item.owner.trustScore}</span>
+                       <span className="text-[10px] font-medium text-white/70 truncate max-w-[40px]">{item.owner.trustScore}</span>
                     </div>
                  </div>
-                 <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-[10px] text-white border border-white/30 font-black">
+                 <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-xl flex items-center justify-center text-[12px] text-white border border-white/30 font-semibold shadow-inner">
                     {item.owner.username.charAt(0).toUpperCase()}
                  </div>
               </div>

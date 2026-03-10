@@ -28,8 +28,8 @@ async function main() {
         name: "Campus Université de Lomé", 
         zone: "Nord", 
         description: "En face de la bibliothèque centrale.",
-        lat: 6.1750,
-        lng: 1.2167
+        lat: 6.1735,
+        lng: 1.2147,
       }
     }),
     prisma.meetingPoint.create({
@@ -37,17 +37,17 @@ async function main() {
         name: "Adidogomé Assiyéyé", 
         zone: "Ouest", 
         description: "Près de l'entrée principale.",
-        lat: 6.1833,
-        lng: 1.1667
+        lat: 6.198,
+        lng: 1.166,
       }
     }),
     prisma.meetingPoint.create({
       data: { 
-        name: "Déckon (Centre-ville)", 
+        name: "Déckon", 
         zone: "Centre", 
-        description: "Boulevard Circulaire, devant la Poste.",
-        lat: 6.1333,
-        lng: 1.2167
+        description: "Point de rencontre fréquent et accessible.",
+        lat: 6.1312,
+        lng: 1.2224,
       }
     })
   ]);

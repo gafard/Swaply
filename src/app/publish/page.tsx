@@ -305,13 +305,13 @@ export default function PublishPage() {
       };
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans pb-24 sm:pb-8">
+    <main className="min-h-screen bg-background flex flex-col pb-24 sm:pb-8">
       
       {/* 1. App Header */}
-      <div className="bg-white/80 backdrop-blur-xl px-5 pt-12 pb-5 sticky top-0 z-40 border-b border-slate-100 flex items-center justify-between shadow-sm">
-        <h1 className="text-xl font-black text-slate-900 tracking-tight">Publier un objet</h1>
-        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-           <Package className="w-4 h-4 text-indigo-600" />
+      <div className="bg-surface/80 backdrop-blur-xl px-5 pt-12 pb-5 sticky top-0 z-40 border-b border-border flex items-center justify-between shadow-sm">
+        <h1 className="text-xl font-semibold text-foreground tracking-tight">Publier un objet</h1>
+        <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 transition-colors">
+           <Package className="w-4.5 h-4.5 text-primary" />
         </div>
       </div>
       
@@ -347,18 +347,18 @@ export default function PublishPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between px-1">
               <div className="flex flex-col">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Scanner Objet</label>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-[11px] text-slate-900 font-bold">Étape {currentStep + 1} / 4</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter italic">Assisté par IA</span>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted">Scanner Objet</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm text-foreground font-semibold">Étape {currentStep + 1} / 4</span>
+                  <span className="w-1 h-1 rounded-full bg-border" />
+                  <span className="text-[10px] text-primary font-bold uppercase tracking-tight italic">Assisté par IA</span>
                 </div>
               </div>
               
               {isCheckingQuality && (
-                <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 shadow-sm animate-pulse">
-                  <RefreshCw className="w-3 h-3 text-indigo-600 animate-spin" />
-                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Analyse Vision...</span>
+                <div className="flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-full border border-primary/10 shadow-sm animate-pulse">
+                  <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Vision...</span>
                 </div>
               )}
             </div>
@@ -373,8 +373,8 @@ export default function PublishPage() {
                   exit={{ opacity: 0, x: -20, scale: 0.95 }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className={cn(
-                    "absolute inset-0 rounded-[3.5rem] overflow-hidden border-2 transition-all duration-700 shadow-2xl group",
-                    isCheckingQuality ? "border-indigo-400 shadow-indigo-100" : "border-white shadow-slate-200/50"
+                    "absolute inset-0 rounded-[32px] overflow-hidden border-2 transition-all duration-700 shadow-card group",
+                    isCheckingQuality ? "border-primary/40 shadow-blue-100/50" : "border-surface shadow-slate-200/20"
                   )}
                 >
                   {/* Real-time Quality Feedback Overlay */}
@@ -385,21 +385,21 @@ export default function PublishPage() {
                       className="absolute top-6 inset-x-6 z-30"
                     >
                       <div className={cn(
-                        "p-4 rounded-3xl backdrop-blur-2xl border shadow-2xl flex items-center justify-between",
+                        "p-4 rounded-3xl backdrop-blur-2xl border shadow-popup flex items-center justify-between",
                         qualityResults[currentStep]?.qualityScore! > 0.7 ? "bg-emerald-500/20 border-emerald-500/30 text-white" : "bg-amber-500/20 border-amber-500/30 text-white"
                       )}>
                          <div className="flex items-center gap-3">
                             <div className={cn(
-                              "w-8 h-8 rounded-xl flex items-center justify-center shadow-inner",
+                              "w-9 h-9 rounded-2xl flex items-center justify-center shadow-inner",
                               qualityResults[currentStep]?.qualityScore! > 0.7 ? "bg-emerald-500" : "bg-amber-500"
                             )}>
                                {qualityResults[currentStep]?.qualityScore! > 0.7 ? <Check className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
                             </div>
                             <div>
-                               <p className="text-[11px] font-black uppercase tracking-widest">
+                               <p className="text-[11px] font-bold uppercase tracking-wider leading-none">
                                  {qualityResults[currentStep]?.qualityScore! > 0.7 ? "Qualité Excellente" : "Attention"}
                                </p>
-                               <p className="text-[10px] opacity-80 font-bold leading-none mt-1">
+                               <p className="text-[10px] opacity-80 font-medium leading-none mt-1.5">
                                  {qualityResults[currentStep]?.suggestions[0] || "Prêt pour la suite"}
                                </p>
                             </div>
@@ -443,54 +443,54 @@ export default function PublishPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-8 text-center relative">
+                    <div className="w-full h-full bg-foreground flex flex-col items-center justify-center p-8 text-center relative">
                        {/* Scanner Guide Grid */}
-                       <div className="absolute inset-8 border border-white/10 rounded-[2.5rem] pointer-events-none">
+                       <div className="absolute inset-8 border border-white/5 rounded-[32px] pointer-events-none">
                           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/5" />
                           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-px bg-white/5" />
                           
                           {/* Corner Markers */}
-                          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-indigo-500 rounded-tl-3xl opacity-60" />
-                          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-indigo-500 rounded-tr-3xl opacity-60" />
-                          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-indigo-500 rounded-bl-3xl opacity-60" />
-                          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-indigo-500 rounded-br-3xl opacity-60" />
+                          <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-primary/40 rounded-tl-3xl" />
+                          <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-primary/40 rounded-tr-3xl" />
+                          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-primary/40 rounded-bl-3xl" />
+                          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-primary/40 rounded-br-3xl" />
                        </div>
 
-                       <div className="relative z-10 space-y-4">
+                       <div className="relative z-10 space-y-6">
                           <motion.div 
                             animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 4 }}
-                            className="w-20 h-20 rounded-[2rem] bg-indigo-600/20 backdrop-blur-xl border border-white/20 flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/20"
+                            className="w-20 h-20 rounded-[28px] bg-primary/20 backdrop-blur-xl border border-white/10 flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/10"
                           >
                              {(() => {
                                const Icon = SCAN_STEPS[currentStep].icon;
                                return <Icon className="w-10 h-10 text-white" />;
                              })()}
                           </motion.div>
-                          <div>
-                            <h3 className="text-xl font-black text-white tracking-tight mb-2">
+                          <div className="px-4">
+                            <h3 className="text-xl font-semibold text-white tracking-tight mb-2">
                               {SCAN_STEPS[currentStep].label}
                             </h3>
-                            <p className="text-sm text-white/60 font-medium px-4 leading-relaxed">
+                            <p className="text-sm text-white/40 font-medium leading-relaxed">
                               {SCAN_STEPS[currentStep].desc}
                             </p>
                           </div>
                        </div>
 
                        {/* Call to Action Layer */}
-                       <div className="absolute bottom-12 inset-x-8">
-                          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-[2.5rem] space-y-4 shadow-xl">
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest italic flex items-center justify-center gap-2">
-                               <Sparkles className="w-3 h-3" />
-                               {SCAN_STEPS[currentStep].guide}
+                       <div className="absolute bottom-10 inset-x-8">
+                          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] space-y-4 shadow-popup">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center justify-center gap-2">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                {SCAN_STEPS[currentStep].guide}
                             </p>
                             <div className="relative">
                               <button
                                 type="button"
-                                className="w-full py-4 bg-white rounded-2xl text-slate-900 font-black text-sm uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all"
+                                className="w-full py-4 bg-white rounded-2xl text-foreground font-bold text-sm uppercase tracking-widest shadow-cta flex items-center justify-center gap-3 active:scale-95 transition-all"
                               >
-                                <Camera className="w-5 h-5 text-indigo-600" />
-                                Ouvrir Caméra / Parcourir
+                                <Camera className="w-5 h-5 text-primary" />
+                                Scanner l&apos;objet
                               </button>
                               <input 
                                 type="file" 
@@ -642,11 +642,11 @@ export default function PublishPage() {
                     <AlertTriangle className="w-6 h-6 text-amber-500" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                       <Sparkles className="w-3 h-3" />
+                    <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
+                       <Sparkles className="w-3.5 h-3.5" />
                        Alerte Cohérence IA
                     </p>
-                    <p className="text-[11px] text-amber-800 font-semibold leading-relaxed">
+                    <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
                       Notre analyse visuelle détecte un objet <span className="underline decoration-amber-400 decoration-2 underline-offset-2">{aiInsights.visualStatus === "BROKEN" ? "CASSÉ" : "DÉFECTUEUX"}</span>. 
                       Êtes-vous sûr de votre choix ?
                     </p>
@@ -670,71 +670,83 @@ export default function PublishPage() {
             </div>
           )}
           
-          <div className="space-y-4">
-             {/* Title Input */}
-             <div>
-               <label className="block text-sm font-bold text-gray-800 mb-2" htmlFor="title">Titre</label>
-               <input 
-                 type="text" 
-                 id="title" 
-                 name="title" 
-                 required 
-                 value={title}
-                 onChange={(e) => setTitle(e.target.value)}
-                 className="w-full bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 px-4 py-3.5 text-sm transition-all placeholder:text-gray-400 outline-none shadow-[0_2px_10px_rgba(0,0,0,0.02)]" 
-                 placeholder="ex. Chaussures de sport Nike" 
-               />
-             </div>
+          <div className="space-y-6">
+            {/* 3. Informations de base */}
+            <div className="bg-surface rounded-[32px] p-7 border border-border shadow-sm space-y-6">
+              <div className="flex items-center gap-3 px-1">
+                <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight">Détails de l&apos;objet</h3>
+                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest">Informations générales</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="title">Titre</label>
+                <input 
+                  type="text" 
+                  id="title" 
+                  name="title" 
+                  required 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm" 
+                  placeholder="ex. Chaussures de sport Nike" 
+                />
+              </div>
 
-             {/* Description Input */}
-             <div>
-               <label className="block text-sm font-bold text-gray-800 mb-2" htmlFor="description">Description (Optionnel)</label>
-               <textarea 
-                 id="description" 
-                 name="description" 
-                 rows={3}
-                 value={description}
-                 onChange={(e) => setDescription(e.target.value)}
-                 className="w-full bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 px-4 py-3.5 text-sm transition-all placeholder:text-gray-400 outline-none shadow-[0_2px_10px_rgba(0,0,0,0.02)] resize-none" 
-                 placeholder="État de l'objet, caractéristiques..." 
-               />
-             </div>
+              {/* Description Input */}
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="description">Description (Optionnel)</label>
+                <textarea 
+                  id="description" 
+                  name="description" 
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm resize-none" 
+                  placeholder="État de l'objet, caractéristiques..." 
+                />
+              </div>
+                  </div>
+                </div>
 
-             {/* Hybrid AI Insights Card */}
-             {photoPreviews.length > 0 && (aiInsights.category || isAnalyzing) && (
-               <div className="bg-white border border-slate-100 rounded-[2rem] p-5 shadow-sm space-y-5">
-                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-indigo-500" />
-                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Analyses Hybride IA</span>
+                {/* Hybrid AI Insights Card */}
+                {photoPreviews.length > 0 && (aiInsights.category || isAnalyzing) && (
+                  <div className="bg-[#F8FAFC] border border-slate-200/60 rounded-3xl p-5 space-y-5">
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <Sparkles className="w-4 h-4 text-primary" />
+                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Analyses Hybride IA</span>
+                       </div>
+                       {isAnalyzing && (
+                         <span className="text-[10px] font-bold text-primary animate-pulse">Extraction...</span>
+                       )}
                     </div>
-                    {isAnalyzing && (
-                      <span className="text-[10px] font-bold text-indigo-600 animate-pulse">Extraction...</span>
-                    )}
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100/50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Type détecté</p>
-                       <p className="text-[12px] font-bold text-slate-900 leading-tight">
-                         {aiInsights.subcategory || aiInsights.category || "---"}
-                       </p>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Type détecté</p>
+                          <p className="text-[12px] font-bold text-foreground leading-tight">
+                            {aiInsights.subcategory || aiInsights.category || "---"}
+                          </p>
+                       </div>
+                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Marque</p>
+                          <p className="text-[12px] font-bold text-foreground truncate">
+                            {aiInsights.brand && aiInsights.brand !== "unknown" ? aiInsights.brand : "Générique"}
+                          </p>
+                       </div>
+                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">État visuel</p>
+                          <p className="text-[12px] font-bold text-foreground capitalize">{aiInsights.condition || "---"}</p>
+                       </div>
+                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rareté</p>
+                          <p className="text-[12px] font-bold text-primary capitalize font-bold">{aiInsights.rarity || "---"}</p>
+                       </div>
                     </div>
-                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100/50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Marque</p>
-                       <p className="text-[12px] font-bold text-slate-900 truncate">
-                         {aiInsights.brand && aiInsights.brand !== "unknown" ? aiInsights.brand : "Générique"}
-                       </p>
-                    </div>
-                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100/50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">État visuel</p>
-                       <p className="text-[12px] font-bold text-slate-900 capitalize">{aiInsights.condition || "---"}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100/50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Rareté</p>
-                       <p className="text-[12px] font-bold text-indigo-600 capitalize font-black">{aiInsights.rarity || "---"}</p>
-                    </div>
-                 </div>
 
                  {/* Technical Details (specific for Electronics) */}
                  {aiInsights.category === "Électronique" && (
@@ -937,18 +949,16 @@ export default function PublishPage() {
                  </div>
                </div>
                {coords && !selectedZone && (
-                 <p className="text-[10px] text-indigo-600 mt-2 font-bold animate-pulse">Détection de votre zone en cours...</p>
+                 <p className="text-[10px] text-primary mt-2 font-bold animate-pulse">Détection de votre zone en cours...</p>
                )}
              </div>
 
-          </div>
-
-          <div className="pt-2 pb-12 space-y-4">
+          <div className="pt-2 pb-12 space-y-5">
             <button
               type="submit"
               disabled={isUploading || isAnalyzing || photoPreviews.length < 2}
               className={cn(
-                "w-full flex justify-center items-center py-5 px-4 border border-indigo-600/20 rounded-[1.5rem] shadow-[0_20px_40px_rgba(79,70,229,0.2)] text-[16px] font-black text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-60 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:border-transparent",
+                "w-full flex justify-center items-center py-5 px-4 rounded-[20px] shadow-cta text-[16px] font-bold text-white bg-primary hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
                 photoPreviews.length < 2 && "opacity-60 grayscale-[0.5]"
               )}
             >
@@ -957,12 +967,12 @@ export default function PublishPage() {
             
             {photoPreviews.length > 0 && photoPreviews.length < 2 && (
               <div className="flex items-center justify-center gap-2 animate-bounce">
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
                   Ajoutez encore 1 photo 📸
                 </p>
               </div>
             )}
-            <p className="text-[10px] text-center mt-6 text-slate-400 font-bold uppercase tracking-widest px-8 leading-relaxed opacity-60">
+            <p className="text-[10px] text-center mt-6 text-muted font-bold uppercase tracking-widest px-8 leading-relaxed opacity-60">
               En publiant, vous acceptez nos conditions de sécurité pour la ville de Lomé.
             </p>
           </div>
