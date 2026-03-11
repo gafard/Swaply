@@ -2,6 +2,7 @@
 
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 import type { AIEstimation } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -24,86 +25,89 @@ export default function PricingSlider({
   const t = useTranslations("publish");
   const errorId = "creditValue-error";
   const outlierId = "creditValue-outlier";
+  const normalizedValue = Number.isFinite(creditValue) ? creditValue : 0;
+  const sliderValue = Math.min(1000, Math.max(10, normalizedValue || 10));
+  const inputValue = useMemo(
+    () => (Number.isFinite(creditValue) && creditValue > 0 ? String(creditValue) : ""),
+    [creditValue]
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <label htmlFor="creditValue" className="text-sm font-bold text-gray-800">
-          {t("pricing.title")}
-        </label>
+    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <label htmlFor="creditValue" className="text-sm font-semibold text-slate-900">
+            {t("pricing.title")}
+          </label>
+          {estimation ? (
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {t("pricing.recommendedEstimation")}: {estimation.suggestedValue}{" "}
+              {t("pricing.creditsShort")} · {t("pricing.range")}: {estimation.minSuggestedValue}-
+              {estimation.maxSuggestedValue} {t("pricing.creditsShort")}
+            </p>
+          ) : null}
+        </div>
         <div
           className={cn(
-            "rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest shadow-sm",
-            isOutOfRange ? "animate-pulse bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+            "rounded-full px-2.5 py-1 text-[10px] font-medium text-nowrap",
+            isOutOfRange
+              ? "border border-amber-200 bg-amber-50 text-amber-700"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-700"
           )}
         >
           {isOutOfRange ? t("pricing.outlier") : t("pricing.coherent")}
         </div>
       </div>
 
-      <div className="relative space-y-6 overflow-hidden rounded-[34px] border border-slate-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#f5f2ff_100%)] p-6 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
-        <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-indigo-200/30 blur-3xl" />
-        <div className="pointer-events-none absolute left-6 top-8 h-16 w-16 rounded-full bg-amber-200/25 blur-2xl" />
-
-        <div className="flex items-center justify-center">
-          <div className="rounded-[30px] border border-white/90 bg-white/90 px-8 py-6 text-center shadow-[0_18px_42px_rgba(36,87,255,0.10)]">
-            <span className="text-5xl font-black tracking-[-0.05em] text-slate-900">{creditValue}</span>
-            <span className="ml-2 text-sm font-black uppercase tracking-[0.18em] text-indigo-600">
-              {t("pricing.credits")}
-            </span>
-          </div>
-        </div>
-
-        {estimation ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[22px] border border-slate-100 bg-white/85 p-4 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                {t("pricing.recommendedEstimation")}
-              </p>
-              <p className="mt-2 text-lg font-black text-slate-900">
-                {estimation.suggestedValue} {t("pricing.creditsShort")}
-              </p>
-            </div>
-            <div className="rounded-[22px] border border-slate-100 bg-white/85 p-4 shadow-sm">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
-                {t("pricing.range")}
-              </p>
-              <p className="mt-2 text-lg font-black text-slate-900">
-                {estimation.minSuggestedValue} - {estimation.maxSuggestedValue} {t("pricing.creditsShort")}
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="rounded-[28px] border border-slate-100 bg-white/80 px-4 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+      <div className="mt-5 space-y-4">
+        <div className="relative">
           <input
             id="creditValue"
-            type="range"
+            type="number"
             name="creditValue"
             min="10"
             max="1000"
             step="5"
-            value={creditValue}
-            aria-label={t("pricing.title")}
-            aria-valuemin={10}
-            aria-valuemax={1000}
-            aria-valuenow={creditValue}
+            inputMode="numeric"
+            value={inputValue}
             aria-invalid={Boolean(errorMessage)}
             aria-describedby={cn(
               errorMessage ? errorId : "",
               isOutOfRange && estimation ? outlierId : ""
             ).trim() || undefined}
-            onChange={(event) => onChange(parseInt(event.target.value, 10))}
-            className="h-2.5 w-full cursor-pointer appearance-none rounded-lg bg-slate-100 accent-indigo-600"
+            onChange={(event) => {
+              const nextValue = parseInt(event.target.value, 10);
+              onChange(Number.isNaN(nextValue) ? 0 : nextValue);
+            }}
+            className="w-full rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-4 pr-20 text-2xl font-semibold tracking-[-0.03em] text-slate-900 outline-none transition-colors focus:border-slate-400 focus:bg-white"
           />
-          <div className="mt-3 flex justify-between text-[9px] font-black uppercase tracking-widest text-slate-300">
-            <span>{t("pricing.accessible")}</span>
-            <span>{t("pricing.premium")}</span>
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            {t("pricing.creditsShort")}
+          </span>
+        </div>
+
+        <div className="rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-4">
+          <input
+            type="range"
+            min="10"
+            max="1000"
+            step="5"
+            value={sliderValue}
+            aria-label={t("pricing.title")}
+            aria-valuemin={10}
+            aria-valuemax={1000}
+            aria-valuenow={sliderValue}
+            onChange={(event) => onChange(parseInt(event.target.value, 10))}
+            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-slate-900"
+          />
+          <div className="mt-3 flex justify-between text-[11px] font-medium text-slate-400">
+            <span>10 {t("pricing.creditsShort")}</span>
+            <span>1000 {t("pricing.creditsShort")}</span>
           </div>
         </div>
 
         {errorMessage ? (
-          <p id={errorId} role="alert" className="text-[10px] font-bold text-rose-600">
+          <p id={errorId} role="alert" className="text-xs font-medium text-rose-600">
             {errorMessage}
           </p>
         ) : null}
@@ -111,17 +115,16 @@ export default function PricingSlider({
         {isOutOfRange && estimation ? (
           <div
             id={outlierId}
-            className="flex items-start gap-2 rounded-[24px] border border-amber-100 bg-amber-50 p-4 shadow-sm"
+            className="flex items-start gap-2 rounded-[18px] border border-amber-200 bg-amber-50 px-3 py-3"
           >
-            <Info className="mt-0.5 h-3.5 w-3.5 text-amber-500" />
-            <p className="text-[10px] font-bold leading-tight text-amber-700">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <p className="text-xs leading-5 text-amber-800">
               {t("pricing.outlierHelp", {
                 min: estimation.minSuggestedValue,
                 max: estimation.maxSuggestedValue,
                 credits: t("pricing.creditsShort"),
               })}{" "}
-              <br />
-              <span className="opacity-70">{t("pricing.outlierHint")}</span>
+              <span className="text-amber-700">{t("pricing.outlierHint")}</span>
             </p>
           </div>
         ) : null}
