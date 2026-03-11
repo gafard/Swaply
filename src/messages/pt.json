@@ -672,12 +672,15 @@
       "subtitle": "Bom te ver de novo. Informe seus dados.",
       "emailPlaceholder": "E-mail",
       "passwordPlaceholder": "Senha",
+      "google": "Continuar com Google",
+      "googleLoading": "Redirecionando para o Google...",
       "submit": "Entrar",
       "loading": "Carregando...",
       "separator": "- Ou continuar com -",
       "noAccount": "Ainda não tem conta?",
       "createAccount": "Criar uma conta",
       "errors": {
+        "google": "Nao foi possivel iniciar o Google agora.",
         "generic": "Nao foi possivel entrar agora."
       }
     },
@@ -687,6 +690,8 @@
       "emailPlaceholder": "E-mail",
       "passwordPlaceholder": "Senha",
       "acceptTermsLabel": "Aceito os <terms>termos de uso</terms> do Swaply.",
+      "google": "Criar com Google",
+      "googleLoading": "Redirecionando para o Google...",
       "submit": "Cadastrar-se",
       "loading": "Criando...",
       "separator": "- Ou cadastrar com -",
@@ -694,6 +699,7 @@
       "login": "Entrar",
       "success": "Conta criada com sucesso. Agora voce pode entrar.",
       "errors": {
+        "google": "Nao foi possivel iniciar o cadastro com Google agora.",
         "mustAcceptTerms": "Voce precisa aceitar os termos de uso para criar uma conta.",
         "generic": "Nao foi possivel criar a conta agora."
       }

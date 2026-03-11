@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [termsError, setTermsError] = useState("");
 
   async function handleSignup(e: React.FormEvent) {
@@ -47,6 +48,35 @@ export default function SignupPage() {
     } else {
       alert(t("errors.generic"));
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignup() {
+    if (!acceptedTerms) {
+      setTermsError(t("errors.mustAcceptTerms"));
+      return;
+    }
+
+    setGoogleLoading(true);
+    setTermsError("");
+
+    const redirectTo = new URL("/api/auth/callback", window.location.origin);
+    redirectTo.searchParams.set("locale", locale);
+    redirectTo.searchParams.set("next", "/onboarding");
+    redirectTo.searchParams.set("acceptedTerms", "1");
+    redirectTo.searchParams.set("termsAcceptedAt", new Date().toISOString());
+    redirectTo.searchParams.set("termsVersion", TERMS_VERSION);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo.toString(),
+      },
+    });
+
+    if (error) {
+      alert(t("errors.google"));
+      setGoogleLoading(false);
     }
   }
 
@@ -146,14 +176,17 @@ export default function SignupPage() {
              <div className="relative flex justify-center bg-[#fffaf2] px-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">{t("separator")}</div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
-                <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">G</div>
-             </button>
-             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
-                <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">f</div>
-             </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleGoogleSignup}
+            disabled={googleLoading}
+            className="flex w-full items-center justify-center gap-3 rounded-[22px] border border-slate-200 bg-white py-4 text-sm font-black text-slate-900 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f3f6ff] text-xs font-black text-indigo-600">
+              G
+            </span>
+            {googleLoading ? t("googleLoading") : t("google")}
+          </button>
 
           <div className="flex flex-col items-center gap-4 pt-5">
             <p className="text-sm font-medium text-slate-500">

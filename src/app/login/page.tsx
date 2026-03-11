@@ -19,17 +19,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  function resolveTargetPath() {
+    const nextPath =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+
+    return normalizePostAuthPath(nextPath ? stripLocalePrefix(nextPath) : "/");
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) {
-      const nextPath =
-        typeof window !== "undefined"
-          ? new URLSearchParams(window.location.search).get("next")
-          : null;
-      const targetPath = normalizePostAuthPath(nextPath ? stripLocalePrefix(nextPath) : "/");
+      const targetPath = resolveTargetPath();
       const bootstrapResponse = await fetch("/api/auth/bootstrap", {
         method: "POST",
         headers: {
@@ -54,6 +60,26 @@ export default function LoginPage() {
     } else {
       alert(t("errors.generic"));
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setGoogleLoading(true);
+    const targetPath = resolveTargetPath();
+    const redirectTo = new URL("/api/auth/callback", window.location.origin);
+    redirectTo.searchParams.set("locale", locale);
+    redirectTo.searchParams.set("next", targetPath);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectTo.toString(),
+      },
+    });
+
+    if (error) {
+      alert(t("errors.google"));
+      setGoogleLoading(false);
     }
   }
 
@@ -120,14 +146,17 @@ export default function LoginPage() {
              <div className="relative flex justify-center bg-[#fffaf2] px-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">{t("separator")}</div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
-                <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">G</div>
-             </button>
-             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
-                <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">f</div>
-             </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="flex w-full items-center justify-center gap-3 rounded-[22px] border border-slate-200 bg-white py-4 text-sm font-black text-slate-900 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f3f6ff] text-xs font-black text-indigo-600">
+              G
+            </span>
+            {googleLoading ? t("googleLoading") : t("google")}
+          </button>
 
           <div className="flex flex-col items-center gap-4 pt-5">
             <p className="text-sm font-medium text-slate-500">

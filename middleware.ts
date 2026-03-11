@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { routing } from "@/i18n/routing";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import { TERMS_COOKIE_NAME, parseTermsCookie } from "@/lib/legal";
 import {
   normalizePostAuthPath,
   ONBOARDING_COOKIE_NAME,
@@ -130,9 +131,10 @@ export async function middleware(request: NextRequest) {
   const onboardingCookie = parseOnboardingCookie(
     request.cookies.get(ONBOARDING_COOKIE_NAME)?.value
   );
+  const termsCookie = parseTermsCookie(request.cookies.get(TERMS_COOKIE_NAME)?.value);
   const isOnboardingRoute = pathname.startsWith("/onboarding");
 
-  if (user && onboardingCookie === null) {
+  if (user && (termsCookie === null || termsCookie === false || onboardingCookie === null)) {
     const url = request.nextUrl.clone();
     url.pathname = "/api/auth/bootstrap";
     url.search = `?locale=${encodeURIComponent(locale)}&next=${encodeURIComponent(nextPath)}`;
@@ -140,7 +142,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && onboardingCookie === false && !isOnboardingRoute) {
+  if (user && termsCookie === true && onboardingCookie === false && !isOnboardingRoute) {
     const url = request.nextUrl.clone();
     url.pathname = localizeHref(locale, "/onboarding");
     url.search = nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : "";
@@ -152,7 +154,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to home if logged in and trying to access auth pages
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
-  if (user && isAuthRoute) {
+  if (user && termsCookie === true && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname =
       onboardingCookie === false ? localizeHref(locale, "/onboarding") : `/${locale}`;
@@ -161,7 +163,7 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  if (user && onboardingCookie === true && isOnboardingRoute) {
+  if (user && termsCookie === true && onboardingCookie === true && isOnboardingRoute) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}`;
     url.search = "";

@@ -672,12 +672,15 @@
       "subtitle": "Welcome back. Enter your credentials.",
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Password",
+      "google": "Continue with Google",
+      "googleLoading": "Redirecting to Google...",
       "submit": "Log in",
       "loading": "Loading...",
       "separator": "- Or continue with -",
       "noAccount": "Don't have an account yet?",
       "createAccount": "Create an account",
       "errors": {
+        "google": "Unable to start Google sign-in right now.",
         "generic": "Unable to sign you in right now."
       }
     },
@@ -687,6 +690,8 @@
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Password",
       "acceptTermsLabel": "I accept Swaply's <terms>terms of use</terms>.",
+      "google": "Create with Google",
+      "googleLoading": "Redirecting to Google...",
       "submit": "Sign up",
       "loading": "Creating...",
       "separator": "- Or sign up with -",
@@ -694,6 +699,7 @@
       "login": "Log in",
       "success": "Account created successfully. You can log in now.",
       "errors": {
+        "google": "Unable to start Google sign-up right now.",
         "mustAcceptTerms": "You must accept the terms of use to create an account.",
         "generic": "Unable to create the account right now."
       }

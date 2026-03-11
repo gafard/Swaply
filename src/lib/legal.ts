@@ -1,9 +1,27 @@
 export const TERMS_VERSION = "2026-03-11";
+export const TERMS_COOKIE_NAME = "SWAPLY_TERMS_ACCEPTED";
+export const TERMS_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export type TermsAcceptance = {
   acceptedTermsAt: Date | null;
   acceptedTermsVersion: string | null;
 };
+
+export function parseTermsCookie(value?: string | null) {
+  if (value === "1") {
+    return true;
+  }
+
+  if (value === "0") {
+    return false;
+  }
+
+  return null;
+}
+
+export function serializeTermsCookie(hasAcceptedTerms: boolean) {
+  return hasAcceptedTerms ? "1" : "0";
+}
 
 export function readTermsAcceptanceFromMetadata(metadata: unknown): TermsAcceptance {
   if (!metadata || typeof metadata !== "object") {

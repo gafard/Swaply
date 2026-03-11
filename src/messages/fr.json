@@ -672,12 +672,15 @@
       "subtitle": "Ravi de vous revoir ! Entrez vos accès.",
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Mot de passe",
+      "google": "Continuer avec Google",
+      "googleLoading": "Redirection Google...",
       "submit": "Se connecter",
       "loading": "Chargement...",
       "separator": "- Ou continuer avec -",
       "noAccount": "Pas encore de compte ?",
       "createAccount": "Créer un compte",
       "errors": {
+        "google": "Impossible de démarrer la connexion Google pour le moment.",
         "generic": "Impossible de vous connecter pour le moment."
       }
     },
@@ -687,6 +690,8 @@
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Mot de passe",
       "acceptTermsLabel": "J'accepte les <terms>conditions d'utilisation</terms> de Swaply.",
+      "google": "Créer avec Google",
+      "googleLoading": "Redirection Google...",
       "submit": "S'inscrire",
       "loading": "Création...",
       "separator": "- Ou s'inscrire avec -",
@@ -694,6 +699,7 @@
       "login": "Se connecter",
       "success": "Compte créé avec succès. Connectez-vous maintenant.",
       "errors": {
+        "google": "Impossible de démarrer l'inscription Google pour le moment.",
         "mustAcceptTerms": "Vous devez accepter les conditions d'utilisation pour créer un compte.",
         "generic": "Impossible de créer le compte pour le moment."
       }

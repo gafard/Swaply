@@ -18,6 +18,11 @@ export type CurrentUser = CurrentUserPayload & {
   availableSwaps: number;
 };
 
+type CurrentUserResolution =
+  | { status: "unauthenticated" }
+  | { status: "missing_terms" }
+  | { status: "ok"; user: CurrentUser };
+
 function sanitizeUsername(raw: string) {
   const cleaned = raw
     .toLowerCase()
@@ -171,14 +176,14 @@ async function ensureCurrentUser(authUser: {
   });
 }
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export async function getCurrentUserResolution(): Promise<CurrentUserResolution> {
   const supabase = await createClient();
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
 
   if (!authUser) {
-    return null;
+    return { status: "unauthenticated" };
   }
 
   const user = await ensureCurrentUser({
@@ -188,16 +193,28 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   });
 
   if (!user) {
-    return null;
+    return { status: "unauthenticated" };
+  }
+
+  if (!user.acceptedTermsAt) {
+    return { status: "missing_terms" };
   }
 
   const regularSwaps = user.wallet?.balanceSwaps ?? 0;
   const promoSwaps = user.wallet?.promoSwaps ?? 0;
 
   return {
-    ...user,
-    swaps: regularSwaps,
-    promoSwaps,
-    availableSwaps: regularSwaps + promoSwaps,
+    status: "ok",
+    user: {
+      ...user,
+      swaps: regularSwaps,
+      promoSwaps,
+      availableSwaps: regularSwaps + promoSwaps,
+    },
   };
+}
+
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const resolution = await getCurrentUserResolution();
+  return resolution.status === "ok" ? resolution.user : null;
 }
