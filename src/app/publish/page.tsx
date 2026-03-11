@@ -24,6 +24,7 @@ import {
   GeoCatalog,
 } from "@/lib/geo";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import SuccessView from "@/components/SuccessView";
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -153,6 +154,9 @@ export default function PublishPage() {
   const [uploadProgressBySlot, setUploadProgressBySlot] = useState<number[]>(EMPTY_UPLOAD_PROGRESS);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [aiError, setAiError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [publishedItemId, setPublishedItemId] = useState<string | null>(null);
+  const [hasBonus, setHasBonus] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -1008,21 +1012,31 @@ export default function PublishPage() {
         return;
       }
 
-      toast.success(
-        result.data?.awardedFirstPublishBonus ? t("successWithBonus") : t("success")
-      );
-      router.push(
-        localizeHref(
-          locale,
-          result.data?.itemId ? `/item/${result.data.itemId}` : "/profile/items"
-        )
-      );
+      setHasBonus(!!result.data?.awardedFirstPublishBonus);
+      setPublishedItemId(result.data?.itemId ?? null);
+      setShowSuccess(true);
     } catch {
       toast.error(t("errors.generic"));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (showSuccess) {
+    return (
+      <SuccessView
+        title={hasBonus ? "Objet publié + Bonus !" : "Objet publié !"}
+        subtitle={hasBonus 
+          ? "Félicitations ! Votre objet est en ligne et vous avez reçu un bonus pour votre première publication."
+          : `Votre objet "${title}" est maintenant visible par toute la communauté.`
+        }
+        actionHref={localizeHref(locale, publishedItemId ? `/item/${publishedItemId}` : "/profile/items")}
+        actionLabel="Voir mon objet"
+        secondaryActionHref={localizeHref(locale, "/")}
+        secondaryActionLabel="Retour à l'accueil"
+      />
+    );
+  }
 
   const resetScanner = useCallback(() => {
     cancelScheduledEstimation();

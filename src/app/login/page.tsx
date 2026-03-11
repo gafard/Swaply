@@ -58,7 +58,14 @@ export default function LoginPage() {
       router.push(payload.targetPath || localizeHref(locale, "/"));
       router.refresh();
     } else {
-      alert(t("errors.generic"));
+      console.error("Login error:", error);
+      if (error.message?.includes("Email not confirmed")) {
+        alert(t("errors.emailNotConfirmed"));
+      } else if (error.message?.includes("Invalid login credentials")) {
+        alert(t("errors.invalidCredentials"));
+      } else {
+        alert(t("errors.generic"));
+      }
       setLoading(false);
     }
   }

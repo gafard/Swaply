@@ -657,7 +657,6 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
         ? prisma.item.findMany({
             where: {
               status: "AVAILABLE",
-              ownerId: { not: user?.id },
               cityId: activeCityId,
             },
             include: itemInclude,
@@ -669,7 +668,6 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
         ? prisma.item.findMany({
             where: {
               status: "AVAILABLE",
-              ownerId: { not: user?.id },
               countryId: activeCountryId,
             },
             include: itemInclude,
@@ -680,7 +678,6 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
       prisma.item.findMany({
         where: {
           status: "AVAILABLE",
-          ownerId: { not: user?.id },
           ...(activeCityId
             ? { cityId: activeCityId }
             : activeCountryId
@@ -694,7 +691,6 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
       prisma.item.findMany({
         where: {
           status: "AVAILABLE",
-          ownerId: { not: user?.id },
           owner: {
             trustScore: { gte: 10 },
           },
@@ -707,7 +703,6 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
       prisma.item.findMany({
         where: {
           status: "AVAILABLE",
-          ownerId: { not: user?.id },
         },
         include: itemInclude,
         orderBy: [{ createdAt: "desc" }],
@@ -829,4 +824,44 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
 
   setInCache(cacheKey, result, 5 * 60 * 1000);
   return result;
+}
+
+export async function removeItem(itemId: string) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return actionFail("auth_required");
+  }
+
+  const item = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: { id: true, ownerId: true, status: true },
+  });
+
+  if (!item) {
+    return actionFail("item_not_found");
+  }
+
+  if (item.ownerId !== user.id) {
+    return actionFail("unauthorized");
+  }
+
+  if (item.status === "RESERVED" || item.status === "EXCHANGED") {
+    return actionFail("item_busy");
+  }
+
+  try {
+    await prisma.item.update({
+      where: { id: itemId },
+      data: { status: "REMOVED" },
+    });
+
+    invalidateCachePattern("discovery:");
+    revalidatePath("/");
+    revalidatePath("/profile/items");
+    revalidatePath(`/item/${itemId}`);
+
+    return actionOk("item_removed");
+  } catch {
+    return actionFail("unexpected_error");
+  }
 }

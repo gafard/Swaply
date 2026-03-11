@@ -10,6 +10,7 @@ import AppLogo from "@/components/AppLogo";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import { TERMS_VERSION } from "@/lib/legal";
+import SuccessView from "@/components/SuccessView";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -22,6 +23,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [termsError, setTermsError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -43,10 +45,14 @@ export default function SignupPage() {
       },
     });
     if (!error) {
-      alert(t("success"));
-      router.push(localizeHref(locale, "/login?next=/onboarding"));
+      setShowSuccess(true);
     } else {
-      alert(t("errors.generic"));
+      console.error("Signup error:", error);
+      if (error.message?.includes("User already registered")) {
+        alert(t("errors.emailAlreadyInUse"));
+      } else {
+        alert(t("errors.generic"));
+      }
       setLoading(false);
     }
   }
@@ -78,6 +84,17 @@ export default function SignupPage() {
       alert(t("errors.google"));
       setGoogleLoading(false);
     }
+  }
+
+  if (showSuccess) {
+    return (
+      <SuccessView
+        title="Compte créé !"
+        subtitle="Votre compte Swaply a été créé avec succès. Vous pouvez maintenant vous connecter et commencer à troquer."
+        actionHref={localizeHref(locale, "/login?next=/onboarding")}
+        actionLabel="Se connecter"
+      />
+    );
   }
 
   return (

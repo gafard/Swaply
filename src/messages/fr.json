@@ -41,7 +41,11 @@
     "history": "Historique des échanges",
     "moderation": "Modération",
     "reportsPending": "{count} report(s) à traiter",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "itemsDelete": "Supprimer",
+    "itemsDeleteConfirm": "Voulez-vous vraiment supprimer cet objet ?",
+    "itemsDeleteSuccess": "Objet supprimé.",
+    "itemsDeleteError": "Impossible de supprimer l'objet."
   },
   "wallet": {
     "title": "Mon Wallet Swaps",
@@ -681,7 +685,9 @@
       "createAccount": "Créer un compte",
       "errors": {
         "google": "Impossible de démarrer la connexion Google pour le moment.",
-        "generic": "Impossible de vous connecter pour le moment."
+        "generic": "Impossible de vous connecter pour le moment.",
+        "emailNotConfirmed": "Votre adresse email n'est pas encore confirmée. Veuillez vérifier votre boîte de réception.",
+        "invalidCredentials": "Email ou mot de passe incorrect."
       }
     },
     "signup": {
@@ -701,7 +707,8 @@
       "errors": {
         "google": "Impossible de démarrer l'inscription Google pour le moment.",
         "mustAcceptTerms": "Vous devez accepter les conditions d'utilisation pour créer un compte.",
-        "generic": "Impossible de créer le compte pour le moment."
+        "generic": "Impossible de créer le compte pour le moment.",
+        "emailAlreadyInUse": "Cette adresse email est déjà utilisée."
       }
     }
   },

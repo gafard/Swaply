@@ -11,12 +11,14 @@ import {
   MessageSquare,
   Eye,
   Heart,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import ReserveButton from "@/components/exchange/ReserveButton";
 import ItemViewTracker from "@/components/item/ItemViewTracker";
 import ReportItemButton from "@/components/item/ReportItemButton";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import DeleteItemButton from "@/app/profile/items/DeleteItemButton";
 
 export default async function ItemDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -40,18 +42,39 @@ export default async function ItemDetailPage(props: {
       images: {
         orderBy: { orderIndex: "asc" },
       },
+      exchanges: {
+        where: { status: "PENDING" },
+        take: 1,
+      },
     },
   })) as any;
 
-  if (!item) {
-    notFound();
+  if (!item || item.status === "REMOVED") {
+    return (
+      <main className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center px-6">
+        <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle className="w-10 h-10" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Objet retiré</h1>
+        <p className="text-sm text-gray-500 text-center mb-8">
+          Cet objet n'est plus disponible car il a été supprimé par son propriétaire ou par la modération.
+        </p>
+        <Link
+          href="/"
+          className="w-full max-w-xs rounded-2xl bg-indigo-600 text-white text-center font-bold py-4 shadow-lg shadow-indigo-200"
+        >
+          Retour à l'accueil
+        </Link>
+      </main>
+    );
   }
 
   const isOwner = user?.id === item.ownerId;
   const locationLabel = item.zone?.name ?? item.city?.name ?? t("unknownZone");
+  const hasPendingExchange = item.exchanges.length > 0;
 
   return (
-    <main className="min-h-screen bg-background flex flex-col pb-24 font-sans">
+    <main className="min-h-screen bg-background flex flex-col pb-24 font-sans text-slate-900">
       {!isOwner && <ItemViewTracker itemId={item.id} />}
 
       <div className="fixed top-0 inset-x-0 z-50 p-6 flex justify-between items-center pointer-events-none">
@@ -116,7 +139,7 @@ export default async function ItemDetailPage(props: {
           </div>
         )}
 
-        <div className="space-y-4 mb-10">
+        <div className="space-y-4 mb-10 text-slate-800">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted px-1">
             {t("description")}
           </h2>
@@ -166,7 +189,7 @@ export default async function ItemDetailPage(props: {
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted mt-1 uppercase tracking-tight">
                 <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span>
-                  {t("trustScore", { value: item.owner.trustScore })}
+                   {t("trustScore", { value: item.owner.trustScore })}
                 </span>
               </div>
             </div>
@@ -179,6 +202,17 @@ export default async function ItemDetailPage(props: {
             <MessageSquare className="w-5.5 h-5.5" />
           </Link>
         </div>
+
+        {isOwner && !hasPendingExchange && item.status === "AVAILABLE" && (
+          <div className="mb-24 px-1">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted">
+                Gestion de l'annonce
+              </h2>
+              <DeleteItemButton itemId={item.id} itemTitle={item.title} />
+            </div>
+          </div>
+        )}
 
         {!isOwner && (
           <div className="mb-24">

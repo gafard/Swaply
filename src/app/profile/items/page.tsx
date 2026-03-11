@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer";
 import { ArrowLeft, ChevronRight, Package, PlusCircle } from "lucide-react";
+import DeleteItemButton from "./DeleteItemButton";
 
 const statusStyles: Record<ItemStatus, string> = {
   DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
@@ -47,7 +48,10 @@ export default async function ProfileItemsPage() {
   }
 
   const items = await prisma.item.findMany({
-    where: { ownerId: user.id },
+    where: { 
+      ownerId: user.id,
+      status: { not: "REMOVED" }
+    },
     include: {
       city: true,
       zone: true,
@@ -109,14 +113,14 @@ export default async function ProfileItemsPage() {
               <AnimatedItem key={item.id} index={index}>
                 <div className="rounded-[1.75rem] bg-white border border-gray-100 shadow-sm p-4">
                   <div className="flex items-start justify-between gap-3 mb-3">
-                    <div>
-                      <p className="text-base font-bold text-gray-900">{item.title}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-bold text-gray-900 line-clamp-1">{item.title}</p>
                       <p className="text-xs text-gray-500 font-medium">
                         Publié {formatDistanceToNow(item.createdAt, { addSuffix: true, locale: fr })}
                       </p>
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold ${statusStyles[item.status]}`}
+                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold shrink-0 ${statusStyles[item.status]}`}
                     >
                       {statusLabels[item.status]}
                     </span>
@@ -146,22 +150,27 @@ export default async function ProfileItemsPage() {
                   <div className="flex items-center gap-4 mb-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                     <span>Vues: {item.metric?.totalViews ?? 0}</span>
                     <span>Favoris: {item.metric?.favoritesCount ?? 0}</span>
-                    <span>Signalements: {item.metric?.reportsCount ?? 0}</span>
                   </div>
 
-                  {pendingExchange ? (
-                    <Link
-                      href={`/exchange/${pendingExchange.id}`}
-                      className="flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700"
-                    >
-                      Conversation active
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  ) : (
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-500">
-                      Aucun échange en cours pour cet objet.
-                    </div>
-                  )}
+                  <div className="space-y-3">
+                    {pendingExchange ? (
+                      <Link
+                        href={`/exchange/${pendingExchange.id}`}
+                        className="flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-700"
+                      >
+                        Conversation active
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    ) : (
+                      <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50/50 px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                        Aucun échange en cours
+                      </div>
+                    )}
+
+                    {!pendingExchange && item.status === "AVAILABLE" && (
+                      <DeleteItemButton itemId={item.id} itemTitle={item.title} />
+                    )}
+                  </div>
                 </div>
               </AnimatedItem>
             );
