@@ -526,6 +526,8 @@
       "descriptionInvalid": "Description invalide.",
       "priceInvalid": "Valeur en Swaps invalide.",
       "imagesRequired": "Veuillez ajouter au moins 2 photos.",
+      "imagesUploading": "Finalisation des photos en cours.",
+      "imagesUploadFailed": "L’envoi des photos a échoué. Réessayez.",
       "locationUnavailable": "Localisation indisponible.",
       "generic": "Impossible de publier l’objet."
     },
@@ -547,6 +549,10 @@
         "details": {
           "label": "Détails",
           "description": "Ajoutez le titre et le contexte utile"
+        },
+        "detailsPricing": {
+          "label": "Détails & prix",
+          "description": "Finalisez le titre, le contexte et la valeur"
         },
         "pricing": {
           "label": "Prix en Swaps",

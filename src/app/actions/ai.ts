@@ -1,5 +1,6 @@
 "use server";
 
+import type OpenAI from "openai";
 import { getOpenAI } from "@/lib/openai";
 import { ITEM_CATEGORIES, AISuggestion, AIEstimation, PhotoQualityResult } from "@/lib/validations";
 import { calculateAIEstimation } from "@/lib/ai-engine";
@@ -9,19 +10,96 @@ import {
   normalizePhotoQualityPayload,
 } from "@/lib/ai-normalization";
 
+type MarketContext = {
+  countryId?: string | null;
+  cityId?: string | null;
+};
+
+type TechDetails = {
+  age?: string;
+  accessories?: string[];
+  functionality?: string;
+};
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Impossible d'analyser l'image";
 }
 
-export async function suggestListingFromImages(imagesBase64: string[]): Promise<Partial<AISuggestion & { estimation?: AIEstimation }>> {
+const DEFAULT_VISION_MODELS = [
+  process.env.OPENROUTER_VISION_MODEL,
+  "qwen/qwen2.5-vl-72b-instruct",
+  "google/gemini-2.0-flash-001",
+  "openai/gpt-4o-mini",
+].filter(Boolean) as string[];
+
+function getVisionModels() {
+  return [...new Set(DEFAULT_VISION_MODELS)];
+}
+
+function extractChatCompletionContent(response: unknown) {
+  if (
+    response &&
+    typeof response === "object" &&
+    "error" in response &&
+    response.error &&
+    typeof response.error === "object" &&
+    "message" in response.error
+  ) {
+    throw new Error(String(response.error.message || "Vision provider error"));
+  }
+
+  const content =
+    response &&
+    typeof response === "object" &&
+    "choices" in response &&
+    Array.isArray(response.choices)
+      ? response.choices[0]?.message?.content
+      : null;
+
+  if (typeof content !== "string" || content.trim().length === 0) {
+    throw new Error("Réponse IA vide ou invalide");
+  }
+
+  return content;
+}
+
+async function createVisionJsonCompletion(
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  maxTokens: number
+) {
+  const openai = getOpenAI();
+  let lastError: unknown = null;
+
+  for (const model of getVisionModels()) {
+    try {
+      const response = await openai.chat.completions.create({
+        model,
+        messages,
+        max_tokens: maxTokens,
+        response_format: { type: "json_object" },
+      });
+
+      return extractChatCompletionContent(response);
+    } catch (error) {
+      lastError = error;
+      console.error(`Swaply vision model failed (${model}):`, getErrorMessage(error));
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Aucun modèle IA vision disponible");
+}
+
+export async function suggestListingFromImages(
+  imagesBase64: string[],
+  marketContext?: MarketContext
+): Promise<Partial<AISuggestion & { estimation?: AIEstimation }>> {
   try {
-    const openai = getOpenAI();
-    const response = await openai.chat.completions.create({
-      model: "qwen/qwen-2.5-vl-7b-instruct", 
-      messages: [
-        {
-          role: "system",
-          content: `
+    const text = await createVisionJsonCompletion([
+      {
+        role: "system",
+        content: `
 Tu es l'expert IA de Swaply, une application de troc locale multi-pays.
 Ton rôle est d'analyser plusieurs photos d'un même objet (différents angles : face, arrière, détails, allumé) pour extraire ses attributs visuels précis et détecter toute fraude ou dommage :
 
@@ -50,32 +128,28 @@ RETOURNE UNIQUEMENT UN JSON VALIDE :
   "confidence": number
 }
 `.trim(),
-        },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Analyse ces photos de l'objet sous différents angles pour Swaply." },
-            ...imagesBase64.map(url => ({ type: "image_url" as const, image_url: { url } })),
-          ],
-        },
-      ],
-      max_tokens: 600,
-      response_format: { type: "json_object" }
-    });
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Analyse ces photos de l'objet sous différents angles pour Swaply." },
+          ...imagesBase64.map(url => ({ type: "image_url" as const, image_url: { url } })),
+        ],
+      },
+    ], 600);
 
-    const text = response.choices[0].message.content || "{}";
     const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = normalizeAISuggestionPayload(JSON.parse(cleanedText));
-    
+
     // Layer 2: Estimation Engine
-    const estimation = await calculateAIEstimation(parsed);
+    const estimation = await calculateAIEstimation(parsed, undefined, marketContext);
 
     return { ...parsed, estimation };
   } catch (error: unknown) {
     const message = getErrorMessage(error);
     console.error("Swaply AI Error:", message);
     const fallback = buildFallbackSuggestion();
-    const estimation = await calculateAIEstimation(fallback);
+    const estimation = await calculateAIEstimation(fallback, undefined, marketContext);
     return {
       ...fallback,
       estimation,
@@ -83,9 +157,16 @@ RETOURNE UNIQUEMENT UN JSON VALIDE :
   }
 }
 
+export async function calculateHybridEstimation(
+  suggestion: AISuggestion,
+  techDetails?: TechDetails,
+  marketContext?: MarketContext
+): Promise<AIEstimation> {
+  return calculateAIEstimation(suggestion, techDetails, marketContext);
+}
+
 export async function analyzePhotoQuality(imageBase64: string, stepIndex: number): Promise<Partial<PhotoQualityResult>> {
   try {
-    const openai = getOpenAI();
     const steps = [
       "Photo principale (objet entier)",
       "Côté ou arrière",
@@ -93,12 +174,10 @@ export async function analyzePhotoQuality(imageBase64: string, stepIndex: number
       "Objet en fonctionnement / Allumé"
     ];
 
-    const response = await openai.chat.completions.create({
-      model: "qwen/qwen-2.5-vl-7b-instruct",
-      messages: [
-        {
-          role: "system",
-          content: `
+    const text = await createVisionJsonCompletion([
+      {
+        role: "system",
+        content: `
 Tu es l'expert contrôle qualité de Swaply. L'utilisateur prend une photo pour l'étape : "${steps[stepIndex]}".
 Analyse l'image immédiatement pour vérifier la qualité technique et le contenu :
 
@@ -118,19 +197,15 @@ RETOURNE UNIQUEMENT UN JSON :
   "suggestions": ["liste de conseils courts si besoin"]
 }
 `.trim(),
-        },
-        {
-          role: "user",
-          content: [
-            { type: "image_url" as const, image_url: { url: imageBase64 } },
-          ],
-        },
-      ],
-      max_tokens: 300,
-      response_format: { type: "json_object" }
-    });
+      },
+      {
+        role: "user",
+        content: [
+          { type: "image_url" as const, image_url: { url: imageBase64 } },
+        ],
+      },
+    ], 300);
 
-    const text = response.choices[0].message.content || "{}";
     const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = normalizePhotoQualityPayload(JSON.parse(cleanedText));
     return parsed;

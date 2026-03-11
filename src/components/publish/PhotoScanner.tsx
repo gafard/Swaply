@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type RefObject, useRef, useState } from "react";
+import { type ChangeEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -9,8 +9,6 @@ import {
   Check,
   FolderOpen,
   RefreshCw,
-  Sparkles,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -51,101 +49,36 @@ export default function PhotoScanner({
   const t = useTranslations("publish");
   const currentQuality = qualityResults[currentStep];
   const currentPreview = photoPreviews[currentStep];
-  const [sourcePickerMode, setSourcePickerMode] = useState<"scan" | "retake" | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
-  const libraryInputRef = useRef<HTMLInputElement | null>(null);
-
-  const openSourcePicker = (mode: "scan" | "retake") => setSourcePickerMode(mode);
-  const closeSourcePicker = () => setSourcePickerMode(null);
-
-  const triggerInput = (ref: RefObject<HTMLInputElement | null>) => {
-    if (!ref.current) {
-      return;
-    }
-
-    ref.current.value = "";
-    ref.current.click();
-  };
-
-  const handleCameraChange = (event: ChangeEvent<HTMLInputElement>) => {
-    closeSourcePicker();
-    onFileChange(event);
-  };
-
-  const handleLibraryChange = (event: ChangeEvent<HTMLInputElement>) => {
-    closeSourcePicker();
-    onFileChange(event);
-  };
 
   return (
-    <div className="space-y-6">
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        aria-hidden="true"
-        tabIndex={-1}
-        onChange={handleCameraChange}
-      />
-      <input
-        ref={libraryInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        aria-hidden="true"
-        tabIndex={-1}
-        onChange={handleLibraryChange}
-      />
-
-      <div className="paper-panel relative overflow-hidden rounded-[34px] p-5">
-        <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-blue-200/30 blur-3xl" />
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col">
-            <label className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
-              {t("scanner.title")}
-            </label>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="font-display text-[1.75rem] font-bold tracking-[-0.05em] text-foreground">
-                {t("scanner.stepCounter", {
-                  current: currentStep + 1,
-                  total: scanSteps.length,
-                })}
-              </span>
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-slate-300" />
-              <span className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-                {t("scanner.aiAssisted")}
-              </span>
-            </div>
+    <div className="space-y-4">
+      <div className="px-1">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+              {t("scanner.stepCounter", {
+                current: currentStep + 1,
+                total: scanSteps.length,
+              })}
+            </p>
+            <h3 className="mt-2 font-display text-[1.6rem] font-bold tracking-[-0.05em] text-slate-950">
+              {scanSteps[currentStep].label}
+            </h3>
+            <p className="mt-1 max-w-[20rem] text-sm font-medium leading-5 text-slate-500">
+              {scanSteps[currentStep].desc}
+            </p>
           </div>
 
-          {isCheckingQuality && (
-            <div className="animate-pulse rounded-full border border-primary/10 bg-[#edf3ff] px-3 py-2 shadow-sm">
+          {isCheckingQuality ? (
+            <div className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-sm">
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-3.5 w-3.5 animate-spin text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
                   {t("scanner.vision")}
                 </span>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between px-1">
-        <div className="flex flex-col">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
-            {scanSteps[currentStep].label}
-          </label>
-          <p className="mt-1 max-w-[220px] text-sm font-medium leading-5 text-slate-500">
-            {scanSteps[currentStep].desc}
-          </p>
-        </div>
-
-        <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm">
-          {t("scanner.aiAssisted")}
+          ) : null}
         </div>
       </div>
 
@@ -158,221 +91,147 @@ export default function PhotoScanner({
             exit={{ opacity: 0, x: -20, scale: 0.95 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "group absolute inset-0 overflow-hidden rounded-[36px] border shadow-[0_24px_70px_rgba(16,32,58,0.18)] transition-all duration-700",
+              "absolute inset-0 overflow-hidden rounded-[32px] border bg-white shadow-[0_18px_48px_rgba(16,32,58,0.12)] transition-all duration-500",
               isCheckingQuality
-                ? "border-primary/35 shadow-[0_24px_70px_rgba(36,87,255,0.16)]"
-                : "border-white/30"
+                ? "border-primary/35 shadow-[0_20px_55px_rgba(36,87,255,0.12)]"
+                : "border-slate-200/70"
             )}
           >
             {currentQuality && (
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="absolute inset-x-6 top-6 z-30"
+                className="absolute inset-x-4 top-4 z-30"
               >
                 <div
                   className={cn(
-                    "flex items-center justify-between rounded-3xl border p-4 text-white shadow-popup backdrop-blur-2xl",
+                    "flex items-center gap-3 rounded-full border px-4 py-3 text-white shadow-popup backdrop-blur-2xl",
                     currentQuality.qualityScore > 0.7
                       ? "border-emerald-500/30 bg-emerald-500/20"
                       : "border-amber-500/30 bg-amber-500/20"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-2xl shadow-inner",
-                        currentQuality.qualityScore > 0.7 ? "bg-emerald-500" : "bg-amber-500"
-                      )}
-                    >
-                      {currentQuality.qualityScore > 0.7 ? (
-                        <Check className="h-5 w-5" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider leading-none">
-                        {currentQuality.qualityScore > 0.7
-                          ? t("scanner.quality.excellent")
-                          : t("scanner.quality.warning")}
-                      </p>
-                      <p className="mt-1.5 text-[10px] font-medium leading-none opacity-80">
-                        {currentQuality.suggestions[0] || t("scanner.quality.ready")}
-                      </p>
-                    </div>
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                      currentQuality.qualityScore > 0.7 ? "bg-emerald-500" : "bg-amber-500"
+                    )}
+                  >
+                    {currentQuality.qualityScore > 0.7 ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] leading-none">
+                      {currentQuality.qualityScore > 0.7
+                        ? t("scanner.quality.excellent")
+                        : t("scanner.quality.warning")}
+                    </p>
+                    <p className="mt-1 text-[11px] font-medium leading-none opacity-85">
+                      {currentQuality.suggestions[0] || t("scanner.quality.ready")}
+                    </p>
                   </div>
                 </div>
               </motion.div>
             )}
 
             {currentPreview ? (
-              <div className="group relative h-full w-full">
+              <div className="relative h-full w-full">
                 <img
                   src={currentPreview}
                   alt={t("scanner.previewAlt")}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
-                  <div className="relative w-full max-w-[20rem] px-4">
-                    <button
-                      type="button"
-                      onClick={() => openSourcePicker("retake")}
-                      className="flex w-full items-center justify-center gap-2 rounded-[2rem] bg-white px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-900 shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95"
-                    >
-                      <RefreshCw className="h-5 w-5 text-indigo-600" />
-                      {t("scanner.retakePhoto")}
-                    </button>
-                  </div>
-
-                  {currentStep < scanSteps.length - 1 && (
-                    <button
-                      type="button"
-                      onClick={() => onStepChange(currentStep + 1)}
-                      className="flex items-center gap-2 rounded-[2rem] bg-gradient-to-r from-indigo-600 to-blue-500 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95"
-                    >
-                      {t("scanner.nextStep")}
-                      <ArrowRight className="h-5 w-5" />
-                    </button>
-                  )}
-
-                  <AnimatePresence>
-                    {sourcePickerMode === "retake" ? (
-                      <motion.div
-                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                        className="w-full max-w-[22rem] rounded-[26px] border border-white/15 bg-slate-950/70 p-3 shadow-2xl backdrop-blur-2xl"
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/28 to-transparent px-4 pb-4 pt-16">
+                  <div className="space-y-3 rounded-[24px] border border-white/15 bg-slate-950/48 p-3 shadow-2xl backdrop-blur-xl">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-slate-900 shadow-lg">
+                        <Camera className="h-4 w-4 text-primary" />
+                        {t("scanner.sourcePicker.camera")}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="sr-only"
+                          onChange={onFileChange}
+                        />
+                      </label>
+                      <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[18px] border border-white/15 bg-white/10 px-4 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-white">
+                        <FolderOpen className="h-4 w-4" />
+                        {t("scanner.sourcePicker.library")}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="sr-only"
+                          onChange={onFileChange}
+                        />
+                      </label>
+                    </div>
+                    {currentStep < scanSteps.length - 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => onStepChange(currentStep + 1)}
+                        className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-white"
                       >
-                        <div className="mb-3 flex items-center justify-between px-2">
-                          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
-                            {t("scanner.sourcePicker.title")}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={closeSourcePicker}
-                            className="rounded-full p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-                            aria-label={t("scanner.sourcePicker.cancel")}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            onClick={() => triggerInput(cameraInputRef)}
-                            className="flex items-center justify-center gap-2 rounded-[20px] bg-white px-4 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-900 shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
-                          >
-                            <Camera className="h-4 w-4 text-primary" />
-                            {t("scanner.sourcePicker.camera")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => triggerInput(libraryInputRef)}
-                            className="flex items-center justify-center gap-2 rounded-[20px] border border-white/15 bg-white/8 px-4 py-4 text-xs font-black uppercase tracking-[0.16em] text-white transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
-                          >
-                            <FolderOpen className="h-4 w-4" />
-                            {t("scanner.sourcePicker.library")}
-                          </button>
-                        </div>
-                      </motion.div>
+                        {t("scanner.nextStep")}
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
                     ) : null}
-                  </AnimatePresence>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="relative flex h-full w-full flex-col items-center justify-center bg-[#081535] p-8 text-center">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(36,87,255,0.38),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(255,142,99,0.14),_transparent_30%)]" />
+              <div className="relative flex h-full w-full flex-col items-center justify-center bg-[linear-gradient(180deg,#0f172a_0%,#10203a_100%)] p-8 text-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(36,87,255,0.2),_transparent_34%)]" />
 
-                <div className="pointer-events-none absolute inset-8 rounded-[32px] border border-white/8">
-                  <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/6" />
-                  <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/6" />
-                  <div className="absolute left-0 top-0 h-10 w-10 rounded-tl-3xl border-l-2 border-t-2 border-primary/40" />
-                  <div className="absolute right-0 top-0 h-10 w-10 rounded-tr-3xl border-r-2 border-t-2 border-primary/40" />
-                  <div className="absolute bottom-0 left-0 h-10 w-10 rounded-bl-3xl border-b-2 border-l-2 border-primary/40" />
-                  <div className="absolute bottom-0 right-0 h-10 w-10 rounded-br-3xl border-b-2 border-r-2 border-primary/40" />
-                </div>
-
-                <div className="relative z-10 space-y-6">
+                <div className="relative z-10 space-y-5">
                   <motion.div
                     animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
                     transition={{ repeat: Infinity, duration: 4 }}
-                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] border border-white/10 bg-white/8 shadow-2xl shadow-blue-500/10 backdrop-blur-xl"
+                    className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[24px] border border-white/10 bg-white/10 shadow-2xl backdrop-blur-xl"
                   >
                     {(() => {
                       const Icon = scanSteps[currentStep].icon;
-                      return <Icon className="h-10 w-10 text-white" />;
+                      return <Icon className="h-9 w-9 text-white" />;
                     })()}
                   </motion.div>
-                  <div className="px-4">
-                    <h3 className="font-display mb-2 text-[2rem] font-bold tracking-[-0.05em] text-white">
+                  <div className="px-2">
+                    <h3 className="font-display mb-2 text-[1.9rem] font-bold tracking-[-0.05em] text-white">
                       {scanSteps[currentStep].label}
                     </h3>
-                    <p className="text-sm font-medium leading-relaxed text-white/50">
-                      {scanSteps[currentStep].desc}
+                    <p className="text-sm font-medium leading-relaxed text-white/60">
+                      {scanSteps[currentStep].guide}
                     </p>
                   </div>
                 </div>
 
-                <div className="absolute inset-x-6 bottom-6">
-                  <div className="space-y-3 rounded-[28px] border border-white/10 bg-white/6 p-4 shadow-popup backdrop-blur-2xl">
-                    <p className="mx-auto flex max-w-[240px] items-center justify-center gap-2 text-center text-[9px] font-bold uppercase leading-4 tracking-[0.16em] text-[#7ca3ff]">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {scanSteps[currentStep].guide}
-                    </p>
-                    <div className="relative space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => openSourcePicker("scan")}
-                        className="flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#fffaf2] py-4 text-sm font-black uppercase tracking-[0.2em] text-foreground shadow-[0_14px_40px_rgba(16,32,58,0.22)] transition-all active:scale-95"
-                      >
-                        <Camera className="h-5 w-5 text-primary" />
-                        {t("scanner.scanObject")}
-                      </button>
-
-                      <AnimatePresence>
-                        {sourcePickerMode === "scan" ? (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                            className="rounded-[24px] border border-white/10 bg-slate-950/65 p-3 shadow-2xl backdrop-blur-2xl"
-                          >
-                            <div className="mb-3 flex items-center justify-between px-1">
-                              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">
-                                {t("scanner.sourcePicker.title")}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={closeSourcePicker}
-                                className="rounded-full p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-                                aria-label={t("scanner.sourcePicker.cancel")}
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                            <div className="grid gap-2">
-                              <button
-                                type="button"
-                                onClick={() => triggerInput(cameraInputRef)}
-                                className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3.5 text-xs font-black uppercase tracking-[0.16em] text-slate-900 shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
-                              >
-                                <Camera className="h-4 w-4 text-primary" />
-                                {t("scanner.sourcePicker.camera")}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => triggerInput(libraryInputRef)}
-                                className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/15 bg-white/8 px-4 py-3.5 text-xs font-black uppercase tracking-[0.16em] text-white transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
-                              >
-                                <FolderOpen className="h-4 w-4" />
-                                {t("scanner.sourcePicker.library")}
-                              </button>
-                            </div>
-                          </motion.div>
-                        ) : null}
-                      </AnimatePresence>
-                    </div>
+                <div className="absolute inset-x-5 bottom-5">
+                  <div className="space-y-2 rounded-[24px] border border-white/10 bg-white/8 p-3 shadow-popup backdrop-blur-2xl">
+                    <label className="relative flex cursor-pointer items-center justify-center gap-3 rounded-[18px] bg-[#fffaf2] py-4 text-sm font-black uppercase tracking-[0.16em] text-foreground shadow-[0_14px_40px_rgba(16,32,58,0.22)]">
+                      <Camera className="h-5 w-5 text-primary" />
+                      {t("scanner.sourcePicker.camera")}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="sr-only"
+                        onChange={onFileChange}
+                      />
+                    </label>
+                    <label className="relative flex cursor-pointer items-center justify-center gap-3 rounded-[18px] border border-white/15 bg-white/8 py-4 text-sm font-black uppercase tracking-[0.16em] text-white">
+                      <FolderOpen className="h-5 w-5" />
+                      {t("scanner.sourcePicker.library")}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="sr-only"
+                        onChange={onFileChange}
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
@@ -381,7 +240,7 @@ export default function PhotoScanner({
         </AnimatePresence>
       </div>
 
-      <div className="no-scrollbar flex items-center gap-3 overflow-x-auto px-1 py-2">
+      <div className="no-scrollbar flex items-center gap-2 overflow-x-auto px-1 py-1">
         {scanSteps.map((step, idx) => (
           <button
             key={idx}
@@ -390,7 +249,7 @@ export default function PhotoScanner({
             disabled={!photoPreviews[idx] && idx !== currentStep}
             aria-pressed={currentStep === idx}
               className={cn(
-                "relative flex aspect-square w-20 flex-shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-3xl border-2 shadow-[0_8px_20px_rgba(16,32,58,0.05)] transition-all duration-500",
+                "relative flex aspect-square w-[4.5rem] flex-shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[22px] border shadow-[0_8px_20px_rgba(16,32,58,0.05)] transition-all duration-300",
                 currentStep === idx
                   ? "border-indigo-500 bg-white ring-4 ring-indigo-50 shadow-lg"
                 : "border-transparent bg-white/50",
@@ -432,7 +291,7 @@ export default function PhotoScanner({
             onClick={onReset}
             aria-label={t("scanner.resetAll")}
             title={t("scanner.resetAll")}
-            className="flex aspect-square w-20 flex-shrink-0 items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-rose-200 hover:text-rose-500"
+            className="flex aspect-square w-[4.5rem] flex-shrink-0 items-center justify-center rounded-[22px] border border-dashed border-slate-200 bg-slate-50 text-slate-400 transition-all hover:border-rose-200 hover:text-rose-500"
           >
             <RefreshCw className="h-5 w-5" />
           </button>
