@@ -111,7 +111,34 @@ async function optimizeImageForAI(file: File, maxDimension = 1280, quality = 0.8
 }
 
 type UploadSlotStatus = "idle" | "processing" | "uploading" | "uploaded" | "failed";
-const EMPTY_UPLOAD_STATUSES: UploadSlotStatus[] = ["idle", "idle", "idle", "idle"];
+const TOTAL_PHOTO_SLOTS = 4;
+const EMPTY_STRING_SLOTS = Array.from({ length: TOTAL_PHOTO_SLOTS }, () => "");
+const EMPTY_UPLOAD_STATUSES: UploadSlotStatus[] = Array.from(
+  { length: TOTAL_PHOTO_SLOTS },
+  () => "idle"
+);
+const EMPTY_UPLOAD_PROGRESS = Array.from({ length: TOTAL_PHOTO_SLOTS }, () => 0);
+const EMPTY_QUALITY_RESULTS = Array.from({ length: TOTAL_PHOTO_SLOTS }, () => null);
+
+function findFirstEmptySlot(values: string[]) {
+  for (let index = 0; index < TOTAL_PHOTO_SLOTS; index += 1) {
+    if (!values[index]) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function findNextEmptySlot(values: string[], fromIndex: number) {
+  for (let index = fromIndex + 1; index < TOTAL_PHOTO_SLOTS; index += 1) {
+    if (!values[index]) {
+      return index;
+    }
+  }
+
+  return -1;
+}
 
 export default function PublishPage() {
   const router = useRouter();
@@ -119,11 +146,11 @@ export default function PublishPage() {
   const t = useTranslations("publish");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [analysisPayloads, setAnalysisPayloads] = useState<string[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>(EMPTY_STRING_SLOTS);
+  const [imageUrls, setImageUrls] = useState<string[]>(EMPTY_STRING_SLOTS);
+  const [analysisPayloads, setAnalysisPayloads] = useState<string[]>(EMPTY_STRING_SLOTS);
   const [uploadStatuses, setUploadStatuses] = useState<UploadSlotStatus[]>(EMPTY_UPLOAD_STATUSES);
-  const [uploadProgressBySlot, setUploadProgressBySlot] = useState<number[]>([0, 0, 0, 0]);
+  const [uploadProgressBySlot, setUploadProgressBySlot] = useState<number[]>(EMPTY_UPLOAD_PROGRESS);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [aiError, setAiError] = useState(false);
 
@@ -156,7 +183,8 @@ export default function PublishPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [flowStep, setFlowStep] = useState(0);
   const [isCheckingQuality, setIsCheckingQuality] = useState(false);
-  const [qualityResults, setQualityResults] = useState<(PhotoQualityResult | null)[]>([null, null, null, null]);
+  const [qualityResults, setQualityResults] =
+    useState<(PhotoQualityResult | null)[]>(EMPTY_QUALITY_RESULTS);
   const estimationTimeoutRef = useRef<number | null>(null);
   const estimationRequestIdRef = useRef(0);
   const previewObjectUrlsRef = useRef<Record<number, string>>({});
@@ -798,7 +826,7 @@ export default function PublishPage() {
     requestLocation();
 
     // 1. Process all files
-    const totalSlots = 4;
+    const totalSlots = TOTAL_PHOTO_SLOTS;
     const targetStep = currentStep;
     
     // Create copies to update
@@ -889,9 +917,7 @@ export default function PublishPage() {
             nextUrls[stepToIndex] = uploadedUrl;
             nextStatuses[stepToIndex] = "uploaded";
             nextProgress[stepToIndex] = 100;
-            const nextEmptyAfterCurrent = nextPreviews.findIndex(
-              (preview, index) => !preview && index > stepToIndex && index < totalSlots
-            );
+            const nextEmptyAfterCurrent = findNextEmptySlot(nextPreviews, stepToIndex);
 
             if (nextEmptyAfterCurrent !== -1) {
               setCurrentStep(nextEmptyAfterCurrent);
@@ -920,7 +946,7 @@ export default function PublishPage() {
     setUploadError(nextUploadError);
 
     // Auto-advance logic: find first empty step
-    const firstEmpty = nextPreviews.findIndex((p, idx) => !p && idx < totalSlots);
+    const firstEmpty = findFirstEmptySlot(nextPreviews);
     if (firstEmpty !== -1) {
       setCurrentStep(firstEmpty);
     } else {
@@ -1002,12 +1028,12 @@ export default function PublishPage() {
     cancelScheduledEstimation();
     revokeAllPreviewUrls();
     setFlowStep(0);
-    setPhotoPreviews([]);
-    setImageUrls([]);
-    setAnalysisPayloads([]);
+    setPhotoPreviews(EMPTY_STRING_SLOTS);
+    setImageUrls(EMPTY_STRING_SLOTS);
+    setAnalysisPayloads(EMPTY_STRING_SLOTS);
     setUploadStatuses(EMPTY_UPLOAD_STATUSES);
-    setUploadProgressBySlot([0, 0, 0, 0]);
-    setQualityResults([null, null, null, null]);
+    setUploadProgressBySlot(EMPTY_UPLOAD_PROGRESS);
+    setQualityResults(EMPTY_QUALITY_RESULTS);
     setCurrentStep(0);
     setUploadError(null);
     setAiError(false);
