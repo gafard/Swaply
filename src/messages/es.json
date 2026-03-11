@@ -399,6 +399,12 @@
         "warning": "Atención",
         "ready": "Listo para continuar"
       },
+      "loading": {
+        "preparing": "Preparación",
+        "uploading": "Envío",
+        "processingHint": "Optimización y control de la foto en curso",
+        "uploadingHint": "Subida segura de la foto actual"
+      },
       "steps": {
         "main": {
           "label": "Foto principal",

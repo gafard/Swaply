@@ -25,30 +25,46 @@ export interface PublishScanStep {
 
 type PhotoScannerProps = {
   currentStep: number;
+  currentUploadProgress: number;
+  currentUploadStatus: "idle" | "processing" | "uploading" | "uploaded" | "failed";
   errorMessage?: string | null;
   isCheckingQuality: boolean;
   onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onReset: () => void;
   onStepChange: (step: number) => void;
   photoPreviews: string[];
+  uploadProgressByStep: number[];
+  uploadStatuses: ("idle" | "processing" | "uploading" | "uploaded" | "failed")[];
   qualityResults: (PhotoQualityResult | null)[];
   scanSteps: PublishScanStep[];
 };
 
 export default function PhotoScanner({
   currentStep,
+  currentUploadProgress,
+  currentUploadStatus,
   errorMessage,
   isCheckingQuality,
   onFileChange,
   onReset,
   onStepChange,
   photoPreviews,
+  uploadProgressByStep,
+  uploadStatuses,
   qualityResults,
   scanSteps,
 }: PhotoScannerProps) {
   const t = useTranslations("publish");
   const currentQuality = qualityResults[currentStep];
   const currentPreview = photoPreviews[currentStep];
+  const isCurrentPhotoBusy =
+    currentUploadStatus === "processing" || currentUploadStatus === "uploading";
+  const currentStatusLabel =
+    currentUploadStatus === "processing"
+      ? t("scanner.loading.preparing")
+      : currentUploadStatus === "uploading"
+        ? t("scanner.loading.uploading")
+        : null;
 
   return (
     <div className="space-y-4">
@@ -144,6 +160,44 @@ export default function PhotoScanner({
                   alt={t("scanner.previewAlt")}
                   className="h-full w-full object-cover"
                 />
+                {isCurrentPhotoBusy ? (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/38 backdrop-blur-[2px]">
+                    <div className="w-[78%] max-w-[19rem] rounded-[24px] border border-white/15 bg-slate-950/72 p-4 text-white shadow-2xl backdrop-blur-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+                          <RefreshCw className="h-4.5 w-4.5 animate-spin" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/80">
+                            {currentStatusLabel}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {currentUploadStatus === "processing"
+                              ? t("scanner.loading.processingHint")
+                              : t("scanner.loading.uploadingHint")}
+                          </p>
+                        </div>
+                        {currentUploadStatus === "uploading" ? (
+                          <span className="text-sm font-black tabular-nums text-white">
+                            {Math.round(currentUploadProgress)}%
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-300 transition-[width] duration-200"
+                          style={{
+                            width: `${
+                              currentUploadStatus === "processing"
+                                ? 18
+                                : Math.max(currentUploadProgress, 8)
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/28 to-transparent px-4 pb-4 pt-16">
                   <div className="space-y-3 rounded-[24px] border border-white/15 bg-slate-950/48 p-3 shadow-2xl backdrop-blur-xl">
                     <div className="grid grid-cols-2 gap-2">
@@ -174,6 +228,7 @@ export default function PhotoScanner({
                       <button
                         type="button"
                         onClick={() => onStepChange(currentStep + 1)}
+                        disabled={isCurrentPhotoBusy}
                         className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-white"
                       >
                         {t("scanner.nextStep")}
@@ -260,8 +315,34 @@ export default function PhotoScanner({
               <>
                 <img src={photoPreviews[idx]} className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-black/20" />
-                <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 shadow-lg">
-                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                {uploadStatuses[idx] === "processing" || uploadStatuses[idx] === "uploading" ? (
+                  <div className="absolute inset-x-2 bottom-2 z-10 overflow-hidden rounded-full bg-black/45">
+                    <div
+                      className="h-1.5 rounded-full bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-300 transition-[width] duration-200"
+                      style={{
+                        width: `${
+                          uploadStatuses[idx] === "processing"
+                            ? 18
+                            : Math.max(uploadProgressByStep[idx] ?? 0, 8)
+                        }%`,
+                      }}
+                    />
+                  </div>
+                ) : null}
+                <div className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-lg">
+                  {uploadStatuses[idx] === "uploaded" ? (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-emerald-500">
+                      <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                    </div>
+                  ) : uploadStatuses[idx] === "failed" ? (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-rose-500">
+                      <AlertTriangle className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-900/60">
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-white" />
+                    </div>
+                  )}
                 </div>
               </>
             ) : (

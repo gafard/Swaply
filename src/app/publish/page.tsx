@@ -123,6 +123,7 @@ export default function PublishPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [analysisPayloads, setAnalysisPayloads] = useState<string[]>([]);
   const [uploadStatuses, setUploadStatuses] = useState<UploadSlotStatus[]>(EMPTY_UPLOAD_STATUSES);
+  const [uploadProgressBySlot, setUploadProgressBySlot] = useState<number[]>([0, 0, 0, 0]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [aiError, setAiError] = useState(false);
 
@@ -159,6 +160,8 @@ export default function PublishPage() {
   const estimationTimeoutRef = useRef<number | null>(null);
   const estimationRequestIdRef = useRef(0);
   const previewObjectUrlsRef = useRef<Record<number, string>>({});
+  const activeUploadSlotRef = useRef<number | null>(null);
+  const lastUploadErrorRef = useRef<string | null>(null);
 
   const scanSteps: PublishScanStep[] = [
     {
@@ -297,9 +300,23 @@ export default function PublishPage() {
     uploadProgressGranularity: "fine",
     onUploadBegin: () => {
       setUploadError(null);
+      lastUploadErrorRef.current = null;
       clearClientError("images");
     },
+    onUploadProgress: (progress) => {
+      const activeSlot = activeUploadSlotRef.current;
+      if (activeSlot === null) {
+        return;
+      }
+
+      setUploadProgressBySlot((previous) => {
+        const next = [...previous];
+        next[activeSlot] = progress;
+        return next;
+      });
+    },
     onUploadError: (error) => {
+      lastUploadErrorRef.current = error.message;
       setUploadError(error.message);
     },
   });
@@ -312,6 +329,8 @@ export default function PublishPage() {
       )) &&
     !hasFailedPhotoUploads &&
     !uploadError;
+  const currentUploadStatus = uploadStatuses[currentStep] ?? "idle";
+  const currentUploadProgress = uploadProgressBySlot[currentStep] ?? 0;
   const flowSteps: Array<{
     id: "photos" | "analysis" | "details" | "publish";
     label: string;
@@ -788,6 +807,7 @@ export default function PublishPage() {
     let nextPayloads = [...analysisPayloads];
     let nextQuality = [...qualityResults];
     let nextStatuses = [...uploadStatuses];
+    let nextProgress = [...uploadProgressBySlot];
     let nextUploadError: string | null = null;
 
     setIsCheckingQuality(true);
@@ -804,6 +824,7 @@ export default function PublishPage() {
         nextUrls[stepToIndex] = "";
         nextQuality[stepToIndex] = null;
         nextStatuses[stepToIndex] = "processing";
+        nextProgress[stepToIndex] = 0;
 
         try {
           const base64 = await optimizeImageForAI(file);
@@ -840,23 +861,36 @@ export default function PublishPage() {
 
         try {
           nextStatuses[stepToIndex] = "uploading";
+          setUploadStatuses([...nextStatuses]);
+          activeUploadSlotRef.current = stepToIndex;
+          lastUploadErrorRef.current = null;
+          setUploadProgressBySlot((previous) => {
+            const next = [...previous];
+            next[stepToIndex] = 0;
+            return next;
+          });
           const optimizedUploadFile = await optimizeImageFileForUpload(file);
           const result = await startUpload([optimizedUploadFile]);
-          const uploadedUrl = result?.[0]?.ufsUrl ?? result?.[0]?.serverData?.imageUrl ?? null;
+          const uploadResult = Array.isArray(result) ? result[0] : null;
+          const uploadedUrl = uploadResult?.ufsUrl ?? uploadResult?.serverData?.imageUrl ?? null;
 
           if (uploadedUrl) {
             nextUrls[stepToIndex] = uploadedUrl;
             nextStatuses[stepToIndex] = "uploaded";
+            nextProgress[stepToIndex] = 100;
           } else {
-            throw new Error(t("errors.imagesUploadFailed"));
+            throw new Error(lastUploadErrorRef.current || t("errors.imagesUploadFailed"));
           }
         } catch (err) {
           console.error("Upload error for file", i, err);
           nextStatuses[stepToIndex] = "failed";
+          nextProgress[stepToIndex] = 0;
           nextUploadError =
             err instanceof Error && err.message.length > 0
               ? err.message
               : t("errors.imagesUploadFailed");
+        } finally {
+          activeUploadSlotRef.current = null;
         }
       }
     } finally {
@@ -868,6 +902,7 @@ export default function PublishPage() {
     setAnalysisPayloads(nextPayloads);
     setQualityResults(nextQuality);
     setUploadStatuses(nextStatuses);
+    setUploadProgressBySlot(nextProgress);
     setUploadError(nextUploadError);
 
     // Auto-advance logic: find first empty step
@@ -957,6 +992,7 @@ export default function PublishPage() {
     setImageUrls([]);
     setAnalysisPayloads([]);
     setUploadStatuses(EMPTY_UPLOAD_STATUSES);
+    setUploadProgressBySlot([0, 0, 0, 0]);
     setQualityResults([null, null, null, null]);
     setCurrentStep(0);
     setUploadError(null);
@@ -1095,10 +1131,14 @@ export default function PublishPage() {
                     currentStep={currentStep}
                     errorMessage={scannerErrorMessage}
                     isCheckingQuality={isCheckingQuality}
+                    currentUploadProgress={currentUploadProgress}
+                    currentUploadStatus={currentUploadStatus}
                     onFileChange={handleImageChange}
                     onReset={resetScanner}
                     onStepChange={setCurrentStep}
                     photoPreviews={photoPreviews}
+                    uploadProgressByStep={uploadProgressBySlot}
+                    uploadStatuses={uploadStatuses}
                     qualityResults={qualityResults}
                     scanSteps={scanSteps}
                   />
