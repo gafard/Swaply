@@ -809,6 +809,14 @@ export default function PublishPage() {
     let nextStatuses = [...uploadStatuses];
     let nextProgress = [...uploadProgressBySlot];
     let nextUploadError: string | null = null;
+    const syncUploadSnapshot = () => {
+      setPhotoPreviews([...nextPreviews]);
+      setImageUrls([...nextUrls]);
+      setAnalysisPayloads([...nextPayloads]);
+      setQualityResults([...nextQuality]);
+      setUploadStatuses([...nextStatuses]);
+      setUploadProgressBySlot([...nextProgress]);
+    };
 
     setIsCheckingQuality(true);
 
@@ -825,6 +833,7 @@ export default function PublishPage() {
         nextQuality[stepToIndex] = null;
         nextStatuses[stepToIndex] = "processing";
         nextProgress[stepToIndex] = 0;
+        syncUploadSnapshot();
 
         try {
           const base64 = await optimizeImageForAI(file);
@@ -833,6 +842,7 @@ export default function PublishPage() {
           console.error("AI payload preparation error for file", i, err);
           nextPayloads[stepToIndex] = "";
         }
+        syncUploadSnapshot();
 
         try {
           const base64ForQuality = nextPayloads[stepToIndex];
@@ -858,10 +868,11 @@ export default function PublishPage() {
           console.error("Quality analysis error for file", i, err);
           nextQuality[stepToIndex] = null;
         }
+        syncUploadSnapshot();
 
         try {
           nextStatuses[stepToIndex] = "uploading";
-          setUploadStatuses([...nextStatuses]);
+          syncUploadSnapshot();
           activeUploadSlotRef.current = stepToIndex;
           lastUploadErrorRef.current = null;
           setUploadProgressBySlot((previous) => {
@@ -891,18 +902,14 @@ export default function PublishPage() {
               : t("errors.imagesUploadFailed");
         } finally {
           activeUploadSlotRef.current = null;
+          syncUploadSnapshot();
         }
       }
     } finally {
       setIsCheckingQuality(false);
     }
 
-    setPhotoPreviews(nextPreviews);
-    setImageUrls(nextUrls);
-    setAnalysisPayloads(nextPayloads);
-    setQualityResults(nextQuality);
-    setUploadStatuses(nextStatuses);
-    setUploadProgressBySlot(nextProgress);
+    syncUploadSnapshot();
     setUploadError(nextUploadError);
 
     // Auto-advance logic: find first empty step
