@@ -68,19 +68,19 @@ export default function DiscoveryCard({
       onDragEnd={handleDragEnd}
       whileDrag={{ scale: 1.02 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="absolute inset-0 overflow-hidden rounded-[32px] bg-white shadow-popup border border-white/20 touch-none"
+      className="absolute inset-0 overflow-hidden rounded-[40px] bg-white shadow-popup border border-white/20 touch-none shadow-[0_22px_70px_rgba(0,0,0,0.18)]"
     >
-      {/* Swipe Feedback Labels - Smaller and more subtle */}
+      {/* Swipe Feedback Labels */}
       <motion.div
         style={{ opacity: reserveOpacity, scale: reserveScale }}
-        className="absolute left-6 top-8 z-40 rounded-2xl border border-emerald-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-emerald-500 uppercase tracking-widest shadow-lg rotate-[-12deg]"
+        className="absolute left-8 top-10 z-40 rounded-full border border-emerald-500 bg-emerald-500/10 backdrop-blur-xl px-5 py-2 text-[12px] font-black text-emerald-500 uppercase tracking-widest shadow-lg rotate-[-12deg]"
       >
         {t("reserve")}
       </motion.div>
 
       <motion.div
         style={{ opacity: skipOpacity, scale: skipScale }}
-        className="absolute right-6 top-8 z-40 rounded-2xl border border-rose-500/50 bg-white/10 backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold text-rose-500 uppercase tracking-widest shadow-lg rotate-[12deg]"
+        className="absolute right-8 top-10 z-40 rounded-full border border-rose-500 bg-rose-500/10 backdrop-blur-xl px-5 py-2 text-[12px] font-black text-rose-500 uppercase tracking-widest shadow-lg rotate-[12deg]"
       >
         {t("skip")}
       </motion.div>
@@ -95,48 +95,53 @@ export default function DiscoveryCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <Package className="h-16 w-16 text-slate-200" />
+            <Package className="h-20 w-20 text-slate-200" />
           </div>
         )}
 
-        {/* Global Scrim Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        {/* Dynamic Scrim Overlays */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-black/20 to-transparent" />
 
-        {/* Floating Info (Style C - Minimalist & Premium) */}
-        <div className="absolute inset-x-4 bottom-4 z-30">
-          <div className="bg-black/10 backdrop-blur-3xl border border-white/10 rounded-[28px] p-5 shadow-2xl space-y-3 overflow-hidden">
-            <div className="flex items-end justify-between">
-              <div className="space-y-1.5">
-                <h2 className="text-xl font-semibold text-white tracking-tight leading-tight">
-                  {item.title}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-white">
-                    {item.creditValue} <span className="text-[10px] text-white/50 font-medium tracking-tighter">CR</span>
-                  </span>
-                  <div className="w-1 h-1 rounded-full bg-white/20" />
-                  <div className="flex items-center gap-1.5 opacity-80">
-                     <MapPin className="w-3 h-3 text-white/60" />
-                     <span className="text-[10px] font-medium text-white uppercase tracking-tight leading-none">
-                       {item.locationZone}
-                     </span>
-                  </div>
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/10 border border-white/5">
-                    <span className="text-[10px] font-bold text-white tracking-tight">{t("nearby")}</span>
-                  </div>
+        {/* Content Overlay */}
+        <div className="absolute inset-x-6 bottom-8 z-30">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-3xl font-bold text-white tracking-tight leading-tight drop-shadow-sm">
+                {item.title}
+              </h2>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 opacity-90">
+                   <MapPin className="w-3.5 h-3.5 text-white/70" />
+                   <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                     {item.locationZone}
+                   </span>
                 </div>
+                <div className="h-1 w-1 rounded-full bg-white/30" />
+                <span className="text-[11px] font-black text-white/80 uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded-md border border-white/5">
+                  {t("nearby")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2">
+                <span className="text-2xl font-black text-white tracking-tighter">
+                  {item.creditValue}
+                </span>
+                <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">SWAPS</span>
               </div>
               
-              <div className="flex items-center gap-2 group/seller">
-                 <div className="text-right">
-                    <p className="text-[10px] font-bold text-white tracking-wide leading-none">{item.owner.username}</p>
-                    <div className="flex items-center gap-0.5 mt-0.5 justify-end">
-                       <Star className="w-2 h-2 fill-amber-400 border-none" />
-                       <span className="text-[10px] font-medium text-white/70 truncate max-w-[40px]">{item.owner.trustScore}</span>
-                    </div>
-                 </div>
-                 <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-xl flex items-center justify-center text-[12px] text-white border border-white/30 font-semibold shadow-inner">
+              <div className="flex items-center gap-2 group/seller bg-black/20 backdrop-blur-md rounded-2xl p-1.5 pr-4 border border-white/5">
+                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[14px] text-white border border-white/20 font-black shadow-inner">
                     {item.owner.username.charAt(0).toUpperCase()}
+                 </div>
+                 <div>
+                    <p className="text-[11px] font-black text-white tracking-wide leading-none">{item.owner.username}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                       <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                       <span className="text-[10px] font-black text-white/60 tracking-tighter">{item.owner.trustScore}</span>
+                    </div>
                  </div>
               </div>
             </div>

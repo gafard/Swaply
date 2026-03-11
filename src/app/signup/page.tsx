@@ -11,6 +11,8 @@ import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import { TERMS_VERSION } from "@/lib/legal";
 import SuccessView from "@/components/SuccessView";
+import ErrorView from "@/components/ErrorView";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -23,6 +25,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [termsError, setTermsError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
@@ -34,7 +37,8 @@ export default function SignupPage() {
 
     setLoading(true);
     setTermsError("");
-    const { error } = await supabase.auth.signUp({
+    setError(null);
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -44,14 +48,14 @@ export default function SignupPage() {
         },
       },
     });
-    if (!error) {
+    if (!authError) {
       setShowSuccess(true);
     } else {
-      console.error("Signup error:", error);
-      if (error.message?.includes("User already registered")) {
-        alert(t("errors.emailAlreadyInUse"));
+      console.error("Signup error:", authError);
+      if (authError.message?.includes("User already registered")) {
+        setError(t("errors.emailAlreadyInUse"));
       } else {
-        alert(t("errors.generic"));
+        setError(t("errors.generic"));
       }
       setLoading(false);
     }
@@ -73,17 +77,29 @@ export default function SignupPage() {
     redirectTo.searchParams.set("termsAcceptedAt", new Date().toISOString());
     redirectTo.searchParams.set("termsVersion", TERMS_VERSION);
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectTo.toString(),
       },
     });
 
-    if (error) {
-      alert(t("errors.google"));
+    if (authError) {
+      setError(t("errors.google"));
       setGoogleLoading(false);
     }
+  }
+
+  if (error && error.includes("Google")) {
+    return (
+      <ErrorView
+        title="Erreur d'inscription"
+        subtitle={error}
+        onRetry={() => setError(null)}
+        secondaryActionHref={localizeHref(locale, "/login")}
+        secondaryActionLabel="Se connecter"
+      />
+    );
   }
 
   if (showSuccess) {

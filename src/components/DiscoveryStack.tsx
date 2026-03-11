@@ -12,6 +12,7 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 import { reserveItem } from "@/app/actions/exchange";
 import { toggleSaveItem } from "@/app/actions/item";
@@ -37,7 +38,7 @@ export default function DiscoveryStack({
 }) {
   const [items] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [toast, setToast] = useState<{
+  const [toastState, setToastState] = useState<{
     show: boolean;
     text: string;
     type: "RESERVE" | "SAVE";
@@ -51,7 +52,6 @@ export default function DiscoveryStack({
   const t = useTranslations("discoverStack");
 
   const currentItem = items[currentIndex];
-  const currentLocationLabel = currentItem?.locationZone || t("localMarket");
 
   const handleSwipeRight = async () => {
     if (!currentItem) {
@@ -61,18 +61,18 @@ export default function DiscoveryStack({
     try {
       const result = await reserveItem(currentItem.id);
       if (!result.ok || !result.data) {
-        alert(t("reserveError"));
+        toast.error(t("reserveError"));
         return;
       }
 
-      setToast({
+      setToastState({
         show: true,
         text: t("reserved"),
         type: "RESERVE",
         exchangeId: result.data.exchangeId,
       });
     } catch {
-      alert(t("reserveError"));
+      toast.error(t("reserveError"));
     }
   };
 
@@ -83,17 +83,17 @@ export default function DiscoveryStack({
 
     try {
       const { saved } = await toggleSaveItem(currentItem.id);
-      setToast({
+      setToastState({
         show: true,
         text: saved ? t("saved") : t("unsaved"),
         type: "SAVE",
       });
 
       setTimeout(() => {
-        setToast((prev) => ({ ...prev, show: false }));
+        setToastState((prev) => ({ ...prev, show: false }));
       }, 1800);
     } catch {
-      alert(t("saveError"));
+      toast.error(t("saveError"));
     }
   };
 
@@ -128,31 +128,8 @@ export default function DiscoveryStack({
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background px-standard pb-12 pt-6">
-      <header className="mb-10 flex items-center justify-between px-1">
-        <div className="space-y-0.5">
-          <h1 className="text-xl font-semibold leading-tight tracking-tight text-foreground">
-            {t("title")}
-          </h1>
-          <div className="flex items-center gap-1.5 opacity-60">
-            <MapPin className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-              {currentLocationLabel}
-            </span>
-          </div>
-        </div>
-
-        <div className="rounded-full border border-white/5 bg-foreground px-4 py-2 shadow-card">
-          <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-white">
-            {currentIndex + 1} <span className="text-white/30">/</span> {items.length}{" "}
-            <span className="ml-1 text-[10px] font-medium uppercase tracking-tight opacity-50">
-              {t("items")}
-            </span>
-          </p>
-        </div>
-      </header>
-
-      <div className="relative flex-1">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background pb-8 overflow-hidden">
+      <div className="relative flex-1 mb-6">
         <AnimatePresence>
           {items
             .slice(currentIndex, currentIndex + 2)
@@ -172,34 +149,34 @@ export default function DiscoveryStack({
         </AnimatePresence>
       </div>
 
-      <div className="relative z-50 mt-12 flex items-center justify-center gap-8">
+      <div className="relative z-50 flex items-center justify-center gap-6 shrink-0 pt-2 bg-background/80 backdrop-blur-md rounded-t-3xl">
         <button
           onClick={handleSwipeLeft}
-          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-card transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-danger"
+          className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-danger"
           aria-label={t("skip")}
         >
-          <X className="h-6 w-6 transition-transform duration-500 group-hover:rotate-90" />
+          <X className="h-5 w-5 transition-transform duration-500 group-hover:rotate-90" />
         </button>
 
         <button
           onClick={handleSave}
-          className="group flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-3xl bg-primary text-white shadow-cta transition-all active:scale-95 hover:bg-blue-700"
+          className="group flex h-[4rem] w-[4rem] items-center justify-center rounded-[2rem] bg-slate-950 text-white shadow-cta transition-all active:scale-95 hover:bg-slate-900"
           aria-label={t("save")}
         >
-          <Star className="h-7 w-7 transition-transform duration-500 group-hover:scale-110" />
+          <Star className="h-6 w-6 transition-transform duration-500 group-hover:scale-110" />
         </button>
 
         <button
           onClick={handleSwipeRight}
-          className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-card transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-success"
+          className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-success"
           aria-label={t("reserve")}
         >
-          <MessageSquare className="h-6 w-6 transition-all group-hover:scale-110" />
+          <MessageSquare className="h-5 w-5 transition-all group-hover:scale-110" />
         </button>
       </div>
 
       <AnimatePresence>
-        {toast.show && (
+        {toastState.show && (
           <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -212,11 +189,11 @@ export default function DiscoveryStack({
               </div>
 
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-foreground">{toast.text}</span>
+                <span className="text-sm font-semibold text-foreground">{toastState.text}</span>
 
-                {toast.type === "RESERVE" && toast.exchangeId && (
+                {toastState.type === "RESERVE" && toastState.exchangeId && (
                   <Link
-                    href={localizeHref(locale, `/exchange/${toast.exchangeId}`)}
+                    href={localizeHref(locale, `/exchange/${toastState.exchangeId}`)}
                     className="mt-0.5 text-xs font-semibold text-primary hover:underline underline-offset-2"
                   >
                     {t("goToChat")}

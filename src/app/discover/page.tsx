@@ -18,7 +18,7 @@ export default async function DiscoverPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
-      <TopNav unreadCount={unreadCount} user={user} showGuestActions={false} showSearch={false} />
+      <TopNav unreadCount={unreadCount} user={user} showGuestActions={false} showSearch={false} showBalance={false} />
       <Suspense
         fallback={
           <div className="flex flex-col items-center justify-center py-20">

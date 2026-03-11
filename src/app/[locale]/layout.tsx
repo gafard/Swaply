@@ -74,7 +74,43 @@ export default async function LocaleLayout({
       <OnboardingStatusSync hasCompletedOnboarding={user?.hasCompletedOnboarding ?? null} />
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
       <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#f8f2e9]/90 shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
-        <Toaster position="top-center" />
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          gutter={12}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "rgba(255, 255, 255, 0.85)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.5)",
+              padding: "16px 24px",
+              color: "#0f172a",
+              borderRadius: "28px",
+              fontSize: "14px",
+              fontWeight: "700",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
+              maxWidth: "400px",
+            },
+            success: {
+              iconTheme: {
+                primary: "#10b981",
+                secondary: "#fff",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#f43f5e",
+                secondary: "#fff",
+              },
+              style: {
+                background: "rgba(255, 250, 250, 0.9)",
+                border: "1px solid rgba(244, 63, 94, 0.2)",
+              }
+            },
+          }}
+        />
         {children}
         <BottomNav />
       </div>

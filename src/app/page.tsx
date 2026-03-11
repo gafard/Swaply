@@ -5,6 +5,7 @@ import { ArrowUpRight, LayoutGrid, MapPin, Sparkles, TrendingUp, Zap, type Lucid
 import { getDiscoveryFeed } from "@/app/actions/item";
 import ItemCard from "@/components/ItemCard";
 import TopNav from "@/components/TopNav";
+import FilterBar from "@/components/FilterBar";
 import { getCurrentUser } from "@/lib/auth";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import prisma from "@/lib/prisma";
@@ -145,8 +146,10 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-transparent pb-24 font-sans sm:pb-8">
       <TopNav unreadCount={unreadCount} user={user} />
-
-      <div className="space-y-8 px-5 pt-4 sm:space-y-10 sm:pt-5">
+      <div className="space-y-8 px-5 pt-6 sm:space-y-10">
+        <section className="mb-2 shrink-0">
+          <FilterBar onFilterChange={() => {}} />
+        </section>
         <section className="group relative mb-24 overflow-hidden rounded-[36px] border border-white/70 bg-[#10203a] p-4 shadow-[0_28px_90px_rgba(16,32,58,0.22)] transition-all active:scale-[0.99] sm:mb-0 sm:rounded-[40px] sm:p-7">
           <Link href={discoverHref} className="absolute inset-0 z-20" aria-label={t("discoverModeTitle")} />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(36,87,255,0.9),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(255,130,90,0.22),_transparent_30%)]" />

@@ -16,11 +16,13 @@ export default function TopNav({
   user,
   showGuestActions = true,
   showSearch = true,
+  showBalance = true,
 }: {
   unreadCount: number;
   user: any;
   showGuestActions?: boolean;
   showSearch?: boolean;
+  showBalance?: boolean;
 }) {
   const router = useRouter();
   const locale = useLocale();
@@ -96,43 +98,45 @@ export default function TopNav({
             ) : null}
           </div>
 
-          <div className="relative mt-4 grid gap-3 justify-items-center sm:mt-5">
-            <div
-              className="w-full max-w-[22rem] rounded-[28px] border border-white/80 bg-white/88 px-4 py-3.5 text-center shadow-[0_14px_36px_rgba(16,32,58,0.06)] sm:py-4"
-            >
-              <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                {t("balance")}
-              </span>
-              <div className="mt-1.5 flex min-w-0 items-end justify-center gap-2 sm:mt-2">
-                <span className="font-display text-[2.8rem] font-bold leading-none tracking-[-0.06em] text-slate-950 sm:text-[3.15rem]">
-                  {balance}
+          {showBalance && (
+            <div className="relative mt-4 grid gap-3 justify-items-center sm:mt-5">
+              <div
+                className="w-full max-w-[22rem] rounded-[28px] border border-white/80 bg-white/88 px-4 py-3.5 text-center shadow-[0_14px_36px_rgba(16,32,58,0.06)] sm:py-4"
+              >
+                <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  {t("balance")}
                 </span>
-                <span className="capsule-outline mb-1 inline-flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#8d6515] sm:px-4 sm:py-2 sm:text-[11px]">
-                  Swaps
-                  <span className="text-[#f29e29]">✦</span>
-                </span>
+                <div className="mt-1.5 flex min-w-0 items-end justify-center gap-2 sm:mt-2">
+                  <span className="font-display text-[2.8rem] font-bold leading-none tracking-[-0.06em] text-slate-950 sm:text-[3.15rem]">
+                    {balance}
+                  </span>
+                  <span className="capsule-outline mb-1 inline-flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#8d6515] sm:px-4 sm:py-2 sm:text-[11px]">
+                    Swaps
+                    <span className="text-[#f29e29]">✦</span>
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {hasGuestActions ? (
-              <div className="flex shrink-0 items-center gap-2 self-center">
-                <Link
-                  href={localizeHref(locale, "/login")}
-                  prefetch
-                  className="rounded-full border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  {t("login")}
-                </Link>
-                <Link
-                  href={localizeHref(locale, "/signup")}
-                  prefetch
-                  className="rounded-full bg-[#2457ff] px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_14px_30px_rgba(36,87,255,0.28)] transition-all active:scale-95"
-                >
-                  {t("signup")}
-                </Link>
-              </div>
-            ) : null}
-          </div>
+              {hasGuestActions ? (
+                <div className="flex shrink-0 items-center gap-2 self-center">
+                  <Link
+                    href={localizeHref(locale, "/login")}
+                    prefetch
+                    className="rounded-full border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 transition-colors hover:text-slate-900"
+                  >
+                    {t("login")}
+                  </Link>
+                  <Link
+                    href={localizeHref(locale, "/signup")}
+                    prefetch
+                    className="rounded-full bg-[#2457ff] px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_14px_30px_rgba(36,87,255,0.28)] transition-all active:scale-95"
+                  >
+                    {t("signup")}
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
 

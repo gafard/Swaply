@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2, Package } from "lucide-react";
 
-import FilterBar from "@/components/FilterBar";
 import DiscoveryStack from "@/components/DiscoveryStack";
 import SearchBar from "@/components/SearchBar";
 
@@ -34,7 +33,7 @@ export default function DiscoverContent() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters] = useState<FilterState>({
     country: "",
     city: "",
     zone: "",
@@ -85,13 +84,12 @@ export default function DiscoverContent() {
   }));
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] space-y-4 px-5 pt-4 overflow-hidden">
-      <div className="shrink-0 space-y-4">
+    <div className="flex flex-col h-[calc(100vh-80px)] space-y-2 px-4 pt-2 overflow-hidden">
+      <div className="shrink-0">
         <SearchBar onSearch={setSearchQuery} placeholder={t("searchPlaceholder")} />
-        <FilterBar onFilterChange={setFilters} />
       </div>
 
-      <div className="flex-1 relative mt-4">
+      <div className="flex-1 relative mt-2">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-indigo-500" />

@@ -10,6 +10,8 @@ import AppLogo from "@/components/AppLogo";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { localizeHref, stripLocalePrefix } from "@/lib/i18n/pathnames";
 import { normalizePostAuthPath } from "@/lib/onboarding";
+import ErrorView from "@/components/ErrorView";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -20,6 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function resolveTargetPath() {
     const nextPath =
@@ -33,8 +36,9 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) {
+    setError(null);
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (!authError) {
       const targetPath = resolveTargetPath();
       const bootstrapResponse = await fetch("/api/auth/bootstrap", {
         method: "POST",
@@ -58,13 +62,13 @@ export default function LoginPage() {
       router.push(payload.targetPath || localizeHref(locale, "/"));
       router.refresh();
     } else {
-      console.error("Login error:", error);
-      if (error.message?.includes("Email not confirmed")) {
-        alert(t("errors.emailNotConfirmed"));
-      } else if (error.message?.includes("Invalid login credentials")) {
-        alert(t("errors.invalidCredentials"));
+      console.error("Login error:", authError);
+      if (authError.message?.includes("Email not confirmed")) {
+        setError(t("errors.emailNotConfirmed"));
+      } else if (authError.message?.includes("Invalid login credentials")) {
+        setError(t("errors.invalidCredentials"));
       } else {
-        alert(t("errors.generic"));
+        setError(t("errors.generic"));
       }
       setLoading(false);
     }
@@ -77,17 +81,30 @@ export default function LoginPage() {
     redirectTo.searchParams.set("locale", locale);
     redirectTo.searchParams.set("next", targetPath);
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    setError(null);
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectTo.toString(),
       },
     });
 
-    if (error) {
-      alert(t("errors.google"));
+    if (authError) {
+      setError(t("errors.google"));
       setGoogleLoading(false);
     }
+  }
+
+  if (error && (error.includes("Google") || error.includes("confirmez"))) {
+    return (
+      <ErrorView
+        title="Erreur de connexion"
+        subtitle={error}
+        onRetry={() => setError(null)}
+        secondaryActionHref={localizeHref(locale, "/signup")}
+        secondaryActionLabel="Créer un compte"
+      />
+    );
   }
 
   return (
