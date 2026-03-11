@@ -38,33 +38,36 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col font-sans">
+    <main className="relative flex min-h-screen flex-col overflow-hidden bg-transparent font-sans">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,_rgba(36,87,255,0.2),_transparent_55%)]" />
+      <div className="pointer-events-none absolute -left-14 top-20 h-48 w-48 rounded-full bg-[#ff8e63]/10 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-blue-200/25 blur-3xl" />
       <div className="absolute right-6 top-6 z-20">
         <LocaleSwitcher variant="button" />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-8 pb-20">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-20 pt-24">
         {/* Logo Section */}
-        <div className="mb-12 flex flex-col items-center">
+        <div className="mb-10 flex flex-col items-center">
           <AppLogo
-            size={80}
+            size={84}
             priority
-            className="mb-6 h-20 w-20 rounded-[2rem] shadow-2xl shadow-indigo-200"
+            className="mb-6 h-21 w-21 rounded-[2rem] border border-white/80 bg-white p-2 shadow-[0_18px_45px_rgba(36,87,255,0.16)]"
           />
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Swaply</h1>
+          <h1 className="font-display text-4xl font-bold tracking-[-0.06em] text-slate-950">Swaply</h1>
         </div>
 
-        <div className="w-full max-w-sm space-y-8">
-          <div className="space-y-2 text-center sm:text-left">
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">{t("title")}</h2>
-            <p className="text-sm text-slate-400 font-medium tracking-tight">{t("subtitle")}</p>
+        <div className="paper-panel w-full max-w-sm rounded-[36px] px-6 py-7">
+          <div className="mb-7 space-y-2 text-center sm:text-left">
+            <h2 className="font-display text-[2rem] font-bold tracking-[-0.05em] text-slate-950">{t("title")}</h2>
+            <p className="text-sm font-medium leading-6 text-slate-500">{t("subtitle")}</p>
           </div>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-4">
               <div className="relative">
                 <input 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300 font-medium" 
+                  className="w-full rounded-[22px] border border-slate-200 bg-white/85 px-5 py-4 text-sm font-semibold outline-none transition-all placeholder:text-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50" 
                   placeholder={t("emailPlaceholder")}
                   type="email"
                   value={email} 
@@ -74,7 +77,7 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <input 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-300 font-medium" 
+                  className="w-full rounded-[22px] border border-slate-200 bg-white/85 px-5 py-4 text-sm font-semibold outline-none transition-all placeholder:text-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50" 
                   type="password" 
                   placeholder={t("passwordPlaceholder")}
                   value={password} 
@@ -86,33 +89,33 @@ export default function LoginPage() {
 
             <button 
               disabled={loading}
-              className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 mt-4"
+              className="mt-4 w-full rounded-[24px] bg-[#10203a] py-4 font-black text-white shadow-[0_16px_36px_rgba(16,32,58,0.22)] transition-all hover:bg-[#0d1a31] active:scale-[0.98] disabled:opacity-50"
             >
               {loading ? t("loading") : t("submit")}
             </button>
           </form>
 
-          <div className="relative py-4">
-             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-             <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-black text-slate-300 bg-white px-4 italic">{t("separator")}</div>
+          <div className="relative py-5">
+             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+             <div className="relative flex justify-center bg-[#fffaf2] px-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">{t("separator")}</div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-             <button className="flex items-center justify-center py-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
+             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
                 <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">G</div>
              </button>
-             <button className="flex items-center justify-center py-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
+             <button className="flex items-center justify-center rounded-[22px] border border-slate-200 bg-white py-4 transition-colors hover:bg-slate-50">
                 <div className="w-5 h-5 bg-indigo-50 rounded-md flex items-center justify-center text-[10px] font-black text-indigo-600">f</div>
              </button>
           </div>
 
-          <div className="pt-4 flex flex-col items-center gap-4">
-            <p className="text-sm text-slate-400 font-medium">
+          <div className="flex flex-col items-center gap-4 pt-5">
+            <p className="text-sm font-medium text-slate-500">
               {t("noAccount")}
             </p>
             <Link 
               href={localizeHref(locale, "/signup")}
-              className="w-full text-center border-2 border-slate-100 text-slate-900 font-black py-4 rounded-2xl hover:bg-slate-50 active:scale-[0.98] transition-all text-sm"
+              className="w-full rounded-[24px] border border-slate-200 bg-white py-4 text-center text-sm font-black text-slate-900 transition-all hover:bg-slate-50 active:scale-[0.98]"
             >
               {t("createAccount")}
             </Link>

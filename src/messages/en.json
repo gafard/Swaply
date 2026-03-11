@@ -11,8 +11,10 @@
     "profile": "Profile"
   },
   "topNav": {
+    "hello": "Hello",
     "greeting": "Hello, {name} 👋",
     "friend": "Friend",
+    "balance": "Local balance",
     "login": "Log in",
     "signup": "Sign up",
     "searchPlaceholder": "Search an item, a category..."
@@ -253,7 +255,12 @@
     "discoverModeBody": "Swipe to match items",
     "nearbyTitle": "New near you",
     "popularTitle": "Popular items",
-    "dealsTitle": "Best deals"
+    "dealsTitle": "Best deals",
+    "localMarket": "Local market",
+    "emptyBadge": "Live market",
+    "emptyTitle": "This shelf is waiting for its first standout listing",
+    "emptyBody": "Publish a well-presented item and give this local market real momentum.",
+    "publishCta": "Publish"
   },
   "discover": {
     "searchPlaceholder": "Search by name, description...",
@@ -377,6 +384,7 @@
       "vision": "Vision...",
       "previewAlt": "Photo preview",
       "retakePhoto": "Retake this photo",
+      "resetAll": "Reset scanner",
       "nextStep": "Go to next step",
       "scanObject": "Scan item",
       "stepBadge": "Shot {index}",
@@ -503,6 +511,10 @@
       "loadGeo": "Unable to load locations.",
       "maxPhotos": "Maximum 4 photos allowed.",
       "aiPhotoQuality": "AI needs a sharper photo to identify the item. Please try again.",
+      "gpsNotSupported": "Geolocation is not available on this device.",
+      "gpsPermissionDenied": "Geolocation was denied. Choose your zone manually.",
+      "gpsUnavailable": "Current position is unavailable. Select your zone manually.",
+      "gpsTimeout": "Geolocation timed out. Try again or select your zone manually.",
       "authRequired": "Sign in to publish an item.",
       "titleInvalid": "Invalid title.",
       "descriptionInvalid": "Invalid description.",
@@ -510,6 +522,48 @@
       "imagesRequired": "Please add at least 2 photos.",
       "locationUnavailable": "Location unavailable.",
       "generic": "Unable to publish the item."
+    },
+    "flow": {
+      "badge": "Publish flow",
+      "counter": "Step {current} of {total}",
+      "next": "Continue",
+      "back": "Back",
+      "submit": "Publish now",
+      "steps": {
+        "photos": {
+          "label": "Photos",
+          "description": "Capture at least 2 clear views"
+        },
+        "analysis": {
+          "label": "AI review",
+          "description": "Review AI signals and real condition"
+        },
+        "details": {
+          "label": "Details",
+          "description": "Add title and useful context"
+        },
+        "pricing": {
+          "label": "Swaps price",
+          "description": "Adjust the suggested value"
+        },
+        "publish": {
+          "label": "Publish",
+          "description": "Choose the zone and go live"
+        }
+      },
+      "aiFallback": {
+        "title": "AI review unavailable",
+        "body": "The listing can still be completed manually. Just verify the real condition before moving on."
+      },
+      "summary": {
+        "title": "Final check",
+        "photos": "{count} photos ready",
+        "item": "Item",
+        "itemFallback": "Title to confirm",
+        "price": "Price",
+        "zone": "Zone",
+        "zoneFallback": "Zone to confirm"
+      }
     }
   },
   "moderation": {

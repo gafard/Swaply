@@ -71,7 +71,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
-      <div className="max-w-md mx-auto relative bg-[#F7F7F5] min-h-screen shadow-2xl shadow-gray-200 lg:border-x lg:border-gray-100 overflow-x-hidden">
+      <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#f8f2e9]/90 shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
         <Toaster position="top-center" />
         {children}
         <BottomNav />

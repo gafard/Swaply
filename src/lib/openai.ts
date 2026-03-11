@@ -1,10 +1,14 @@
 import OpenAI from "openai";
 
+function resolveReferer() {
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+}
+
 export const getOpenAI = () => new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY || "dummy",
   baseURL: "https://openrouter.ai/api/v1",
   defaultHeaders: {
-    "HTTP-Referer": "http://localhost:3000", // Required by OpenRouter for ranking
+    "HTTP-Referer": resolveReferer(),
     "X-Title": "Swaply",
   }
 });

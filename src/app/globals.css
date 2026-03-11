@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F7F7F5;
-  --surface: #FFFFFF;
-  --foreground: #0F172A;
-  --muted: #64748B;
-  --primary: #2563EB;
+  --background: #f6f1e8;
+  --surface: #fffaf2;
+  --foreground: #10203a;
+  --muted: #6a778f;
+  --primary: #2457ff;
   --success: #16A34A;
   --warning: #F59E0B;
   --danger: #E11D48;
-  --border: #E2E8F0;
+  --border: #d8dfec;
   
   /* Soft accents */
   --indigo-soft-bg: #EEF2FF;
@@ -21,7 +21,8 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   
   --color-background: var(--background);
   --color-surface: var(--surface);
@@ -48,18 +49,38 @@
   --spacing-wide: 40px;
 
   /* Shadows */
-  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.06);
-  --shadow-popup: 0 12px 32px rgba(15, 23, 42, 0.12);
-  --shadow-cta: 0 6px 20px rgba(37, 99, 235, 0.18);
+  --shadow-card: 0 14px 42px rgba(16, 32, 58, 0.08);
+  --shadow-popup: 0 18px 50px rgba(16, 32, 58, 0.14);
+  --shadow-cta: 0 12px 26px rgba(36, 87, 255, 0.24);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  background-image:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 32%),
+    radial-gradient(circle at top right, rgba(36, 87, 255, 0.08), transparent 28%),
+    linear-gradient(180deg, #fbf8f2 0%, #f6f1e8 55%, #f3ede3 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(16, 32, 58, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 32, 58, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.22), transparent 70%);
+  z-index: 0;
 }
 
 /* Utilities for Glassmorphism */
 @layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
   .glass {
     @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)];
   }
@@ -68,6 +89,15 @@ body {
   }
   .glass-dark {
     @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-lg text-white;
+  }
+  .paper-panel {
+    @apply border border-white/70 bg-[#fffaf2]/90 backdrop-blur-xl shadow-[0_18px_55px_rgba(16,32,58,0.08)];
+  }
+  .ink-title {
+    @apply font-display tracking-[-0.04em] text-[#10203a];
+  }
+  .capsule-outline {
+    @apply rounded-full border border-slate-200/80 bg-white/75 shadow-[0_10px_24px_rgba(16,32,58,0.08)];
   }
   
   /* Smooth hiding scrollbar while keeping scroll functionality */

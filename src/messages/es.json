@@ -11,8 +11,10 @@
     "profile": "Perfil"
   },
   "topNav": {
+    "hello": "Hola",
     "greeting": "Hola, {name} 👋",
     "friend": "Amigo",
+    "balance": "Saldo local",
     "login": "Entrar",
     "signup": "Crear cuenta",
     "searchPlaceholder": "Buscar un objeto, una categoría..."
@@ -116,7 +118,12 @@
     "discoverModeBody": "Desliza para encontrar objetos",
     "nearbyTitle": "Nuevos cerca de ti",
     "popularTitle": "Objetos populares",
-    "dealsTitle": "Buenas ofertas"
+    "dealsTitle": "Buenas ofertas",
+    "localMarket": "Mercado local",
+    "emptyBadge": "Mercado activo",
+    "emptyTitle": "Esta vitrina espera su primer anuncio fuerte",
+    "emptyBody": "Publica un objeto bien presentado y dale impulso real a este mercado local.",
+    "publishCta": "Publicar"
   },
   "discover": {
     "searchPlaceholder": "Buscar por nombre, descripción...",
@@ -377,6 +384,7 @@
       "vision": "Visión...",
       "previewAlt": "Vista previa de la foto",
       "retakePhoto": "Repetir esta foto",
+      "resetAll": "Reiniciar escáner",
       "nextStep": "Ir al siguiente paso",
       "scanObject": "Escanear artículo",
       "stepBadge": "Toma {index}",
@@ -503,6 +511,10 @@
       "loadGeo": "No se pudieron cargar las ubicaciones.",
       "maxPhotos": "Máximo 4 fotos permitidas.",
       "aiPhotoQuality": "La IA necesita una foto más nítida para identificar el artículo. Inténtalo de nuevo.",
+      "gpsNotSupported": "La geolocalización no está disponible en este dispositivo.",
+      "gpsPermissionDenied": "Se rechazó la geolocalización. Elige tu zona manualmente.",
+      "gpsUnavailable": "La posición actual no está disponible. Selecciona tu zona manualmente.",
+      "gpsTimeout": "La geolocalización excedió el tiempo. Inténtalo de nuevo o elige tu zona manualmente.",
       "authRequired": "Inicia sesión para publicar un artículo.",
       "titleInvalid": "Título inválido.",
       "descriptionInvalid": "Descripción inválida.",
@@ -510,6 +522,48 @@
       "imagesRequired": "Añade al menos 2 fotos.",
       "locationUnavailable": "Ubicación no disponible.",
       "generic": "No se pudo publicar el artículo."
+    },
+    "flow": {
+      "badge": "Flujo de publicación",
+      "counter": "Paso {current} de {total}",
+      "next": "Continuar",
+      "back": "Volver",
+      "submit": "Publicar ahora",
+      "steps": {
+        "photos": {
+          "label": "Fotos",
+          "description": "Captura al menos 2 vistas nítidas"
+        },
+        "analysis": {
+          "label": "Análisis IA",
+          "description": "Revisa las señales IA y el estado real"
+        },
+        "details": {
+          "label": "Detalles",
+          "description": "Añade el título y el contexto útil"
+        },
+        "pricing": {
+          "label": "Precio en Swaps",
+          "description": "Ajusta el valor sugerido"
+        },
+        "publish": {
+          "label": "Publicación",
+          "description": "Elige la zona y publica"
+        }
+      },
+      "aiFallback": {
+        "title": "Análisis no disponible",
+        "body": "El anuncio puede continuar sin sugerencia IA. Solo verifica el estado real antes de seguir."
+      },
+      "summary": {
+        "title": "Verificación final",
+        "photos": "{count} fotos listas",
+        "item": "Objeto",
+        "itemFallback": "Título por confirmar",
+        "price": "Precio",
+        "zone": "Zona",
+        "zoneFallback": "Zona por confirmar"
+      }
     }
   },
   "moderation": {

@@ -3,6 +3,11 @@
 import { getOpenAI } from "@/lib/openai";
 import { ITEM_CATEGORIES, AISuggestion, AIEstimation, PhotoQualityResult } from "@/lib/validations";
 import { calculateAIEstimation } from "@/lib/ai-engine";
+import {
+  buildFallbackSuggestion,
+  normalizeAISuggestionPayload,
+  normalizePhotoQualityPayload,
+} from "@/lib/ai-normalization";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Impossible d'analyser l'image";
@@ -60,12 +65,7 @@ RETOURNE UNIQUEMENT UN JSON VALIDE :
 
     const text = response.choices[0].message.content || "{}";
     const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const parsed = JSON.parse(cleanedText) as AISuggestion;
-
-    // Layer 1 Normalization
-    if (!ITEM_CATEGORIES.includes(parsed.category as any)) {
-      parsed.category = "Autre";
-    }
+    const parsed = normalizeAISuggestionPayload(JSON.parse(cleanedText));
     
     // Layer 2: Estimation Engine
     const estimation = await calculateAIEstimation(parsed);
@@ -74,7 +74,12 @@ RETOURNE UNIQUEMENT UN JSON VALIDE :
   } catch (error: unknown) {
     const message = getErrorMessage(error);
     console.error("Swaply AI Error:", message);
-    return {};
+    const fallback = buildFallbackSuggestion();
+    const estimation = await calculateAIEstimation(fallback);
+    return {
+      ...fallback,
+      estimation,
+    };
   }
 }
 
@@ -126,7 +131,8 @@ RETOURNE UNIQUEMENT UN JSON :
     });
 
     const text = response.choices[0].message.content || "{}";
-    const parsed = JSON.parse(text) as PhotoQualityResult;
+    const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const parsed = normalizePhotoQualityPayload(JSON.parse(cleanedText));
     return parsed;
   } catch (error) {
     console.error("Quality Check Error:", error);

@@ -1,18 +1,20 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { publishItem } from "@/app/actions/item";
 import { suggestListingFromImages, analyzePhotoQuality } from "@/app/actions/ai";
 import { useUploadThing } from "@/lib/uploadthing";
-import { Package, Camera, Info, Sparkles, Wand2, Laptop, Clock, ShieldCheck, Headphones, Check, Star, AlertTriangle, Zap, Search, RefreshCw, ArrowRight, BarChart3 } from "lucide-react";
+import { Package, Camera, Clock, ShieldCheck, Check, AlertTriangle, Zap, Search, Sparkles, Info, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateAIEstimation } from "@/lib/ai-engine";
-import { PhotoQualityResult, AIEstimation } from "@/lib/validations";
-import JustificationCard from "@/components/JustificationCard";
+import { PhotoQualityResult } from "@/lib/validations";
+import PhotoScanner, { type PublishScanStep } from "@/components/publish/PhotoScanner";
+import PricingSlider from "@/components/publish/PricingSlider";
+import AIInsightsCard, { type PublishAIInsights } from "@/components/publish/AIInsightsCard";
+import LocationSelector from "@/components/publish/LocationSelector";
 import {
   findNearestZoneInCity,
   GeoCatalog,
@@ -28,6 +30,38 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+function loadImageElement(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Impossible de charger l'image."));
+    image.src = src;
+  });
+}
+
+async function optimizeImageForAI(file: File, maxDimension = 1280, quality = 0.82) {
+  const sourceUrl = await readFileAsDataUrl(file);
+  const image = await loadImageElement(sourceUrl);
+  const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
+
+  if (largestSide <= maxDimension) {
+    return sourceUrl;
+  }
+
+  const scale = maxDimension / largestSide;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.naturalWidth * scale);
+  canvas.height = Math.round(image.naturalHeight * scale);
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return sourceUrl;
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 export default function PublishPage() {
   const router = useRouter();
   const locale = useLocale();
@@ -36,8 +70,8 @@ export default function PublishPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [analysisPayloads, setAnalysisPayloads] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [aiError, setAiError] = useState(false);
 
   // Form State
@@ -47,10 +81,13 @@ export default function PublishPage() {
   const [geoCatalog, setGeoCatalog] = useState<GeoCatalog>([]);
   const [isLoadingGeo, setIsLoadingGeo] = useState(true);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [selectedCountryId, setSelectedCountryId] = useState("");
   const [selectedCityId, setSelectedCityId] = useState("");
   const [selectedZoneId, setSelectedZoneId] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [clientErrors, setClientErrors] = useState<Partial<Record<"title" | "description" | "creditValue" | "images" | "location", string>>>({});
   
   // Technical Details State (Electronics)
   const [techAge, setTechAge] = useState<string>("1_3_years");
@@ -60,26 +97,18 @@ export default function PublishPage() {
   const [functionalStatus, setFunctionalStatus] = useState<"PERFECT" | "DEFECTIVE" | "BROKEN">("PERFECT");
 
   // AI Insights State
-  const [aiInsights, setAiInsights] = useState<{
-    category?: string;
-    subcategory?: string;
-    brand?: string;
-    condition?: string;
-    visualStatus?: "PERFECT" | "DEFECTIVE" | "BROKEN";
-    rarity?: string;
-    fraudRisk?: string;
-    isStockPhoto?: boolean;
-    flags?: string[];
-    confidence?: number;
-    estimation?: AIEstimation;
-  }>({});
+  const [aiInsights, setAiInsights] = useState<PublishAIInsights>({});
 
   // Guided Scanner State
   const [currentStep, setCurrentStep] = useState(0);
+  const [flowStep, setFlowStep] = useState(0);
   const [isCheckingQuality, setIsCheckingQuality] = useState(false);
   const [qualityResults, setQualityResults] = useState<(PhotoQualityResult | null)[]>([null, null, null, null]);
+  const estimationTimeoutRef = useRef<number | null>(null);
+  const estimationRequestIdRef = useRef(0);
+  const previewObjectUrlsRef = useRef<Record<number, string>>({});
 
-  const scanSteps = [
+  const scanSteps: PublishScanStep[] = [
     {
       label: t("scanner.steps.main.label"),
       desc: t("scanner.steps.main.description"),
@@ -142,6 +171,11 @@ export default function PublishPage() {
     [availableZones, selectedZoneId]
   );
   const isElectronics = isElectronicsCategory(aiInsights.category);
+  const photoCount = photoPreviews.filter(Boolean).length;
+  const uploadedImageCount = imageUrls.filter(Boolean).length;
+  const normalizedTitle = title.trim();
+  const normalizedDescription = description.trim();
+  const scannerErrorMessage = clientErrors.images || uploadError || (aiError ? t("errors.aiPhotoQuality") : null);
   const conditionOptions = [
     {
       id: "PERFECT",
@@ -198,6 +232,103 @@ export default function PublishPage() {
     { id: "charger", label: t("technical.accessories.charger") },
     { id: "cables", label: t("technical.accessories.cables") },
   ];
+  const { startUpload, isUploading } = useUploadThing("imageUploader", {
+    uploadProgressGranularity: "fine",
+    onUploadBegin: () => {
+      setUploadError(null);
+      clearClientError("images");
+    },
+    onUploadError: (error) => {
+      setUploadError(error.message);
+    },
+  });
+  const flowSteps = [
+    {
+      id: "photos",
+      label: t("flow.steps.photos.label"),
+      description: t("flow.steps.photos.description"),
+    },
+    {
+      id: "analysis",
+      label: t("flow.steps.analysis.label"),
+      description: t("flow.steps.analysis.description"),
+    },
+    {
+      id: "details",
+      label: t("flow.steps.details.label"),
+      description: t("flow.steps.details.description"),
+    },
+    {
+      id: "pricing",
+      label: t("flow.steps.pricing.label"),
+      description: t("flow.steps.pricing.description"),
+    },
+    {
+      id: "publish",
+      label: t("flow.steps.publish.label"),
+      description: t("flow.steps.publish.description"),
+    },
+  ] as const;
+  const isPhotosStepComplete = uploadedImageCount >= 2;
+  const isAnalysisStepComplete = isPhotosStepComplete && !isUploading && !isAnalyzing;
+  const isDetailsStepComplete =
+    normalizedTitle.length >= 2 &&
+    (normalizedDescription.length === 0 || normalizedDescription.length >= 5);
+  const isPricingStepComplete =
+    Number.isFinite(creditValue) && !Number.isNaN(creditValue) && creditValue >= 10;
+  const isPublishStepComplete = Boolean(selectedCountryId && selectedCityId && selectedZoneId);
+  const flowCompletion = [
+    isPhotosStepComplete,
+    isAnalysisStepComplete,
+    isDetailsStepComplete,
+    isPricingStepComplete,
+    isPublishStepComplete,
+  ];
+  const canAccessFlowStep = (index: number) =>
+    index === 0 || flowCompletion.slice(0, index).every(Boolean);
+  const maxUnlockedFlowStep = flowSteps.reduce(
+    (currentMax, _step, index) => (canAccessFlowStep(index) ? index : currentMax),
+    0
+  );
+  const currentFlowMeta = flowSteps[flowStep];
+  const flowProgress = Math.round(((flowStep + 1) / flowSteps.length) * 100);
+
+  const clearClientError = useCallback(
+    (field: keyof typeof clientErrors) => {
+      setClientErrors((previous) => {
+        if (!previous[field]) {
+          return previous;
+        }
+
+        const next = { ...previous };
+        delete next[field];
+        return next;
+      });
+    },
+    []
+  );
+
+  const revokePreviewAtIndex = useCallback((index: number) => {
+    const existingUrl = previewObjectUrlsRef.current[index];
+    if (existingUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(existingUrl);
+    }
+    delete previewObjectUrlsRef.current[index];
+  }, []);
+
+  const revokeAllPreviewUrls = useCallback(() => {
+    Object.keys(previewObjectUrlsRef.current).forEach((index) => {
+      revokePreviewAtIndex(Number(index));
+    });
+  }, [revokePreviewAtIndex]);
+
+  const cancelScheduledEstimation = useCallback(() => {
+    if (estimationTimeoutRef.current) {
+      clearTimeout(estimationTimeoutRef.current);
+      estimationTimeoutRef.current = null;
+    }
+    estimationRequestIdRef.current += 1;
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -288,50 +419,177 @@ export default function PublishPage() {
     }
   }, [availableZones, selectedZoneId]);
 
-  // Recalculate estimation when tech details change (only for electronics)
-  const refreshEstimation = async (updatedInsights = aiInsights, age = techAge, func = techFunctionality, accs = techAccessories) => {
-    if (isElectronicsCategory(updatedInsights.category) && updatedInsights.confidence) {
-       // We need to pass the base suggestion to the engine
-       const suggestion = {
-         category: updatedInsights.category as any,
-         subcategory: updatedInsights.subcategory || "",
-         brand: updatedInsights.brand || "unknown",
-         condition: updatedInsights.condition as any || "good",
-         visualStatus: updatedInsights.visualStatus || "PERFECT",
-         rarity: updatedInsights.rarity as any || "common",
-         fraudRisk: updatedInsights.fraudRisk as any || "low",
-         isStockPhoto: updatedInsights.isStockPhoto || false,
-         flags: updatedInsights.flags || [],
-         confidence: updatedInsights.confidence,
-         title: title,
-         description: description
-       };
-
-       const newEstimation = await calculateAIEstimation(suggestion, {
-         age,
-         functionality: func,
-         accessories: accs
-       });
-
-       setAiInsights(prev => ({ ...prev, estimation: newEstimation }));
-       setCreditValue(newEstimation.suggestedValue);
+  useEffect(() => {
+    if (!coords || selectedZoneId || availableZones.length === 0) {
+      return;
     }
-  };
 
-  const { startUpload, isUploading } = useUploadThing("imageUploader", {
-    uploadProgressGranularity: "fine",
-    onUploadBegin: () => {
-      setUploadError(null);
-      setUploadProgress(0);
+    const nearest = findNearestZoneInCity(availableZones, coords.lat, coords.lng);
+    if (nearest) {
+      setSelectedZoneId(nearest.id);
+      setGpsError(null);
+      clearClientError("location");
+    }
+  }, [availableZones, clearClientError, coords, selectedZoneId]);
+
+  useEffect(() => {
+    if (selectedZoneId && gpsError) {
+      setGpsError(null);
+    }
+  }, [gpsError, selectedZoneId]);
+
+  useEffect(() => {
+    return () => {
+      cancelScheduledEstimation();
+      revokeAllPreviewUrls();
+    };
+  }, [cancelScheduledEstimation, revokeAllPreviewUrls]);
+
+  useEffect(() => {
+    if (!canAccessFlowStep(flowStep)) {
+      setFlowStep(maxUnlockedFlowStep);
+    }
+  }, [flowStep, maxUnlockedFlowStep]);
+
+  const requestLocation = useCallback(() => {
+    if (coords || isRequestingLocation) {
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setGpsError(t("errors.gpsNotSupported"));
+      return;
+    }
+
+    setIsRequestingLocation(true);
+    setGpsError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setIsRequestingLocation(false);
+      },
+      (error) => {
+        setIsRequestingLocation(false);
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setGpsError(t("errors.gpsPermissionDenied"));
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setGpsError(t("errors.gpsUnavailable"));
+            break;
+          case error.TIMEOUT:
+            setGpsError(t("errors.gpsTimeout"));
+            break;
+          default:
+            setGpsError(t("errors.locationUnavailable"));
+            break;
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10_000,
+        maximumAge: 300_000,
+      }
+    );
+  }, [coords, isRequestingLocation, t]);
+
+  const runEstimation = useCallback(
+    async (
+      requestId: number,
+      updatedInsights = aiInsights,
+      age = techAge,
+      func = techFunctionality,
+      accs = techAccessories
+    ) => {
+      if (!isElectronicsCategory(updatedInsights.category) || !updatedInsights.confidence) {
+        return;
+      }
+
+      const suggestion = {
+        category: updatedInsights.category as any,
+        subcategory: updatedInsights.subcategory || "",
+        brand: updatedInsights.brand || "unknown",
+        condition: (updatedInsights.condition as any) || "good",
+        visualStatus: updatedInsights.visualStatus || "PERFECT",
+        rarity: (updatedInsights.rarity as any) || "common",
+        fraudRisk: (updatedInsights.fraudRisk as any) || "low",
+        isStockPhoto: updatedInsights.isStockPhoto || false,
+        flags: updatedInsights.flags || [],
+        confidence: updatedInsights.confidence,
+        title,
+        description,
+      };
+
+      const newEstimation = await calculateAIEstimation(suggestion, {
+        age,
+        functionality: func,
+        accessories: accs,
+      });
+
+      if (requestId !== estimationRequestIdRef.current) {
+        return;
+      }
+
+      setAiInsights((previous) => ({ ...previous, estimation: newEstimation }));
+      setCreditValue(newEstimation.suggestedValue);
     },
-    onUploadProgress: (progress) => {
-      setUploadProgress(progress);
+    [aiInsights, description, techAccessories, techAge, techFunctionality, title]
+  );
+
+  const refreshEstimation = useCallback(
+    (
+      updatedInsights = aiInsights,
+      age = techAge,
+      func = techFunctionality,
+      accs = techAccessories
+    ) => {
+      cancelScheduledEstimation();
+
+      if (!isElectronicsCategory(updatedInsights.category) || !updatedInsights.confidence) {
+        return;
+      }
+
+      const requestId = estimationRequestIdRef.current;
+      estimationTimeoutRef.current = window.setTimeout(() => {
+        estimationTimeoutRef.current = null;
+        void runEstimation(requestId, updatedInsights, age, func, accs);
+      }, 320);
     },
-    onUploadError: (error) => {
-      setUploadError(error.message);
-      setUploadProgress(0);
-    },
-  });
+    [aiInsights, cancelScheduledEstimation, runEstimation, techAccessories, techAge, techFunctionality]
+  );
+
+  const validateClientForm = useCallback(() => {
+    const nextErrors: Partial<Record<"title" | "description" | "creditValue" | "images" | "location", string>> = {};
+
+    if (uploadedImageCount < 2) {
+      nextErrors.images = t("errors.imagesRequired");
+    }
+
+    if (title.trim().length < 2) {
+      nextErrors.title = t("errors.titleInvalid");
+    }
+
+    const normalizedDescription = description.trim();
+    if (normalizedDescription.length > 0 && normalizedDescription.length < 5) {
+      nextErrors.description = t("errors.descriptionInvalid");
+    }
+
+    if (!Number.isFinite(creditValue) || Number.isNaN(creditValue) || creditValue < 0) {
+      nextErrors.creditValue = t("errors.priceInvalid");
+    }
+
+    if (!selectedCountryId || !selectedCityId || !selectedZoneId) {
+      nextErrors.location = t("errors.locationUnavailable");
+    }
+
+    setClientErrors(nextErrors);
+    return nextErrors;
+  }, [creditValue, description, selectedCityId, selectedCountryId, selectedZoneId, t, title, uploadedImageCount]);
 
   const analyzeImages = async (base64Array: string[]) => {
     setIsAnalyzing(true);
@@ -343,7 +601,7 @@ export default function PublishPage() {
       if (suggestion.description) setDescription(suggestion.description);
       if (suggestion.modelGuess) setModelGuess(suggestion.modelGuess);
       
-      const insights = {
+      const insights: PublishAIInsights = {
         category: suggestion.category,
         subcategory: suggestion.subcategory,
         brand: suggestion.brand,
@@ -364,10 +622,10 @@ export default function PublishPage() {
       }
 
       if (isElectronicsCategory(suggestion.category)) {
-        await refreshEstimation(insights);
+        refreshEstimation(insights);
       }
       
-      if (!suggestion.title && !suggestion.description) {
+      if (!suggestion.estimation) {
         setAiError(true);
       }
     } catch (error) {
@@ -383,7 +641,8 @@ export default function PublishPage() {
     if (files.length === 0) return;
 
     // Limit to 4 images total
-    const remainingSlots = 4 - photoPreviews.length;
+    const isReplacingCurrentStep = Boolean(photoPreviews[currentStep]);
+    const remainingSlots = 4 - photoCount + (isReplacingCurrentStep ? 1 : 0);
     const filesToUpload = files.slice(0, remainingSlots);
 
     if (filesToUpload.length === 0) {
@@ -391,66 +650,63 @@ export default function PublishPage() {
       return;
     }
 
-    // Trigger location capture
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCoords({ lat: latitude, lng: longitude });
-        const nearest = findNearestZoneInCity(availableZones, latitude, longitude);
-        if (nearest) {
-          setSelectedZoneId(nearest.id);
-        }
-      });
-    }
+    clearClientError("images");
+    requestLocation();
 
     // 1. Process all files
     const totalSlots = 4;
-    let targetStep = currentStep;
+    const targetStep = currentStep;
     
     // Create copies to update
     let nextPreviews = [...photoPreviews];
     let nextUrls = [...imageUrls];
+    let nextPayloads = [...analysisPayloads];
     let nextQuality = [...qualityResults];
 
-    for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
-      const stepToIndex = (targetStep + i) % totalSlots;
-      
-      const previewUrl = URL.createObjectURL(file);
-      nextPreviews[stepToIndex] = previewUrl;
-      
-      try {
-        const base64 = await readFileAsDataUrl(file);
-        setIsCheckingQuality(true);
-        const quality = await analyzePhotoQuality(base64, stepToIndex);
-        setIsCheckingQuality(false);
-        
-        nextQuality[stepToIndex] = quality as PhotoQualityResult;
+    setIsCheckingQuality(true);
 
-        // Auto-fill from first photo EVER (index 0)
-        if (stepToIndex === 0 && quality?.objectDetected) {
-          if (!title) setTitle(quality.objectDetected);
-          setAiInsights(prev => ({ 
-            ...prev, 
-            subcategory: quality.objectDetected || undefined, 
-            brand: quality.brandDetected || undefined,
-            confidence: quality.qualityScore
-          }));
-        }
+    try {
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const stepToIndex = (targetStep + i) % totalSlots;
 
-        const result = await startUpload([file]);
-        if (result) {
-          nextUrls[stepToIndex] = result[0].ufsUrl;
+        revokePreviewAtIndex(stepToIndex);
+        const previewUrl = URL.createObjectURL(file);
+        previewObjectUrlsRef.current[stepToIndex] = previewUrl;
+        nextPreviews[stepToIndex] = previewUrl;
+
+        try {
+          const base64 = await optimizeImageForAI(file);
+          nextPayloads[stepToIndex] = base64;
+          const quality = await analyzePhotoQuality(base64, stepToIndex);
+          nextQuality[stepToIndex] = quality as PhotoQualityResult;
+
+          if (stepToIndex === 0 && quality?.objectDetected) {
+            if (!title) setTitle(quality.objectDetected);
+            setAiInsights((prev) => ({
+              ...prev,
+              subcategory: quality.objectDetected || undefined,
+              brand: quality.brandDetected || undefined,
+              confidence: quality.qualityScore,
+            }));
+          }
+
+          const result = await startUpload([file]);
+          if (result) {
+            nextUrls[stepToIndex] = result[0].ufsUrl;
+          }
+        } catch (err) {
+          console.error("Upload error for file", i, err);
         }
-      } catch (err) {
-        console.error("Upload error for file", i, err);
       }
+    } finally {
+      setIsCheckingQuality(false);
     }
 
     setPhotoPreviews(nextPreviews);
     setImageUrls(nextUrls);
+    setAnalysisPayloads(nextPayloads);
     setQualityResults(nextQuality);
-    setUploadProgress(100);
     setUploadError(null);
 
     // Auto-advance logic: find first empty step
@@ -462,49 +718,22 @@ export default function PublishPage() {
     }
 
     // Overall analysis if 2+
-    if (nextPreviews.filter(Boolean).length >= 2) {
+    if (nextPayloads.filter(Boolean).length >= 2) {
       try {
-        const allBase64 = await Promise.all(
-          nextPreviews.filter(Boolean).map(url => fetch(url).then(r => r.blob()).then(blob => {
-             return new Promise<string>((resolve) => {
-               const reader = new FileReader();
-               reader.onloadend = () => resolve(reader.result as string);
-               reader.readAsDataURL(blob);
-             });
-          }))
-        );
-        analyzeImages(allBase64);
+        const allBase64 = nextPayloads.filter(Boolean);
+        void analyzeImages(allBase64);
       } catch (err) {
         console.error("Analysis skip: failed to prepare base64", err);
       }
     }
+
+    e.target.value = "";
   };
 
-  const manualTriggerAI = async () => {
-    if (photoPreviews.length === 0) return;
-    setIsAnalyzing(true);
-    setAiError(false);
-    
-    try {
-      const allBase64 = await Promise.all(
-        photoPreviews.map(url => fetch(url).then(r => r.blob()).then(blob => {
-           return new Promise<string>((resolve) => {
-             const reader = new FileReader();
-             reader.onloadend = () => resolve(reader.result as string);
-             reader.readAsDataURL(blob);
-           });
-        }))
-      );
-      analyzeImages(allBase64);
-    } catch (error) {
-      setAiError(true);
-      setIsAnalyzing(false);
-    }
-  };
-
-  const isOutOfRange = aiInsights.estimation && (
-    creditValue < aiInsights.estimation.minSuggestedValue || 
-    creditValue > aiInsights.estimation.maxSuggestedValue
+  const isOutOfRange = Boolean(
+    aiInsights.estimation &&
+      (creditValue < aiInsights.estimation.minSuggestedValue ||
+        creditValue > aiInsights.estimation.maxSuggestedValue)
   );
 
   const getPublishErrorMessage = (code: string) => {
@@ -528,6 +757,12 @@ export default function PublishPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const validationErrors = validateClientForm();
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error(Object.values(validationErrors)[0] ?? t("errors.generic"));
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -553,23 +788,45 @@ export default function PublishPage() {
     }
   };
 
-  const removeImage = (index: number) => {
-    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => prev.filter((_, i) => i !== index));
-  };
+  const resetScanner = useCallback(() => {
+    cancelScheduledEstimation();
+    revokeAllPreviewUrls();
+    setFlowStep(0);
+    setPhotoPreviews([]);
+    setImageUrls([]);
+    setAnalysisPayloads([]);
+    setQualityResults([null, null, null, null]);
+    setCurrentStep(0);
+    setUploadError(null);
+    setAiError(false);
+    clearClientError("images");
+  }, [cancelScheduledEstimation, clearClientError, revokeAllPreviewUrls]);
+
+  const goToNextFlowStep = useCallback(() => {
+    setFlowStep((current) => Math.min(current + 1, maxUnlockedFlowStep));
+  }, [maxUnlockedFlowStep]);
+
+  const goToPreviousFlowStep = useCallback(() => {
+    setFlowStep((current) => Math.max(current - 1, 0));
+  }, []);
 
   return (
-    <main className="min-h-screen bg-background flex flex-col pb-24 sm:pb-8">
+    <main className="min-h-screen bg-transparent flex flex-col pb-24 sm:pb-8">
       
       {/* 1. App Header */}
-      <div className="bg-surface/80 backdrop-blur-xl px-5 pt-12 pb-5 sticky top-0 z-40 border-b border-border flex items-center justify-between shadow-sm">
-        <h1 className="text-xl font-semibold text-foreground tracking-tight">{t("title")}</h1>
-        <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 transition-colors">
-           <Package className="w-4.5 h-4.5 text-primary" />
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/70 bg-[#f8f2e9]/80 px-5 pb-5 pt-10 backdrop-blur-2xl">
+        <div>
+          <p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+            Swaply Studio
+          </p>
+          <h1 className="font-display text-[2rem] font-bold tracking-[-0.05em] text-foreground">{t("title")}</h1>
+        </div>
+        <div className="flex h-12 w-12 items-center justify-center rounded-[24px] border border-white/80 bg-white/80 shadow-[0_16px_35px_rgba(36,87,255,0.12)] transition-colors">
+           <Package className="h-5 w-5 text-primary" />
         </div>
       </div>
       
-      <div className="flex-1 w-full px-5 pt-8 z-10">
+      <div className="z-10 flex-1 w-full px-5 pt-7">
         <form onSubmit={handleSubmit} className="space-y-8">
           <input type="hidden" name="imageUrls" value={JSON.stringify(imageUrls)} />
           <input type="hidden" name="latitude" value={coords?.lat || ""} />
@@ -600,781 +857,486 @@ export default function PublishPage() {
           <input type="hidden" name="modelGuess" value={modelGuess} />
           <input type="hidden" name="functionalStatus" value={functionalStatus} />
           <input type="hidden" name="isNotifiedDefective" value={isConditionInconsistent ? "true" : "false"} />
-                {/* 1. Photo Management Grid (TOP PRIORITY) */}
-          {/* 1. GUIDED PHOTO SCANNER (PREMIUM EXPERIENCE) */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex flex-col">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-muted">
-                  {t("scanner.title")}
-                </label>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-foreground font-semibold">
-                    {t("scanner.stepCounter", {
-                      current: currentStep + 1,
-                      total: scanSteps.length,
-                    })}
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-border" />
-                  <span className="text-[10px] text-primary font-bold uppercase tracking-tight italic">
-                    {t("scanner.aiAssisted")}
-                  </span>
-                </div>
-              </div>
-              
-              {isCheckingQuality && (
-                <div className="flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-full border border-primary/10 shadow-sm animate-pulse">
-                  <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                    {t("scanner.vision")}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Main Scanner Area */}
-            <div className="relative aspect-[4/5] w-full h-[450px]">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className={cn(
-                    "absolute inset-0 rounded-[32px] overflow-hidden border-2 transition-all duration-700 shadow-card group",
-                    isCheckingQuality ? "border-primary/40 shadow-blue-100/50" : "border-surface shadow-slate-200/20"
-                  )}
-                >
-                  {/* Real-time Quality Feedback Overlay */}
-                  {qualityResults[currentStep] && (
-                    <motion.div 
-                      initial={{ y: -20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      className="absolute top-6 inset-x-6 z-30"
-                    >
-                      <div className={cn(
-                        "p-4 rounded-3xl backdrop-blur-2xl border shadow-popup flex items-center justify-between",
-                        qualityResults[currentStep]?.qualityScore! > 0.7 ? "bg-emerald-500/20 border-emerald-500/30 text-white" : "bg-amber-500/20 border-amber-500/30 text-white"
-                      )}>
-                         <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-9 h-9 rounded-2xl flex items-center justify-center shadow-inner",
-                              qualityResults[currentStep]?.qualityScore! > 0.7 ? "bg-emerald-500" : "bg-amber-500"
-                            )}>
-                               {qualityResults[currentStep]?.qualityScore! > 0.7 ? <Check className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-                            </div>
-                            <div>
-                               <p className="text-[11px] font-bold uppercase tracking-wider leading-none">
-                                 {qualityResults[currentStep]?.qualityScore! > 0.7
-                                   ? t("scanner.quality.excellent")
-                                   : t("scanner.quality.warning")}
-                               </p>
-                               <p className="text-[10px] opacity-80 font-medium leading-none mt-1.5">
-                                 {qualityResults[currentStep]?.suggestions[0] || t("scanner.quality.ready")}
-                               </p>
-                            </div>
-                         </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Camera / Preview Layer */}
-                  {photoPreviews[currentStep] ? (
-                    <div className="w-full h-full relative group">
-                      <img 
-                        src={photoPreviews[currentStep]} 
-                        alt={t("scanner.previewAlt")} 
-                        className="w-full h-full object-cover" 
-                      />
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
-                         <div className="relative">
-                            <button className="px-8 py-4 bg-white text-slate-900 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all">
-                               <RefreshCw className="w-5 h-5 text-indigo-600" />
-                               {t("scanner.retakePhoto")}
-                            </button>
-                            <input 
-                              type="file" 
-                              accept="image/*"
-                              multiple
-                              className="absolute inset-0 opacity-0 cursor-pointer"
-                              onChange={handleImageChange}
-                            />
-                         </div>
-                         
-                         {currentStep < 3 && (
-                            <button 
-                              onClick={() => setCurrentStep(prev => prev + 1)}
-                              className="px-8 py-4 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-2xl active:scale-95 transition-all"
-                            >
-                               {t("scanner.nextStep")}
-                               <ArrowRight className="w-5 h-5" />
-                            </button>
-                         )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full bg-foreground flex flex-col items-center justify-center p-8 text-center relative">
-                       {/* Scanner Guide Grid */}
-                       <div className="absolute inset-8 border border-white/5 rounded-[32px] pointer-events-none">
-                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/5" />
-                          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-px bg-white/5" />
-                          
-                          {/* Corner Markers */}
-                          <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-primary/40 rounded-tl-3xl" />
-                          <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-primary/40 rounded-tr-3xl" />
-                          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-primary/40 rounded-bl-3xl" />
-                          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-primary/40 rounded-br-3xl" />
-                       </div>
-
-                       <div className="relative z-10 space-y-6">
-                          <motion.div 
-                            animate={{ scale: [1, 1.05, 1], rotate: [0, 5, -5, 0] }}
-                            transition={{ repeat: Infinity, duration: 4 }}
-                            className="w-20 h-20 rounded-[28px] bg-primary/20 backdrop-blur-xl border border-white/10 flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/10"
-                          >
-                             {(() => {
-                               const Icon = scanSteps[currentStep].icon;
-                               return <Icon className="w-10 h-10 text-white" />;
-                             })()}
-                          </motion.div>
-                          <div className="px-4">
-                            <h3 className="text-xl font-semibold text-white tracking-tight mb-2">
-                              {scanSteps[currentStep].label}
-                            </h3>
-                            <p className="text-sm text-white/40 font-medium leading-relaxed">
-                              {scanSteps[currentStep].desc}
-                            </p>
-                          </div>
-                       </div>
-
-                       {/* Call to Action Layer */}
-                       <div className="absolute bottom-10 inset-x-8">
-                          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-5 rounded-[28px] space-y-4 shadow-popup">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center justify-center gap-2">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {scanSteps[currentStep].guide}
-                            </p>
-                            <div className="relative">
-                              <button
-                                type="button"
-                                className="w-full py-4 bg-white rounded-2xl text-foreground font-bold text-sm uppercase tracking-widest shadow-cta flex items-center justify-center gap-3 active:scale-95 transition-all"
-                              >
-                                <Camera className="w-5 h-5 text-primary" />
-                                {t("scanner.scanObject")}
-                              </button>
-                              <input 
-                                type="file" 
-                                accept="image/*"
-                                multiple
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                onChange={handleImageChange}
-                              />
-                            </div>
-                          </div>
-                       </div>
-                    </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Steps & Thumbnails Strip */}
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 px-1">
-               {scanSteps.map((step, idx) => (
-                 <button
-                   key={idx}
-                   type="button"
-                   onClick={() => idx < imageUrls.length && setCurrentStep(idx)}
-                   className={cn(
-                     "relative flex-shrink-0 w-20 aspect-square rounded-3xl border-2 transition-all duration-500 flex flex-col items-center justify-center gap-1 overflow-hidden",
-                     currentStep === idx ? "border-indigo-500 bg-white shadow-lg ring-4 ring-indigo-50" : "border-transparent bg-white/50"
-                   )}
-                 >
-                    {photoPreviews[idx] ? (
-                      <>
-                        <img src={photoPreviews[idx]} className="absolute inset-0 w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/20" />
-                        <div className="relative z-10 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white shadow-lg">
-                           <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <step.icon className={cn("w-5 h-5", currentStep === idx ? "text-indigo-600" : "text-slate-300")} />
-                        <span className={cn("text-[8px] font-black uppercase tracking-tighter", currentStep === idx ? "text-indigo-900" : "text-slate-400")}>
-                          {t("scanner.stepBadge", { index: idx + 1 })}
-                        </span>
-                      </>
-                    )}
-                 </button>
-               ))}
-
-               {imageUrls.length > 0 && (
-                 <button
-                   type="button"
-                   onClick={() => {
-                     setPhotoPreviews([]);
-                     setImageUrls([]);
-                     setCurrentStep(0);
-                     setQualityResults([null, null, null, null]);
-                   }}
-                   className="flex-shrink-0 w-20 aspect-square rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:border-rose-200 transition-all"
-                 >
-                   <RefreshCw className="w-5 h-5" />
-                 </button>
-               )}
-            </div>
-
-            {/* Error Messages */}
-            {(uploadError || aiError) && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-3xl flex items-start gap-3 mx-1">
-                 <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-                 <p className="text-[11px] font-bold text-rose-800 leading-tight">
-                    {uploadError || t("errors.aiPhotoQuality")}
-                 </p>
-              </div>
-            )}
-          </div>
-
-          {/* 2. État de l'objet (Mandatory & Premium) */}
-          {photoPreviews.length > 0 && (
-            <div className="bg-white rounded-[2.5rem] p-7 shadow-xl shadow-slate-200/40 border border-slate-100 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner border border-indigo-100">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 tracking-tight">
-                      {t("condition.title")}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                      {t("condition.subtitle")}
-                    </p>
-                  </div>
-                </div>
-                <div className="px-3 py-1 rounded-full bg-rose-50 border border-rose-100">
-                  <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest leading-none">
-                    {t("condition.required")}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-3">
-                {conditionOptions.map((status) => (
-                  <button
-                    key={status.id}
-                    type="button"
-                    onClick={() => {
-                      setFunctionalStatus(status.id as any);
-                      if (isElectronics) {
-                        setTechFunctionality(status.techId);
-                        refreshEstimation(aiInsights, techAge, status.techId);
-                      }
-                    }}
-                    className={cn(
-                      "group flex items-center gap-4 p-5 rounded-[2rem] border transition-all duration-500",
-                      functionalStatus === status.id 
-                        ? "border-indigo-500 bg-white shadow-2xl shadow-indigo-100/50 -translate-y-1" 
-                        : "bg-slate-50/50 border-transparent hover:border-slate-200"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border transition-colors duration-500",
-                      functionalStatus === status.id ? "bg-indigo-600 text-white border-indigo-400" : `${status.bg} ${status.color} ${status.border}`
-                    )}>
-                      <status.icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className={cn("text-sm font-black tracking-tight transition-colors", functionalStatus === status.id ? "text-indigo-900" : "text-slate-800")}>
-                        {status.label}
-                      </p>
-                      <p className="text-[11px] text-slate-400 font-medium leading-tight">
-                        {status.desc}
-                      </p>
-                    </div>
-                    <div className={cn(
-                      "w-6 h-6 rounded-full border-2 transition-all duration-500 flex items-center justify-center",
-                      functionalStatus === status.id ? "bg-indigo-600 border-indigo-600 scale-110" : "border-slate-200 group-hover:border-slate-300"
-                    )}>
-                      {functionalStatus === status.id && (
-                        <Check className="w-3.5 h-3.5 text-white" strokeWidth={4} />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {isConditionInconsistent && (
-                <div className="bg-amber-50/80 backdrop-blur-md border border-amber-200 p-5 rounded-[2.5rem] flex gap-4 animate-in zoom-in duration-700">
-                  <div className="w-12 h-12 rounded-2xl bg-white border border-amber-200 flex items-center justify-center shrink-0 shadow-sm self-start">
-                    <AlertTriangle className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                       <Sparkles className="w-3.5 h-3.5" />
-                       {t("condition.consistencyAlertTitle")}
-                    </p>
-                    <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
-                      {t.rich("condition.consistencyAlertBody", {
-                        status:
-                          aiInsights.visualStatus === "BROKEN"
-                            ? t("condition.visualStatus.broken")
-                            : t("condition.visualStatus.defective"),
-                        strong: (chunks) => (
-                          <span className="underline decoration-amber-400 decoration-2 underline-offset-2">
-                            {chunks}
-                          </span>
-                        ),
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {aiInsights.isStockPhoto && (
-                <div className="bg-slate-900 p-5 rounded-[2.5rem] flex gap-4 shadow-2xl">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center shrink-0 shadow-inner border border-slate-700">
-                    <Camera className="w-6 h-6 text-slate-300" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1.5">
-                      {t("catalogPhoto.title")}
-                    </p>
-                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                      {t.rich("catalogPhoto.body", {
-                        strong: (chunks) => (
-                          <span className="text-white font-black underline">{chunks}</span>
-                        ),
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          <div className="space-y-6">
-            {/* 3. Informations de base */}
-            <div className="bg-surface rounded-[32px] p-7 border border-border shadow-sm space-y-6">
-              <div className="flex items-center gap-3 px-1">
-                <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
-                  <Info className="w-5 h-5" />
-                </div>
+            <div className="rounded-[32px] border border-white/80 bg-white/75 p-5 shadow-[0_18px_45px_rgba(16,32,58,0.08)] backdrop-blur-xl">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground tracking-tight">
-                    {t("details.title")}
-                  </h3>
-                  <p className="text-[10px] text-muted font-bold uppercase tracking-widest">
-                    {t("details.subtitle")}
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                    {t("flow.badge")}
+                  </p>
+                  <h2 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+                    {currentFlowMeta.label}
+                  </h2>
+                  <p className="mt-1 text-sm font-medium text-slate-500">
+                    {currentFlowMeta.description}
                   </p>
                 </div>
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">
+                    {t("flow.counter", {
+                      current: flowStep + 1,
+                      total: flowSteps.length,
+                    })}
+                  </p>
+                  <p className="mt-1 text-lg font-black text-indigo-900">{flowProgress}%</p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="title">
-                  {t("details.fields.title")}
-                </label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title" 
-                  required 
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm" 
-                  placeholder={t("details.placeholders.title")} 
+
+              <div className="mt-5 h-2 rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 transition-all duration-500"
+                  style={{ width: `${flowProgress}%` }}
                 />
               </div>
 
-              {/* Description Input */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2" htmlFor="description">
-                  {t("details.fields.descriptionOptional")}
-                </label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-2xl focus:border-slate-400 text-foreground px-4 py-3.5 text-sm transition-all placeholder:text-muted outline-none shadow-sm resize-none" 
-                  placeholder={t("details.placeholders.description")} 
-                />
+              <div className="mt-5 grid grid-cols-5 gap-2">
+                {flowSteps.map((step, index) => {
+                  const isActive = flowStep === index;
+                  const isUnlocked = canAccessFlowStep(index);
+                  const isComplete = flowCompletion[index];
+
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      disabled={!isUnlocked}
+                      onClick={() => setFlowStep(index)}
+                      className={cn(
+                        "rounded-2xl border px-2 py-3 text-left transition-all",
+                        isActive
+                          ? "border-indigo-500 bg-indigo-600 text-white shadow-lg shadow-indigo-100"
+                          : isComplete
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : isUnlocked
+                              ? "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                              : "border-slate-100 bg-slate-50 text-slate-300"
+                      )}
+                    >
+                      <span className="block text-[9px] font-black uppercase tracking-[0.18em] opacity-80">
+                        0{index + 1}
+                      </span>
+                      <span className="mt-1 block text-[11px] font-black leading-tight">
+                        {step.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
+
+            {flowStep === 0 ? (
+              <div className="space-y-5">
+                <PhotoScanner
+                  currentStep={currentStep}
+                  errorMessage={scannerErrorMessage}
+                  isCheckingQuality={isCheckingQuality}
+                  onFileChange={handleImageChange}
+                  onReset={resetScanner}
+                  onStepChange={setCurrentStep}
+                  photoPreviews={photoPreviews}
+                  qualityResults={qualityResults}
+                  scanSteps={scanSteps}
+                />
+
+                {photoCount > 0 && uploadedImageCount < 2 ? (
+                  <div className="flex items-center justify-center gap-2 animate-bounce">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                      {t("addOneMorePhoto")}
+                    </p>
                   </div>
-                </div>
+                ) : null}
+              </div>
+            ) : null}
 
-                {/* Hybrid AI Insights Card */}
-                {photoPreviews.length > 0 && (aiInsights.category || isAnalyzing) && (
-                  <div className="bg-[#F8FAFC] border border-slate-200/60 rounded-3xl p-5 space-y-5">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                         <Sparkles className="w-4 h-4 text-primary" />
-                         <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                           {t("ai.title")}
-                         </span>
-                       </div>
-                       {isAnalyzing && (
-                         <span className="text-[10px] font-bold text-primary animate-pulse">
-                           {t("ai.extracting")}
-                         </span>
-                       )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                            {t("ai.detectedType")}
-                          </p>
-                          <p className="text-[12px] font-bold text-foreground leading-tight">
-                            {aiInsights.subcategory || aiInsights.category || "---"}
-                          </p>
-                       </div>
-                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                            {t("ai.brand")}
-                          </p>
-                          <p className="text-[12px] font-bold text-foreground truncate">
-                            {aiInsights.brand && aiInsights.brand !== "unknown"
-                              ? aiInsights.brand
-                              : t("ai.genericBrand")}
-                          </p>
-                       </div>
-                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                            {t("ai.visualState")}
-                          </p>
-                          <p className="text-[12px] font-bold text-foreground capitalize">{aiInsights.condition || "---"}</p>
-                       </div>
-                       <div className="bg-white rounded-2xl p-3 border border-slate-100 shadow-sm">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                            {t("ai.rarity")}
-                          </p>
-                          <p className="text-[12px] font-bold text-primary capitalize font-bold">{aiInsights.rarity || "---"}</p>
-                       </div>
-                    </div>
-
-                 {/* Technical Details (specific for Electronics) */}
-                 {isElectronics && (
-                   <div className="pt-4 border-t border-slate-100 space-y-5">
-                      <div className="flex items-center gap-2">
-                         <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center">
-                            <Laptop className="w-3.5 h-3.5 text-indigo-600" />
-                         </div>
-                         <span className="text-[11px] font-black uppercase tracking-widest text-slate-900">
-                           {t("technical.title")}
-                         </span>
-                      </div>
-
-                      {/* Model Guess & Confirmation */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
-                          {t("technical.model")}
-                        </label>
-                        <div className="relative">
-                          <input 
-                            type="text"
-                            name="modelGuess"
-                            value={modelGuess}
-                            onChange={(e) => setModelGuess(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[12px] font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            placeholder={t("technical.modelPlaceholder")}
-                          />
-                          <Wand2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400 opacity-50" />
+            {flowStep === 1 ? (
+              <div className="space-y-6">
+                {photoPreviews.length > 0 ? (
+                  <div className="space-y-6 rounded-[2.5rem] border border-slate-100 bg-white p-7 shadow-xl shadow-slate-200/40 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-inner">
+                          <ShieldCheck className="h-5 w-5" />
                         </div>
-                        <p className="text-[9px] text-slate-400 italic pl-1 flex items-center gap-1">
-                          <Info className="w-2.5 h-2.5" />
-                          {t("technical.modelHint")}
-                        </p>
-                      </div>
-
-                      {/* Age Selection */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
-                          {t("technical.ageLabel")}
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                           {ageOptions.map((age) => (
-                             <button
-                               key={age.id}
-                               type="button"
-                               onClick={() => { setTechAge(age.id); refreshEstimation(aiInsights, age.id); }}
-                               className={cn(
-                                 "py-2.5 rounded-xl text-[10px] font-black transition-all border",
-                                 techAge === age.id ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                               )}
-                             >
-                               {age.label}
-                             </button>
-                           ))}
+                        <div>
+                          <h3 className="text-sm font-black tracking-tight text-slate-900">
+                            {t("condition.title")}
+                          </h3>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {t("condition.subtitle")}
+                          </p>
                         </div>
                       </div>
-
-                      {/* Accessories */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">
-                          {t("technical.accessoriesLabel")}
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                           {accessoryOptions.map(acc => {
-                             const isSelected = techAccessories.includes(acc.id);
-                             return (
-                               <button
-                                 key={acc.id}
-                                 type="button"
-                                 onClick={() => {
-                                   const next = isSelected 
-                                     ? techAccessories.filter(a => a !== acc.id)
-                                     : [...techAccessories, acc.id];
-                                   setTechAccessories(next);
-                                   refreshEstimation(aiInsights, techAge, techFunctionality, next);
-                                 }}
-                                 className={cn(
-                                   "px-3 py-2 rounded-full text-[9px] font-black transition-all border flex items-center gap-1.5",
-                                   isSelected ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-white border-slate-100 text-slate-400"
-                                 )}
-                               >
-                                 {isSelected && <Check className="w-2.5 h-2.5" />}
-                                 {acc.label}
-                               </button>
-                             );
-                           })}
-                        </div>
-                      </div>
-                   </div>
-                 )}
-
-                 {/* Advanced Estimation Dashboard (Prix Juste) */}
-                 {aiInsights.estimation && !isAnalyzing && (
-                   <div className="space-y-4">
-                     <div className="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100/50 flex items-center justify-between">
-                        <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
-                             {t("pricing.recommendedEstimation")}
-                           </span>
-                           <span className="text-2xl font-black text-slate-900">
-                             {aiInsights.estimation.suggestedValue}{" "}
-                             <span className="text-sm opacity-50 font-black">
-                               {t("pricing.creditsShort")}
-                             </span>
-                           </span>
-                        </div>
-                        <div className="text-right">
-                           <span className="text-[9px] font-bold text-slate-400 uppercase block">
-                             {t("pricing.range")}
-                           </span>
-                           <span className="text-[12px] font-black text-indigo-600">
-                             {aiInsights.estimation.minSuggestedValue} – {aiInsights.estimation.maxSuggestedValue} {t("pricing.creditsShort")}
-                           </span>
-                        </div>
-                     </div>
-                     
-                     <JustificationCard estimation={aiInsights.estimation} />
-                   </div>
-                 )}
-
-                 {/* Fraud/Quality Check */}
-                 {aiInsights.fraudRisk && aiInsights.fraudRisk !== "low" && (
-                   <div className={cn(
-                     "p-3 rounded-2xl border flex items-start gap-3",
-                     aiInsights.fraudRisk === "high" ? "bg-rose-50 border-rose-100" : "bg-amber-50 border-amber-100"
-                   )}>
-                      <Info className={cn("w-4 h-4 mt-0.5", aiInsights.fraudRisk === "high" ? "text-rose-500" : "text-amber-500")} />
-                      <div>
-                        <p className={cn("text-[11px] font-bold", aiInsights.fraudRisk === "high" ? "text-rose-700" : "text-amber-700")}>
-                          {aiInsights.fraudRisk === "high"
-                            ? t("ai.qualityInsufficient")
-                            : t("ai.listingUnderWatch")}
-                        </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
-                          {aiInsights.flags?.join(", ") || t("ai.qualityCriteriaNotMet")}
-                        </p>
-                      </div>
-                   </div>
-                 )}
-               </div>
-             )}
-
-             {/* Guided Credit Value (Hybrid Slider) */}
-             <div>
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <label className="text-sm font-bold text-gray-800">{t("pricing.title")}</label>
-                  <div className={cn(
-                    "px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest",
-                    isOutOfRange ? "bg-amber-100 text-amber-700 animate-pulse" : "bg-emerald-100 text-emerald-700"
-                  )}>
-                    {isOutOfRange ? t("pricing.outlier") : t("pricing.coherent")}
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-6">
-                   <div className="flex items-center justify-center">
-                      <div className="text-center">
-                        <span className="text-5xl font-black text-slate-900">{creditValue}</span>
-                        <span className="text-sm font-black text-indigo-600 ml-2 uppercase">
-                          {t("pricing.credits")}
+                      <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1">
+                        <span className="text-[8px] font-black uppercase tracking-widest leading-none text-rose-500">
+                          {t("condition.required")}
                         </span>
                       </div>
-                   </div>
+                    </div>
 
-                   <div className="px-2">
-                     <input 
-                       type="range" 
-                       name="creditValue"
-                       min="10" 
-                       max="1000" 
-                       step="5"
-                       value={creditValue}
-                       onChange={(e) => setCreditValue(parseInt(e.target.value))}
-                       className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                     />
-                     <div className="flex justify-between mt-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                        <span>{t("pricing.accessible")}</span>
-                        <span>{t("pricing.premium")}</span>
-                     </div>
-                   </div>
-                   
-                   {isOutOfRange && aiInsights.estimation && (
-                     <div className="flex items-start gap-2 bg-amber-50 p-3 rounded-2xl border border-amber-100">
-                        <Info className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
-                        <p className="text-[10px] text-amber-700 font-bold leading-tight">
-                          {t("pricing.outlierHelp", {
-                            min: aiInsights.estimation.minSuggestedValue,
-                            max: aiInsights.estimation.maxSuggestedValue,
-                            credits: t("pricing.creditsShort"),
-                          })}{" "}
-                          <br />
-                          <span className="opacity-70">{t("pricing.outlierHint")}</span>
-                        </p>
-                     </div>
-                   )}
-                </div>
-             </div>
+                    <div className="flex flex-col gap-3">
+                      {conditionOptions.map((status) => (
+                        <button
+                          key={status.id}
+                          type="button"
+                          onClick={() => {
+                            setFunctionalStatus(status.id as any);
+                            if (isElectronics) {
+                              setTechFunctionality(status.techId);
+                              refreshEstimation(aiInsights, techAge, status.techId);
+                            }
+                          }}
+                          className={cn(
+                            "group flex items-center gap-4 rounded-[2rem] border p-5 transition-all duration-500",
+                            functionalStatus === status.id
+                              ? "border-indigo-500 bg-white -translate-y-1 shadow-2xl shadow-indigo-100/50"
+                              : "border-transparent bg-slate-50/50 hover:border-slate-200"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-sm transition-colors duration-500",
+                              functionalStatus === status.id
+                                ? "border-indigo-400 bg-indigo-600 text-white"
+                                : `${status.bg} ${status.color} ${status.border}`
+                            )}
+                          >
+                            <status.icon className="h-6 w-6" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p
+                              className={cn(
+                                "text-sm font-black tracking-tight transition-colors",
+                                functionalStatus === status.id ? "text-indigo-900" : "text-slate-800"
+                              )}
+                            >
+                              {status.label}
+                            </p>
+                            <p className="text-[11px] font-medium leading-tight text-slate-400">
+                              {status.desc}
+                            </p>
+                          </div>
+                          <div
+                            className={cn(
+                              "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-500",
+                              functionalStatus === status.id
+                                ? "scale-110 border-indigo-600 bg-indigo-600"
+                                : "border-slate-200 group-hover:border-slate-300"
+                            )}
+                          >
+                            {functionalStatus === status.id ? (
+                              <Check className="h-3.5 w-3.5 text-white" strokeWidth={4} />
+                            ) : null}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
 
-             {/* DB-backed Location */}
-             <div className="space-y-4">
-               <div className="flex items-center justify-between mb-1 px-1">
-                 <label className="text-sm font-bold text-gray-800">{t("location.title")}</label>
-                 {selectedZone && (
-                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                     {selectedZone.name}
-                   </span>
-                 )}
-               </div>
+                    {isConditionInconsistent ? (
+                      <div className="flex gap-4 rounded-[2.5rem] border border-amber-200 bg-amber-50/80 p-5 backdrop-blur-md animate-in zoom-in duration-700">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center self-start rounded-2xl border border-amber-200 bg-white shadow-sm">
+                          <AlertTriangle className="h-6 w-6 text-amber-500" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="mb-1.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {t("condition.consistencyAlertTitle")}
+                          </p>
+                          <p className="text-[11px] font-medium leading-relaxed text-amber-800">
+                            {t.rich("condition.consistencyAlertBody", {
+                              status:
+                                aiInsights.visualStatus === "BROKEN"
+                                  ? t("condition.visualStatus.broken")
+                                  : t("condition.visualStatus.defective"),
+                              strong: (chunks) => (
+                                <span className="underline decoration-amber-400 decoration-2 underline-offset-2">
+                                  {chunks}
+                                </span>
+                              ),
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
 
-               {geoError ? (
-                 <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-[11px] font-bold text-rose-700">
-                   {geoError}
-                 </div>
-               ) : isLoadingGeo ? (
-                 <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-3 animate-pulse">
-                   <div className="h-11 rounded-2xl bg-slate-100" />
-                   <div className="h-11 rounded-2xl bg-slate-100" />
-                   <div className="h-11 rounded-2xl bg-slate-100" />
-                 </div>
-               ) : (
-                 <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
-                   <div className="grid gap-4 sm:grid-cols-2">
-                     <div>
-                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                         {t("country")}
-                       </label>
-                       <select
-                         required
-                         value={selectedCountryId}
-                         onChange={(e) => setSelectedCountryId(e.target.value)}
-                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500"
-                       >
-                         <option value="" disabled>{t("selectCountry")}</option>
-                         {geoCatalog.map((country) => (
-                           <option key={country.id} value={country.id}>
-                             {country.name}
-                           </option>
-                         ))}
-                       </select>
-                     </div>
+                    {aiInsights.isStockPhoto ? (
+                      <div className="flex gap-4 rounded-[2.5rem] bg-slate-900 p-5 shadow-2xl">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 shadow-inner">
+                          <Camera className="h-6 w-6 text-slate-300" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-white">
+                            {t("catalogPhoto.title")}
+                          </p>
+                          <p className="text-[11px] font-medium leading-relaxed text-slate-400">
+                            {t.rich("catalogPhoto.body", {
+                              strong: (chunks) => (
+                                <span className="font-black text-white underline">{chunks}</span>
+                              ),
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
 
-                     <div>
-                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                         {t("city")}
-                       </label>
-                       <select
-                         required
-                         value={selectedCityId}
-                         onChange={(e) => setSelectedCityId(e.target.value)}
-                         disabled={availableCities.length === 0}
-                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50"
-                       >
-                         <option value="" disabled>{t("selectCity")}</option>
-                         {availableCities.map((city) => (
-                           <option key={city.id} value={city.id}>
-                             {city.name}
-                           </option>
-                         ))}
-                       </select>
-                     </div>
-                   </div>
-
-                   <div>
-                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                       {t("zone")}
-                     </label>
-                     <select
-                       required
-                       value={selectedZoneId}
-                       onChange={(e) => setSelectedZoneId(e.target.value)}
-                       disabled={availableZones.length === 0}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50"
-                     >
-                       <option value="" disabled>{t("selectZone")}</option>
-                       {availableZones.map((zone) => (
-                         <option key={zone.id} value={zone.id}>
-                           {zone.name}
-                         </option>
-                       ))}
-                     </select>
-                   </div>
-                 </div>
-               )}
-
-               {coords && !selectedZoneId && !isLoadingGeo && (
-                 <p className="text-[10px] text-primary mt-2 font-bold animate-pulse">
-                   {t("detectingZone")}
-                 </p>
-               )}
-             </div>
-
-          <div className="pt-2 pb-12 space-y-5">
-            <button
-              type="submit"
-              disabled={isSubmitting || isUploading || isAnalyzing || photoPreviews.length < 2 || isLoadingGeo || !selectedZoneId}
-              className={cn(
-                "w-full flex justify-center items-center py-5 px-4 rounded-[20px] shadow-cta text-[16px] font-bold text-white bg-primary hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
-                photoPreviews.length < 2 && "opacity-60 grayscale-[0.5]"
-              )}
-            >
-               {isSubmitting
-                 ? t("submitting")
-                 : isUploading
-                   ? t("uploading")
-                   : isAnalyzing
-                     ? t("analyzing")
-                     : photoPreviews.length < 2
-                       ? t("twoPhotosRequired")
-                       : t("submit")}
-            </button>
-            
-            {photoPreviews.length > 0 && photoPreviews.length < 2 && (
-              <div className="flex items-center justify-center gap-2 animate-bounce">
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                  {t("addOneMorePhoto")}
-                </p>
+                {photoPreviews.length > 0 ? (
+                  aiInsights.category || isAnalyzing ? (
+                    <AIInsightsCard
+                      accessoryOptions={accessoryOptions}
+                      ageOptions={ageOptions}
+                      aiInsights={aiInsights}
+                      isAnalyzing={isAnalyzing}
+                      isElectronics={isElectronics}
+                      modelGuess={modelGuess}
+                      onAccessoryToggle={(accessoryId) => {
+                        const nextAccessories = techAccessories.includes(accessoryId)
+                          ? techAccessories.filter((item) => item !== accessoryId)
+                          : [...techAccessories, accessoryId];
+                        setTechAccessories(nextAccessories);
+                        refreshEstimation(aiInsights, techAge, techFunctionality, nextAccessories);
+                      }}
+                      onAgeChange={(ageId) => {
+                        setTechAge(ageId);
+                        refreshEstimation(aiInsights, ageId);
+                      }}
+                      onModelGuessChange={setModelGuess}
+                      techAccessories={techAccessories}
+                      techAge={techAge}
+                    />
+                  ) : (
+                    <div className="rounded-[32px] border border-slate-200/70 bg-[#F8FAFC] p-6 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                        {t("flow.aiFallback.title")}
+                      </p>
+                      <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                        {t("flow.aiFallback.body")}
+                      </p>
+                    </div>
+                  )
+                ) : null}
               </div>
-            )}
-            <p className="text-[10px] text-center mt-6 text-muted font-bold uppercase tracking-widest px-8 leading-relaxed opacity-60">
-              {t("terms")}
-            </p>
+            ) : null}
+
+            {flowStep === 2 ? (
+              <div className="rounded-[32px] border border-border bg-surface p-7 shadow-sm space-y-6">
+                <div className="flex items-center gap-3 px-1">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5 text-primary">
+                    <Info className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                      {t("details.title")}
+                    </h3>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                      {t("details.subtitle")}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-foreground" htmlFor="title">
+                    {t("details.fields.title")}
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    required
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      clearClientError("title");
+                    }}
+                    aria-invalid={Boolean(clientErrors.title)}
+                    aria-describedby={clientErrors.title ? "title-error" : undefined}
+                    className={cn(
+                      "w-full rounded-2xl border bg-surface px-4 py-3.5 text-sm text-foreground shadow-sm outline-none transition-all placeholder:text-muted focus:border-slate-400",
+                      clientErrors.title ? "border-rose-300" : "border-border"
+                    )}
+                    placeholder={t("details.placeholders.title")}
+                  />
+                  {clientErrors.title ? (
+                    <p id="title-error" role="alert" className="mt-2 text-[11px] font-bold text-rose-600">
+                      {clientErrors.title}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-foreground" htmlFor="description">
+                    {t("details.fields.descriptionOptional")}
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      clearClientError("description");
+                    }}
+                    aria-invalid={Boolean(clientErrors.description)}
+                    aria-describedby={clientErrors.description ? "description-error" : undefined}
+                    className={cn(
+                      "w-full resize-none rounded-2xl border bg-surface px-4 py-3.5 text-sm text-foreground shadow-sm outline-none transition-all placeholder:text-muted focus:border-slate-400",
+                      clientErrors.description ? "border-rose-300" : "border-border"
+                    )}
+                    placeholder={t("details.placeholders.description")}
+                  />
+                  {clientErrors.description ? (
+                    <p id="description-error" role="alert" className="mt-2 text-[11px] font-bold text-rose-600">
+                      {clientErrors.description}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {flowStep === 3 ? (
+              <PricingSlider
+                creditValue={creditValue}
+                errorMessage={clientErrors.creditValue}
+                estimation={aiInsights.estimation}
+                isOutOfRange={Boolean(isOutOfRange)}
+                onChange={(value) => {
+                  setCreditValue(value);
+                  clearClientError("creditValue");
+                }}
+              />
+            ) : null}
+
+            {flowStep === 4 ? (
+              <div className="space-y-6">
+                <LocationSelector
+                  availableCities={availableCities}
+                  availableZones={availableZones}
+                  clientError={clientErrors.location}
+                  geoCatalog={geoCatalog}
+                  geoError={geoError}
+                  gpsError={gpsError}
+                  isDetectingZone={Boolean(
+                    (isRequestingLocation || (coords && !selectedZoneId)) &&
+                      !isLoadingGeo &&
+                      !gpsError
+                  )}
+                  isLoadingGeo={isLoadingGeo}
+                  onCityChange={(cityId) => {
+                    setSelectedCityId(cityId);
+                    clearClientError("location");
+                  }}
+                  onCountryChange={(countryId) => {
+                    setSelectedCountryId(countryId);
+                    clearClientError("location");
+                  }}
+                  onZoneChange={(zoneId) => {
+                    setSelectedZoneId(zoneId);
+                    clearClientError("location");
+                  }}
+                  selectedCityId={selectedCityId}
+                  selectedCountryId={selectedCountryId}
+                  selectedZone={selectedZone}
+                  selectedZoneId={selectedZoneId}
+                />
+
+                <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {t("flow.summary.title")}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                        {t("flow.summary.item")}
+                      </p>
+                      <p className="mt-2 text-sm font-black text-slate-900">
+                        {normalizedTitle || t("flow.summary.itemFallback")}
+                      </p>
+                      <p className="mt-1 text-[10px] font-bold text-slate-500">
+                        {t("flow.summary.photos", { count: uploadedImageCount })}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                        {t("flow.summary.price")}
+                      </p>
+                      <p className="mt-2 text-sm font-black text-slate-900">
+                        {creditValue} {t("pricing.creditsShort")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+                        {t("flow.summary.zone")}
+                      </p>
+                      <p className="mt-2 text-sm font-black text-slate-900">
+                        {selectedZone?.name || t("flow.summary.zoneFallback")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-5 pb-12 pt-2">
+              <div
+                className={cn(
+                  "grid gap-3",
+                  flowStep === 0 ? "grid-cols-1" : "grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)]"
+                )}
+              >
+                {flowStep > 0 ? (
+                  <button
+                    type="button"
+                    onClick={goToPreviousFlowStep}
+                    className="flex items-center justify-center gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-5 text-sm font-black text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    {t("flow.back")}
+                  </button>
+                ) : null}
+
+                {flowStep < flowSteps.length - 1 ? (
+                  <button
+                    type="button"
+                    disabled={!flowCompletion[flowStep]}
+                    onClick={goToNextFlowStep}
+                    className="flex items-center justify-center gap-2 rounded-[20px] bg-primary px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all hover:bg-blue-700 active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none"
+                  >
+                    {t("flow.next")}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={
+                      isSubmitting ||
+                      isUploading ||
+                      isAnalyzing ||
+                      uploadedImageCount < 2 ||
+                      isLoadingGeo ||
+                      !selectedZoneId
+                    }
+                    className={cn(
+                      "flex w-full items-center justify-center rounded-[20px] bg-primary px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all hover:bg-blue-700 active:scale-[0.98] disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
+                      uploadedImageCount < 2 && "opacity-60 grayscale-[0.5]"
+                    )}
+                  >
+                    {isSubmitting
+                      ? t("submitting")
+                      : isUploading
+                        ? t("uploading")
+                        : isAnalyzing
+                          ? t("analyzing")
+                          : t("flow.submit")}
+                  </button>
+                )}
+              </div>
+
+              {flowStep === flowSteps.length - 1 ? (
+                <p className="mt-6 px-8 text-center text-[10px] font-bold uppercase tracking-widest leading-relaxed text-muted opacity-60">
+                  {t("terms")}
+                </p>
+              ) : null}
+            </div>
           </div>
         </form>
       </div>

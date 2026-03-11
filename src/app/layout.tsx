@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Space_Grotesk } from "next/font/google";
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import "./globals.css";
@@ -13,8 +13,13 @@ function resolveMetadataBase() {
   }
 }
 
-const inter = Inter({
-  variable: "--font-inter",
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -75,8 +80,15 @@ export default async function RootLayout({
   const htmlLang = preferredLocale ?? routing.defaultLocale;
 
   return (
-    <html lang={htmlLang} className={inter.variable} suppressHydrationWarning>
-      <body className="antialiased min-h-screen bg-[#F7F7F5] text-slate-800 font-sans selection:bg-indigo-500/30" suppressHydrationWarning>
+    <html
+      lang={htmlLang}
+      className={`${manrope.variable} ${spaceGrotesk.variable}`}
+      suppressHydrationWarning
+    >
+      <body
+        className="min-h-screen bg-[#f6f1e8] text-slate-800 font-sans antialiased selection:bg-blue-500/20"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
