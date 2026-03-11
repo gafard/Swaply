@@ -49,7 +49,7 @@ export default function LocationSelector({
       <div className="mb-1 flex items-center justify-between px-1">
         <label className="text-sm font-bold text-gray-800">{t("location.title")}</label>
         {selectedZone ? (
-          <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+          <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700 shadow-sm">
             {selectedZone.name}
           </span>
         ) : null}
@@ -68,13 +68,14 @@ export default function LocationSelector({
           {errorMessage}
         </div>
       ) : isLoadingGeo ? (
-        <div className="space-y-3 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm animate-pulse">
+        <div className="space-y-3 rounded-[34px] border border-slate-100 bg-white p-5 shadow-[0_18px_48px_rgba(16,32,58,0.08)] animate-pulse">
           <div className="h-11 rounded-2xl bg-slate-100" />
           <div className="h-11 rounded-2xl bg-slate-100" />
           <div className="h-11 rounded-2xl bg-slate-100" />
         </div>
       ) : (
-        <div className="space-y-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="relative space-y-4 overflow-hidden rounded-[34px] border border-slate-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#eefbf8_100%)] p-5 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
+          <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-200/25 blur-3xl" />
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
@@ -91,7 +92,7 @@ export default function LocationSelector({
                 aria-invalid={Boolean(clientError)}
                 aria-describedby={clientError ? errorId : undefined}
                 className={cn(
-                  "w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500",
+                  "w-full rounded-[20px] border bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500",
                   clientError ? "border-rose-300" : "border-slate-200"
                 )}
               >
@@ -122,7 +123,7 @@ export default function LocationSelector({
                 aria-invalid={Boolean(clientError)}
                 aria-describedby={clientError ? errorId : undefined}
                 className={cn(
-                  "w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50",
+                  "w-full rounded-[20px] border bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50",
                   clientError ? "border-rose-300" : "border-slate-200"
                 )}
               >
@@ -154,7 +155,7 @@ export default function LocationSelector({
               aria-invalid={Boolean(clientError)}
               aria-describedby={clientError ? errorId : undefined}
               className={cn(
-                "w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50",
+                "w-full rounded-[20px] border bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500 disabled:opacity-50",
                 clientError ? "border-rose-300" : "border-slate-200"
               )}
             >

@@ -387,6 +387,12 @@
       "resetAll": "Réinitialiser le scanner",
       "nextStep": "Aller à l’étape suivante",
       "scanObject": "Scanner l’objet",
+      "sourcePicker": {
+        "title": "Choisir une source",
+        "camera": "Appareil photo",
+        "library": "Parcourir",
+        "cancel": "Fermer le sélecteur"
+      },
       "stepBadge": "Vue {index}",
       "quality": {
         "excellent": "Qualité excellente",

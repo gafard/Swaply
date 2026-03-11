@@ -35,6 +35,7 @@ export type PhotoQualityResult = {
   brandDetected: string | null;
   qualityScore: number; // 0 to 1
   suggestions: string[];
+  analysisError?: boolean;
 };
 
 export type AIEstimation = {

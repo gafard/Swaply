@@ -136,6 +136,15 @@ RETOURNE UNIQUEMENT UN JSON :
     return parsed;
   } catch (error) {
     console.error("Quality Check Error:", error);
-    return { qualityScore: 0.5, suggestions: ["Erreur d'analyse, essayez de rester stable."] };
+    return {
+      isBlurry: false,
+      isStockPhoto: false,
+      isObjectVisible: true,
+      objectDetected: null,
+      brandDetected: null,
+      qualityScore: 0,
+      suggestions: [],
+      analysisError: true,
+    };
   }
 }

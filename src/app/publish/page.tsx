@@ -1,13 +1,14 @@
 "use client";
 
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { publishItem } from "@/app/actions/item";
 import { suggestListingFromImages, analyzePhotoQuality } from "@/app/actions/ai";
 import { useUploadThing } from "@/lib/uploadthing";
-import { Package, Camera, Clock, ShieldCheck, Check, AlertTriangle, Zap, Search, Sparkles, Info, ArrowLeft, ArrowRight } from "lucide-react";
+import { type LucideIcon, Package, Camera, Clock, ShieldCheck, Check, AlertTriangle, Zap, Search, Sparkles, Info, ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateAIEstimation } from "@/lib/ai-engine";
 import { PhotoQualityResult } from "@/lib/validations";
@@ -242,33 +243,61 @@ export default function PublishPage() {
       setUploadError(error.message);
     },
   });
-  const flowSteps = [
+  const flowSteps: Array<{
+    id: "photos" | "analysis" | "details" | "pricing" | "publish";
+    label: string;
+    description: string;
+    icon: LucideIcon;
+    accent: string;
+    surface: string;
+    glow: string;
+  }> = [
     {
       id: "photos",
       label: t("flow.steps.photos.label"),
       description: t("flow.steps.photos.description"),
+      icon: Camera,
+      accent: "from-[#102a72] via-[#2457ff] to-[#78c8ff]",
+      surface: "border-[#d7e4ff] bg-[#edf4ff]",
+      glow: "shadow-[0_22px_55px_rgba(36,87,255,0.18)]",
     },
     {
       id: "analysis",
       label: t("flow.steps.analysis.label"),
       description: t("flow.steps.analysis.description"),
+      icon: Sparkles,
+      accent: "from-[#2c145f] via-[#5b2be0] to-[#8f7cff]",
+      surface: "border-[#e4dbff] bg-[#f5f1ff]",
+      glow: "shadow-[0_22px_55px_rgba(91,43,224,0.18)]",
     },
     {
       id: "details",
       label: t("flow.steps.details.label"),
       description: t("flow.steps.details.description"),
+      icon: Info,
+      accent: "from-[#123c52] via-[#1983a6] to-[#7ad8e6]",
+      surface: "border-[#d6eef4] bg-[#eefbfd]",
+      glow: "shadow-[0_22px_55px_rgba(25,131,166,0.18)]",
     },
     {
       id: "pricing",
       label: t("flow.steps.pricing.label"),
       description: t("flow.steps.pricing.description"),
+      icon: Zap,
+      accent: "from-[#3d2611] via-[#e88922] to-[#ffd36b]",
+      surface: "border-[#f8dfb8] bg-[#fff5df]",
+      glow: "shadow-[0_22px_55px_rgba(232,137,34,0.18)]",
     },
     {
       id: "publish",
       label: t("flow.steps.publish.label"),
       description: t("flow.steps.publish.description"),
+      icon: MapPin,
+      accent: "from-[#0b3340] via-[#0f766e] to-[#5ed4bf]",
+      surface: "border-[#d0efe9] bg-[#ebfaf7]",
+      glow: "shadow-[0_22px_55px_rgba(15,118,110,0.18)]",
     },
-  ] as const;
+  ];
   const isPhotosStepComplete = uploadedImageCount >= 2;
   const isAnalysisStepComplete = isPhotosStepComplete && !isUploading && !isAnalyzing;
   const isDetailsStepComplete =
@@ -291,6 +320,7 @@ export default function PublishPage() {
     0
   );
   const currentFlowMeta = flowSteps[flowStep];
+  const CurrentFlowIcon = currentFlowMeta.icon;
   const flowProgress = Math.round(((flowStep + 1) / flowSteps.length) * 100);
 
   const clearClientError = useCallback(
@@ -679,16 +709,22 @@ export default function PublishPage() {
           const base64 = await optimizeImageForAI(file);
           nextPayloads[stepToIndex] = base64;
           const quality = await analyzePhotoQuality(base64, stepToIndex);
-          nextQuality[stepToIndex] = quality as PhotoQualityResult;
+          const resolvedQuality = quality as PhotoQualityResult;
 
-          if (stepToIndex === 0 && quality?.objectDetected) {
-            if (!title) setTitle(quality.objectDetected);
-            setAiInsights((prev) => ({
-              ...prev,
-              subcategory: quality.objectDetected || undefined,
-              brand: quality.brandDetected || undefined,
-              confidence: quality.qualityScore,
-            }));
+          if (resolvedQuality.analysisError) {
+            nextQuality[stepToIndex] = null;
+          } else {
+            nextQuality[stepToIndex] = resolvedQuality;
+
+            if (stepToIndex === 0 && resolvedQuality.objectDetected) {
+              if (!title) setTitle(resolvedQuality.objectDetected);
+              setAiInsights((prev) => ({
+                ...prev,
+                subcategory: resolvedQuality.objectDetected || undefined,
+                brand: resolvedQuality.brandDetected || undefined,
+                confidence: resolvedQuality.qualityScore,
+              }));
+            }
           }
 
           const result = await startUpload([file]);
@@ -810,6 +846,16 @@ export default function PublishPage() {
     setFlowStep((current) => Math.max(current - 1, 0));
   }, []);
 
+  const isFinalFlowStep = flowStep === flowSteps.length - 1;
+  const isNextFlowDisabled = !flowCompletion[flowStep];
+  const isSubmitDisabled =
+    isSubmitting ||
+    isUploading ||
+    isAnalyzing ||
+    uploadedImageCount < 2 ||
+    isLoadingGeo ||
+    !selectedZoneId;
+
   return (
     <main className="min-h-screen bg-transparent flex flex-col pb-24 sm:pb-8">
       
@@ -858,42 +904,57 @@ export default function PublishPage() {
           <input type="hidden" name="functionalStatus" value={functionalStatus} />
           <input type="hidden" name="isNotifiedDefective" value={isConditionInconsistent ? "true" : "false"} />
           <div className="space-y-6">
-            <div className="rounded-[32px] border border-white/80 bg-white/75 p-5 shadow-[0_18px_45px_rgba(16,32,58,0.08)] backdrop-blur-xl">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
-                    {t("flow.badge")}
-                  </p>
-                  <h2 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+            <div className="paper-panel relative overflow-hidden rounded-[36px] p-5 sm:p-6">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_right,_rgba(36,87,255,0.16),_transparent_42%),radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_transparent_46%)]" />
+              <div className="pointer-events-none absolute -right-8 top-6 h-28 w-28 rounded-full bg-white/45 blur-2xl" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-2 shadow-[0_12px_26px_rgba(16,32,58,0.08)]">
+                    <CurrentFlowIcon className="h-3.5 w-3.5 text-primary" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                      {t("flow.badge")}
+                    </p>
+                  </div>
+                  <h2 className="ink-title mt-4 text-[1.8rem] font-bold leading-none sm:text-[2rem]">
                     {currentFlowMeta.label}
                   </h2>
-                  <p className="mt-1 text-sm font-medium text-slate-500">
+                  <p className="mt-2 max-w-[28rem] text-sm font-medium leading-6 text-slate-500">
                     {currentFlowMeta.description}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">
+                <div
+                  className={cn(
+                    "shrink-0 rounded-[28px] border px-4 py-3 text-right backdrop-blur-xl",
+                    currentFlowMeta.surface,
+                    currentFlowMeta.glow
+                  )}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
                     {t("flow.counter", {
                       current: flowStep + 1,
                       total: flowSteps.length,
                     })}
                   </p>
-                  <p className="mt-1 text-lg font-black text-indigo-900">{flowProgress}%</p>
+                  <p className="mt-1 text-xl font-black text-slate-950">{flowProgress}%</p>
                 </div>
               </div>
 
-              <div className="mt-5 h-2 rounded-full bg-slate-100">
+              <div className="relative mt-6 h-3 overflow-hidden rounded-full bg-white/80 shadow-[inset_0_1px_3px_rgba(16,32,58,0.06)]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 transition-all duration-500"
+                  className={cn(
+                    "h-full rounded-full bg-gradient-to-r transition-all duration-500",
+                    currentFlowMeta.accent
+                  )}
                   style={{ width: `${flowProgress}%` }}
                 />
               </div>
 
-              <div className="mt-5 grid grid-cols-5 gap-2">
+              <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-1">
                 {flowSteps.map((step, index) => {
                   const isActive = flowStep === index;
                   const isUnlocked = canAccessFlowStep(index);
                   const isComplete = flowCompletion[index];
+                  const StepIcon = step.icon;
 
                   return (
                     <button
@@ -902,9 +963,9 @@ export default function PublishPage() {
                       disabled={!isUnlocked}
                       onClick={() => setFlowStep(index)}
                       className={cn(
-                        "rounded-2xl border px-2 py-3 text-left transition-all",
+                        "min-w-[148px] rounded-[24px] border px-3 py-3 text-left transition-all duration-300",
                         isActive
-                          ? "border-indigo-500 bg-indigo-600 text-white shadow-lg shadow-indigo-100"
+                          ? cn("border-transparent text-white shadow-xl", step.accent, step.glow)
                           : isComplete
                             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                             : isUnlocked
@@ -912,11 +973,28 @@ export default function PublishPage() {
                               : "border-slate-100 bg-slate-50 text-slate-300"
                       )}
                     >
-                      <span className="block text-[9px] font-black uppercase tracking-[0.18em] opacity-80">
-                        0{index + 1}
-                      </span>
-                      <span className="mt-1 block text-[11px] font-black leading-tight">
+                      <div className="flex items-start justify-between gap-3">
+                        <div
+                          className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-2xl border",
+                            isActive
+                              ? "border-white/20 bg-white/15 text-white"
+                              : isComplete
+                                ? "border-emerald-200 bg-white text-emerald-600"
+                                : "border-slate-200 bg-slate-50 text-slate-400"
+                          )}
+                        >
+                          <StepIcon className="h-4 w-4" />
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-[0.18em] opacity-75">
+                          0{index + 1}
+                        </span>
+                      </div>
+                      <span className="mt-3 block text-[11px] font-black leading-tight">
                         {step.label}
+                      </span>
+                      <span className="mt-1 block text-[10px] font-medium leading-4 opacity-75">
+                        {step.description}
                       </span>
                     </button>
                   );
@@ -924,32 +1002,47 @@ export default function PublishPage() {
               </div>
             </div>
 
-            {flowStep === 0 ? (
-              <div className="space-y-5">
-                <PhotoScanner
-                  currentStep={currentStep}
-                  errorMessage={scannerErrorMessage}
-                  isCheckingQuality={isCheckingQuality}
-                  onFileChange={handleImageChange}
-                  onReset={resetScanner}
-                  onStepChange={setCurrentStep}
-                  photoPreviews={photoPreviews}
-                  qualityResults={qualityResults}
-                  scanSteps={scanSteps}
-                />
+            <AnimatePresence mode="wait">
+              {flowStep === 0 ? (
+                <motion.div
+                  key="flow-photos"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-5"
+                >
+                  <PhotoScanner
+                    currentStep={currentStep}
+                    errorMessage={scannerErrorMessage}
+                    isCheckingQuality={isCheckingQuality}
+                    onFileChange={handleImageChange}
+                    onReset={resetScanner}
+                    onStepChange={setCurrentStep}
+                    photoPreviews={photoPreviews}
+                    qualityResults={qualityResults}
+                    scanSteps={scanSteps}
+                  />
 
-                {photoCount > 0 && uploadedImageCount < 2 ? (
-                  <div className="flex items-center justify-center gap-2 animate-bounce">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                      {t("addOneMorePhoto")}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+                  {photoCount > 0 && uploadedImageCount < 2 ? (
+                    <div className="flex items-center justify-center gap-2 animate-bounce">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                        {t("addOneMorePhoto")}
+                      </p>
+                    </div>
+                  ) : null}
+                </motion.div>
+              ) : null}
 
-            {flowStep === 1 ? (
-              <div className="space-y-6">
+              {flowStep === 1 ? (
+                <motion.div
+                  key="flow-analysis"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-6"
+                >
                 {photoPreviews.length > 0 ? (
                   <div className="space-y-6 rounded-[2.5rem] border border-slate-100 bg-white p-7 shadow-xl shadow-slate-200/40 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="flex items-center justify-between px-1">
@@ -1115,11 +1208,18 @@ export default function PublishPage() {
                     </div>
                   )
                 ) : null}
-              </div>
-            ) : null}
+                </motion.div>
+              ) : null}
 
-            {flowStep === 2 ? (
-              <div className="rounded-[32px] border border-border bg-surface p-7 shadow-sm space-y-6">
+              {flowStep === 2 ? (
+                <motion.div
+                  key="flow-details"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="rounded-[32px] border border-border bg-surface p-7 shadow-sm space-y-6"
+                >
                 <div className="flex items-center gap-3 px-1">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5 text-primary">
                     <Info className="h-5 w-5" />
@@ -1190,24 +1290,39 @@ export default function PublishPage() {
                     </p>
                   ) : null}
                 </div>
-              </div>
-            ) : null}
+                </motion.div>
+              ) : null}
 
-            {flowStep === 3 ? (
-              <PricingSlider
-                creditValue={creditValue}
-                errorMessage={clientErrors.creditValue}
-                estimation={aiInsights.estimation}
-                isOutOfRange={Boolean(isOutOfRange)}
-                onChange={(value) => {
-                  setCreditValue(value);
-                  clearClientError("creditValue");
-                }}
-              />
-            ) : null}
+              {flowStep === 3 ? (
+                <motion.div
+                  key="flow-pricing"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <PricingSlider
+                    creditValue={creditValue}
+                    errorMessage={clientErrors.creditValue}
+                    estimation={aiInsights.estimation}
+                    isOutOfRange={Boolean(isOutOfRange)}
+                    onChange={(value) => {
+                      setCreditValue(value);
+                      clearClientError("creditValue");
+                    }}
+                  />
+                </motion.div>
+              ) : null}
 
-            {flowStep === 4 ? (
-              <div className="space-y-6">
+              {flowStep === 4 ? (
+                <motion.div
+                  key="flow-publish"
+                  initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="space-y-6"
+                >
                 <LocationSelector
                   availableCities={availableCities}
                   availableZones={availableZones}
@@ -1239,12 +1354,12 @@ export default function PublishPage() {
                   selectedZoneId={selectedZoneId}
                 />
 
-                <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-sm">
+                <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                     {t("flow.summary.title")}
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#fff7ec,_#ffffff)] p-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
                         {t("flow.summary.item")}
                       </p>
@@ -1255,7 +1370,7 @@ export default function PublishPage() {
                         {t("flow.summary.photos", { count: uploadedImageCount })}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#f6f3ff,_#ffffff)] p-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
                         {t("flow.summary.price")}
                       </p>
@@ -1263,7 +1378,7 @@ export default function PublishPage() {
                         {creditValue} {t("pricing.creditsShort")}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#eefbf8,_#ffffff)] p-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
                         {t("flow.summary.zone")}
                       </p>
@@ -1273,65 +1388,67 @@ export default function PublishPage() {
                     </div>
                   </div>
                 </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <div className="relative sticky bottom-4 z-30 space-y-4 pb-4 pt-2">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f6f1e8] via-[#f6f1e8]/86 to-transparent blur-xl" />
+              <div className="paper-panel relative overflow-hidden rounded-[28px] p-3">
+                <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+                <div
+                  className={cn(
+                    "grid gap-3",
+                    flowStep === 0 ? "grid-cols-1" : "grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)]"
+                  )}
+                >
+                  {flowStep > 0 ? (
+                    <button
+                      type="button"
+                      onClick={goToPreviousFlowStep}
+                      className="flex items-center justify-center gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-5 text-sm font-black text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      {t("flow.back")}
+                    </button>
+                  ) : null}
+
+                  {flowStep < flowSteps.length - 1 ? (
+                    <button
+                      type="button"
+                      disabled={isNextFlowDisabled}
+                      onClick={goToNextFlowStep}
+                      className={cn(
+                        "flex items-center justify-center gap-2 rounded-[20px] bg-gradient-to-r px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none",
+                        currentFlowMeta.accent
+                      )}
+                    >
+                      {t("flow.next")}
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isSubmitDisabled}
+                      className={cn(
+                        "flex w-full items-center justify-center rounded-[20px] bg-gradient-to-r px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all active:scale-[0.98] disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
+                        currentFlowMeta.accent,
+                        uploadedImageCount < 2 && "opacity-60 grayscale-[0.5]"
+                      )}
+                    >
+                      {isSubmitting
+                        ? t("submitting")
+                        : isUploading
+                          ? t("uploading")
+                          : isAnalyzing
+                            ? t("analyzing")
+                            : t("flow.submit")}
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : null}
 
-            <div className="space-y-5 pb-12 pt-2">
-              <div
-                className={cn(
-                  "grid gap-3",
-                  flowStep === 0 ? "grid-cols-1" : "grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)]"
-                )}
-              >
-                {flowStep > 0 ? (
-                  <button
-                    type="button"
-                    onClick={goToPreviousFlowStep}
-                    className="flex items-center justify-center gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-5 text-sm font-black text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    {t("flow.back")}
-                  </button>
-                ) : null}
-
-                {flowStep < flowSteps.length - 1 ? (
-                  <button
-                    type="button"
-                    disabled={!flowCompletion[flowStep]}
-                    onClick={goToNextFlowStep}
-                    className="flex items-center justify-center gap-2 rounded-[20px] bg-primary px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all hover:bg-blue-700 active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none"
-                  >
-                    {t("flow.next")}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={
-                      isSubmitting ||
-                      isUploading ||
-                      isAnalyzing ||
-                      uploadedImageCount < 2 ||
-                      isLoadingGeo ||
-                      !selectedZoneId
-                    }
-                    className={cn(
-                      "flex w-full items-center justify-center rounded-[20px] bg-primary px-4 py-5 text-[16px] font-bold text-white shadow-cta transition-all hover:bg-blue-700 active:scale-[0.98] disabled:bg-slate-300 disabled:text-white disabled:shadow-none",
-                      uploadedImageCount < 2 && "opacity-60 grayscale-[0.5]"
-                    )}
-                  >
-                    {isSubmitting
-                      ? t("submitting")
-                      : isUploading
-                        ? t("uploading")
-                        : isAnalyzing
-                          ? t("analyzing")
-                          : t("flow.submit")}
-                  </button>
-                )}
-              </div>
-
-              {flowStep === flowSteps.length - 1 ? (
+              {isFinalFlowStep ? (
                 <p className="mt-6 px-8 text-center text-[10px] font-bold uppercase tracking-widest leading-relaxed text-muted opacity-60">
                   {t("terms")}
                 </p>

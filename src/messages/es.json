@@ -387,6 +387,12 @@
       "resetAll": "Reiniciar escáner",
       "nextStep": "Ir al siguiente paso",
       "scanObject": "Escanear artículo",
+      "sourcePicker": {
+        "title": "Elegir una fuente",
+        "camera": "Cámara",
+        "library": "Explorar archivos",
+        "cancel": "Cerrar selector"
+      },
       "stepBadge": "Toma {index}",
       "quality": {
         "excellent": "Calidad excelente",

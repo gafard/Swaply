@@ -1,14 +1,16 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import { type ChangeEvent, type RefObject, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowRight,
   Camera,
   Check,
+  FolderOpen,
   RefreshCw,
   Sparkles,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -49,10 +51,57 @@ export default function PhotoScanner({
   const t = useTranslations("publish");
   const currentQuality = qualityResults[currentStep];
   const currentPreview = photoPreviews[currentStep];
+  const [sourcePickerMode, setSourcePickerMode] = useState<"scan" | "retake" | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryInputRef = useRef<HTMLInputElement | null>(null);
+
+  const openSourcePicker = (mode: "scan" | "retake") => setSourcePickerMode(mode);
+  const closeSourcePicker = () => setSourcePickerMode(null);
+
+  const triggerInput = (ref: RefObject<HTMLInputElement | null>) => {
+    if (!ref.current) {
+      return;
+    }
+
+    ref.current.value = "";
+    ref.current.click();
+  };
+
+  const handleCameraChange = (event: ChangeEvent<HTMLInputElement>) => {
+    closeSourcePicker();
+    onFileChange(event);
+  };
+
+  const handleLibraryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    closeSourcePicker();
+    onFileChange(event);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[32px] border border-white/80 bg-[#fffaf2]/90 p-5 shadow-[0_18px_50px_rgba(16,32,58,0.08)]">
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleCameraChange}
+      />
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+        onChange={handleLibraryChange}
+      />
+
+      <div className="paper-panel relative overflow-hidden rounded-[34px] p-5">
+        <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-blue-200/30 blur-3xl" />
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col">
             <label className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
@@ -95,7 +144,7 @@ export default function PhotoScanner({
           </p>
         </div>
 
-        <div className="rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm">
+        <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm">
           {t("scanner.aiAssisted")}
         </div>
       </div>
@@ -165,31 +214,70 @@ export default function PhotoScanner({
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
-                  <div className="relative">
-                    <button className="flex items-center gap-2 rounded-[2rem] bg-white px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-900 shadow-2xl transition-all active:scale-95">
+                  <div className="relative w-full max-w-[20rem] px-4">
+                    <button
+                      type="button"
+                      onClick={() => openSourcePicker("retake")}
+                      className="flex w-full items-center justify-center gap-2 rounded-[2rem] bg-white px-8 py-4 text-xs font-black uppercase tracking-widest text-slate-900 shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95"
+                    >
                       <RefreshCw className="h-5 w-5 text-indigo-600" />
                       {t("scanner.retakePhoto")}
                     </button>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="absolute inset-0 cursor-pointer opacity-0"
-                      aria-label={t("scanner.retakePhoto")}
-                      onChange={onFileChange}
-                    />
                   </div>
 
                   {currentStep < scanSteps.length - 1 && (
                     <button
                       type="button"
                       onClick={() => onStepChange(currentStep + 1)}
-                      className="flex items-center gap-2 rounded-[2rem] bg-indigo-600 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-2xl transition-all active:scale-95"
+                      className="flex items-center gap-2 rounded-[2rem] bg-gradient-to-r from-indigo-600 to-blue-500 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:-translate-y-0.5 active:scale-95"
                     >
                       {t("scanner.nextStep")}
                       <ArrowRight className="h-5 w-5" />
                     </button>
                   )}
+
+                  <AnimatePresence>
+                    {sourcePickerMode === "retake" ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        className="w-full max-w-[22rem] rounded-[26px] border border-white/15 bg-slate-950/70 p-3 shadow-2xl backdrop-blur-2xl"
+                      >
+                        <div className="mb-3 flex items-center justify-between px-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
+                            {t("scanner.sourcePicker.title")}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={closeSourcePicker}
+                            className="rounded-full p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                            aria-label={t("scanner.sourcePicker.cancel")}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => triggerInput(cameraInputRef)}
+                            className="flex items-center justify-center gap-2 rounded-[20px] bg-white px-4 py-4 text-xs font-black uppercase tracking-[0.16em] text-slate-900 shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+                          >
+                            <Camera className="h-4 w-4 text-primary" />
+                            {t("scanner.sourcePicker.camera")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => triggerInput(libraryInputRef)}
+                            className="flex items-center justify-center gap-2 rounded-[20px] border border-white/15 bg-white/8 px-4 py-4 text-xs font-black uppercase tracking-[0.16em] text-white transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+                          >
+                            <FolderOpen className="h-4 w-4" />
+                            {t("scanner.sourcePicker.library")}
+                          </button>
+                        </div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </div>
               </div>
             ) : (
@@ -232,22 +320,58 @@ export default function PhotoScanner({
                       <Sparkles className="h-3.5 w-3.5" />
                       {scanSteps[currentStep].guide}
                     </p>
-                    <div className="relative">
+                    <div className="relative space-y-2">
                       <button
                         type="button"
+                        onClick={() => openSourcePicker("scan")}
                         className="flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#fffaf2] py-4 text-sm font-black uppercase tracking-[0.2em] text-foreground shadow-[0_14px_40px_rgba(16,32,58,0.22)] transition-all active:scale-95"
                       >
                         <Camera className="h-5 w-5 text-primary" />
                         {t("scanner.scanObject")}
                       </button>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                        aria-label={t("scanner.scanObject")}
-                        onChange={onFileChange}
-                      />
+
+                      <AnimatePresence>
+                        {sourcePickerMode === "scan" ? (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                            className="rounded-[24px] border border-white/10 bg-slate-950/65 p-3 shadow-2xl backdrop-blur-2xl"
+                          >
+                            <div className="mb-3 flex items-center justify-between px-1">
+                              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">
+                                {t("scanner.sourcePicker.title")}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={closeSourcePicker}
+                                className="rounded-full p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                                aria-label={t("scanner.sourcePicker.cancel")}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <div className="grid gap-2">
+                              <button
+                                type="button"
+                                onClick={() => triggerInput(cameraInputRef)}
+                                className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3.5 text-xs font-black uppercase tracking-[0.16em] text-slate-900 shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+                              >
+                                <Camera className="h-4 w-4 text-primary" />
+                                {t("scanner.sourcePicker.camera")}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => triggerInput(libraryInputRef)}
+                                className="flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/15 bg-white/8 px-4 py-3.5 text-xs font-black uppercase tracking-[0.16em] text-white transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
+                              >
+                                <FolderOpen className="h-4 w-4" />
+                                {t("scanner.sourcePicker.library")}
+                              </button>
+                            </div>
+                          </motion.div>
+                        ) : null}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -265,10 +389,10 @@ export default function PhotoScanner({
             onClick={() => onStepChange(idx)}
             disabled={!photoPreviews[idx] && idx !== currentStep}
             aria-pressed={currentStep === idx}
-            className={cn(
-              "relative flex aspect-square w-20 flex-shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-3xl border-2 transition-all duration-500",
-              currentStep === idx
-                ? "border-indigo-500 bg-white ring-4 ring-indigo-50 shadow-lg"
+              className={cn(
+                "relative flex aspect-square w-20 flex-shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-3xl border-2 shadow-[0_8px_20px_rgba(16,32,58,0.05)] transition-all duration-500",
+                currentStep === idx
+                  ? "border-indigo-500 bg-white ring-4 ring-indigo-50 shadow-lg"
                 : "border-transparent bg-white/50",
               !photoPreviews[idx] && idx !== currentStep && "cursor-not-allowed opacity-60"
             )}

@@ -387,6 +387,12 @@
       "resetAll": "Reset scanner",
       "nextStep": "Go to next step",
       "scanObject": "Scan item",
+      "sourcePicker": {
+        "title": "Choose a source",
+        "camera": "Camera",
+        "library": "Browse files",
+        "cancel": "Close picker"
+      },
       "stepBadge": "Shot {index}",
       "quality": {
         "excellent": "Excellent quality",

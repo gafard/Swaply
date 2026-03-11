@@ -243,5 +243,6 @@ export function normalizePhotoQualityPayload(payload: unknown): PhotoQualityResu
       ? Math.max(0, Math.min(1, numericQuality > 1 ? numericQuality / 100 : numericQuality))
       : 0.5,
     suggestions: normalizeFlags(source.suggestions),
+    analysisError: Boolean(source.analysisError),
   };
 }
