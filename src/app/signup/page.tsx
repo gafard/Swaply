@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import AppLogo from "@/components/AppLogo";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import { TERMS_VERSION } from "@/lib/legal";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -17,12 +18,29 @@ export default function SignupPage() {
   const t = useTranslations("auth.signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [termsError, setTermsError] = useState("");
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (!acceptedTerms) {
+      setTermsError(t("errors.mustAcceptTerms"));
+      return;
+    }
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    setTermsError("");
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          accepted_terms_at: new Date().toISOString(),
+          accepted_terms_version: TERMS_VERSION,
+        },
+      },
+    });
     if (!error) {
       alert(t("success"));
       router.push(localizeHref(locale, "/login?next=/onboarding"));
@@ -80,6 +98,39 @@ export default function SignupPage() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-4">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(event) => {
+                    setAcceptedTerms(event.target.checked);
+                    if (event.target.checked) {
+                      setTermsError("");
+                    }
+                  }}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium leading-6 text-slate-600">
+                  {t.rich("acceptTermsLabel", {
+                    terms: (chunks) => (
+                      <Link
+                        href={localizeHref(locale, "/terms")}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-indigo-600 underline decoration-indigo-200 underline-offset-4"
+                      >
+                        {chunks}
+                      </Link>
+                    ),
+                  })}
+                </span>
+              </label>
+              {termsError ? (
+                <p className="mt-2 text-sm font-semibold text-rose-600">{termsError}</p>
+              ) : null}
             </div>
 
             <button 

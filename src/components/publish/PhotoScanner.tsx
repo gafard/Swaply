@@ -4,7 +4,6 @@ import { type ChangeEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
-  ArrowRight,
   Camera,
   Check,
   FolderOpen,
@@ -199,7 +198,7 @@ export default function PhotoScanner({
                   </div>
                 ) : null}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/28 to-transparent px-4 pb-4 pt-16">
-                  <div className="space-y-3 rounded-[24px] border border-white/15 bg-slate-950/48 p-3 shadow-2xl backdrop-blur-xl">
+                  <div className="rounded-[24px] border border-white/15 bg-slate-950/48 p-3 shadow-2xl backdrop-blur-xl">
                     <div className="grid grid-cols-2 gap-2">
                       <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-[18px] bg-white px-4 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-slate-900 shadow-lg">
                         <Camera className="h-4 w-4 text-primary" />
@@ -224,17 +223,6 @@ export default function PhotoScanner({
                         />
                       </label>
                     </div>
-                    {currentStep < scanSteps.length - 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => onStepChange(currentStep + 1)}
-                        disabled={isCurrentPhotoBusy}
-                        className="flex w-full items-center justify-center gap-2 rounded-[18px] bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-3.5 text-xs font-black uppercase tracking-[0.14em] text-white"
-                      >
-                        {t("scanner.nextStep")}
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
-                    ) : null}
                   </div>
                 </div>
               </div>

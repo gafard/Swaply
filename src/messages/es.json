@@ -686,6 +686,7 @@
       "subtitle": "Únete a Swaply y empieza a descubrir tesoros.",
       "emailPlaceholder": "Correo electrónico",
       "passwordPlaceholder": "Contraseña",
+      "acceptTermsLabel": "Acepto las <terms>condiciones de uso</terms> de Swaply.",
       "submit": "Registrarse",
       "loading": "Creando...",
       "separator": "- O registrarte con -",
@@ -693,6 +694,7 @@
       "login": "Iniciar sesión",
       "success": "Cuenta creada correctamente. Ahora puedes iniciar sesión.",
       "errors": {
+        "mustAcceptTerms": "Debes aceptar las condiciones de uso para crear una cuenta.",
         "generic": "No se puede crear la cuenta por ahora."
       }
     }

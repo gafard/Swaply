@@ -889,6 +889,13 @@ export default function PublishPage() {
             nextUrls[stepToIndex] = uploadedUrl;
             nextStatuses[stepToIndex] = "uploaded";
             nextProgress[stepToIndex] = 100;
+            const nextEmptyAfterCurrent = nextPreviews.findIndex(
+              (preview, index) => !preview && index > stepToIndex && index < totalSlots
+            );
+
+            if (nextEmptyAfterCurrent !== -1) {
+              setCurrentStep(nextEmptyAfterCurrent);
+            }
           } else {
             throw new Error(lastUploadErrorRef.current || t("errors.imagesUploadFailed"));
           }
@@ -1045,6 +1052,9 @@ export default function PublishPage() {
       
       <div className="z-10 flex-1 w-full px-5 pt-7">
         <form onSubmit={handleSubmit} className="space-y-8">
+          <input type="hidden" name="title" value={title} />
+          <input type="hidden" name="description" value={description} />
+          <input type="hidden" name="creditValue" value={String(creditValue)} />
           <input type="hidden" name="imageUrls" value={JSON.stringify(persistedImageUrls)} />
           <input type="hidden" name="latitude" value={coords?.lat || ""} />
           <input type="hidden" name="longitude" value={coords?.lng || ""} />

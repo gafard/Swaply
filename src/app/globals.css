@@ -63,6 +63,12 @@ body {
     linear-gradient(180deg, #fbf8f2 0%, #f6f1e8 55%, #f3ede3 100%);
 }
 
+html,
+body {
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: none;
+}
+
 body::before {
   content: "";
   position: fixed;

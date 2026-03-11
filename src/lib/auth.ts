@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { readTermsAcceptanceFromMetadata } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
 
 type CurrentUserPayload = Prisma.UserGetPayload<{
@@ -91,7 +92,9 @@ async function buildUniqueUsername(email?: string | null) {
 async function ensureCurrentUser(authUser: {
   id: string;
   email?: string | null;
+  userMetadata?: unknown;
 }) {
+  const termsAcceptance = readTermsAcceptanceFromMetadata(authUser.userMetadata);
   const existing = await prisma.user.findFirst({
     where: {
       OR: [
@@ -113,6 +116,9 @@ async function ensureCurrentUser(authUser: {
       data: {
         authUserId: authUser.id,
         email: authUser.email ?? existing.email,
+        acceptedTermsAt: existing.acceptedTermsAt ?? termsAcceptance.acceptedTermsAt,
+        acceptedTermsVersion:
+          existing.acceptedTermsVersion ?? termsAcceptance.acceptedTermsVersion,
       },
       include: {
         wallet: true,
@@ -150,6 +156,8 @@ async function ensureCurrentUser(authUser: {
       countryId: location.countryId,
       cityId: location.cityId,
       zoneId: location.zoneId,
+      acceptedTermsAt: termsAcceptance.acceptedTermsAt,
+      acceptedTermsVersion: termsAcceptance.acceptedTermsVersion,
       wallet: {
         create: {},
       },
@@ -176,6 +184,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const user = await ensureCurrentUser({
     id: authUser.id,
     email: authUser.email,
+    userMetadata: authUser.user_metadata,
   });
 
   if (!user) {

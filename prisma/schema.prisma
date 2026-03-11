@@ -147,6 +147,8 @@ model User {
 
   preferredLanguage String?  @default("fr")
   hasCompletedOnboarding Boolean @default(false)
+  acceptedTermsAt  DateTime?
+  acceptedTermsVersion String?
   trustScore       Int       @default(0)
   isVerified       Boolean   @default(false)
   isActive         Boolean   @default(true)

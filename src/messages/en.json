@@ -686,6 +686,7 @@
       "subtitle": "Join Swaply and start discovering great finds.",
       "emailPlaceholder": "Email",
       "passwordPlaceholder": "Password",
+      "acceptTermsLabel": "I accept Swaply's <terms>terms of use</terms>.",
       "submit": "Sign up",
       "loading": "Creating...",
       "separator": "- Or sign up with -",
@@ -693,6 +694,7 @@
       "login": "Log in",
       "success": "Account created successfully. You can log in now.",
       "errors": {
+        "mustAcceptTerms": "You must accept the terms of use to create an account.",
         "generic": "Unable to create the account right now."
       }
     }
