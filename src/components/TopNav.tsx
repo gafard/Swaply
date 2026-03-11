@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { Bell, Search } from "lucide-react";
@@ -13,16 +15,29 @@ export default function TopNav({
   unreadCount,
   user,
   showGuestActions = true,
+  showSearch = true,
 }: {
   unreadCount: number;
   user: any;
   showGuestActions?: boolean;
+  showSearch?: boolean;
 }) {
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("topNav");
   const balance = user?.swaps ?? user?.credits ?? 0;
   const notificationLabel = String(unreadCount).padStart(2, "0");
   const hasGuestActions = !user && showGuestActions;
+
+  useEffect(() => {
+    const routes = user
+      ? ["/", "/notifications", "/discover", "/publish", "/messages", "/profile"]
+      : ["/", "/login", "/signup", "/discover"];
+
+    routes.forEach((route) => {
+      router.prefetch(localizeHref(locale, route));
+    });
+  }, [locale, router, user]);
 
   return (
     <motion.div 
@@ -38,7 +53,7 @@ export default function TopNav({
           <div className="pointer-events-none absolute left-8 top-0 h-px w-24 bg-gradient-to-r from-white/0 via-white/90 to-white/0" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
-              <Link href={localizeHref(locale, "/")} className="shrink-0 rounded-[24px] border border-white/80 bg-white/85 p-2 shadow-[0_14px_34px_rgba(16,32,58,0.1)] sm:rounded-[28px] sm:p-2.5">
+              <Link href={localizeHref(locale, "/")} prefetch className="shrink-0 rounded-[24px] border border-white/80 bg-white/85 p-2 shadow-[0_14px_34px_rgba(16,32,58,0.1)] sm:rounded-[28px] sm:p-2.5">
                 <AppLogo
                   size={48}
                   className="h-12 w-12 rounded-[18px] bg-white sm:h-[54px] sm:w-[54px] sm:rounded-[22px]"
@@ -60,7 +75,7 @@ export default function TopNav({
 
             {user ? (
               <div className="flex items-center gap-3 pt-1">
-                <Link href={localizeHref(locale, "/notifications")} className="relative group">
+                <Link href={localizeHref(locale, "/notifications")} prefetch className="relative group">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -81,29 +96,14 @@ export default function TopNav({
             ) : null}
           </div>
 
-          <div
-            className={cn(
-              "relative mt-4 grid gap-3 sm:mt-5",
-              user
-                ? "sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
-                : "justify-items-center"
-            )}
-          >
+          <div className="relative mt-4 grid gap-3 justify-items-center sm:mt-5">
             <div
-              className={cn(
-                "rounded-[28px] border border-white/80 bg-white/88 px-4 py-3.5 shadow-[0_14px_36px_rgba(16,32,58,0.06)] sm:py-4",
-                !user && "w-full max-w-[22rem] text-center"
-              )}
+              className="w-full max-w-[22rem] rounded-[28px] border border-white/80 bg-white/88 px-4 py-3.5 text-center shadow-[0_14px_36px_rgba(16,32,58,0.06)] sm:py-4"
             >
               <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                 {t("balance")}
               </span>
-              <div
-                className={cn(
-                  "mt-1.5 flex min-w-0 items-end gap-2 sm:mt-2",
-                  !user && "justify-center"
-                )}
-              >
+              <div className="mt-1.5 flex min-w-0 items-end justify-center gap-2 sm:mt-2">
                 <span className="font-display text-[2.8rem] font-bold leading-none tracking-[-0.06em] text-slate-950 sm:text-[3.15rem]">
                   {balance}
                 </span>
@@ -118,47 +118,42 @@ export default function TopNav({
               <div className="flex shrink-0 items-center gap-2 self-center">
                 <Link
                   href={localizeHref(locale, "/login")}
+                  prefetch
                   className="rounded-full border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 transition-colors hover:text-slate-900"
                 >
                   {t("login")}
                 </Link>
                 <Link
                   href={localizeHref(locale, "/signup")}
+                  prefetch
                   className="rounded-full bg-[#2457ff] px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-[0_14px_30px_rgba(36,87,255,0.28)] transition-all active:scale-95"
                 >
                   {t("signup")}
                 </Link>
-              </div>
-            ) : user ? (
-              <div className="rounded-[26px] border border-white/75 bg-[linear-gradient(135deg,rgba(36,87,255,0.08),rgba(255,255,255,0.82))] px-4 py-4 shadow-[0_14px_36px_rgba(16,32,58,0.06)]">
-                <div className="flex items-center justify-between gap-3">
-                  <Bell className="h-4 w-4 text-primary" strokeWidth={2.5} />
-                  <span className="font-display text-[2rem] font-bold leading-none tracking-[-0.05em] text-slate-950">
-                    {notificationLabel}
-                  </span>
-                </div>
               </div>
             ) : null}
           </div>
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-[#fffaf3] px-4 py-3.5 shadow-[0_18px_44px_rgba(16,32,58,0.08)] sm:py-4">
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-blue-100/40 to-transparent" />
-        <motion.div 
-          whileTap={{ scale: 0.98 }}
-          className="relative z-10 flex items-center gap-3 rounded-[26px] border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 focus-within:border-slate-400 sm:py-4"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-[#f2f5ff] text-primary shadow-inner">
-            <Search className="w-5 h-5" strokeWidth={2.5} />
-          </div>
-          <input 
-            type="text" 
-            placeholder={t("searchPlaceholder")} 
-            className="w-full border-none bg-transparent text-[15px] font-semibold text-foreground outline-none placeholder:text-slate-400"
-          />
-        </motion.div>
-      </div>
+      {showSearch ? (
+        <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-[#fffaf3] px-4 py-3.5 shadow-[0_18px_44px_rgba(16,32,58,0.08)] sm:py-4">
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-blue-100/40 to-transparent" />
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            className="relative z-10 flex items-center gap-3 rounded-[26px] border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 focus-within:border-slate-400 sm:py-4"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-[#f2f5ff] text-primary shadow-inner">
+              <Search className="w-5 h-5" strokeWidth={2.5} />
+            </div>
+            <input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              className="w-full border-none bg-transparent text-[15px] font-semibold text-foreground outline-none placeholder:text-slate-400"
+            />
+          </motion.div>
+        </div>
+      ) : null}
     </motion.div>
   );
 }

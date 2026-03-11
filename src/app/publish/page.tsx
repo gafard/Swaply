@@ -43,6 +43,53 @@ function loadImageElement(src: string) {
   });
 }
 
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error("Impossible de compresser l'image."));
+          return;
+        }
+        resolve(blob);
+      },
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+async function optimizeImageFileForUpload(
+  file: File,
+  maxDimension = 1600,
+  quality = 0.86
+) {
+  if (file.size <= 3_500_000) {
+    return file;
+  }
+
+  const sourceUrl = await readFileAsDataUrl(file);
+  const image = await loadImageElement(sourceUrl);
+  const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
+  const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.naturalWidth * scale);
+  canvas.height = Math.round(image.naturalHeight * scale);
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return file;
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const blob = await canvasToBlob(canvas, quality);
+
+  return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 async function optimizeImageForAI(file: File, maxDimension = 1280, quality = 0.82) {
   const sourceUrl = await readFileAsDataUrl(file);
   const image = await loadImageElement(sourceUrl);
@@ -759,9 +806,14 @@ export default function PublishPage() {
             }
           }
 
-          const result = await startUpload([file]);
-          if (result) {
-            nextUrls[stepToIndex] = result[0].ufsUrl;
+          const optimizedUploadFile = await optimizeImageFileForUpload(file);
+          const result = await startUpload([optimizedUploadFile]);
+          const uploadedUrl = result?.[0]?.ufsUrl ?? result?.[0]?.serverData?.imageUrl ?? null;
+
+          if (uploadedUrl) {
+            nextUrls[stepToIndex] = uploadedUrl;
+          } else {
+            throw new Error(t("errors.imagesUploadFailed"));
           }
         } catch (err) {
           console.error("Upload error for file", i, err);

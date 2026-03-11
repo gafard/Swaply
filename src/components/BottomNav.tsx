@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { 
@@ -16,17 +17,27 @@ import { localizeHref, stripLocalePrefix } from "@/lib/i18n/pathnames";
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("bottomNav");
   const cleanPathname = stripLocalePrefix(pathname);
 
-  const navItems = [
-    { href: "/", label: t("explore"), icon: Compass },
-    { href: "/discover", label: t("discover"), icon: LayoutGrid },
-    { href: "/publish", label: t("publish"), icon: Plus, isAction: true },
-    { href: "/messages", label: t("messages"), icon: MessageSquare },
-    { href: "/profile", label: t("profile"), icon: User },
-  ];
+  const navItems = useMemo(
+    () => [
+      { href: "/", label: t("explore"), icon: Compass },
+      { href: "/discover", label: t("discover"), icon: LayoutGrid },
+      { href: "/publish", label: t("publish"), icon: Plus, isAction: true },
+      { href: "/messages", label: t("messages"), icon: MessageSquare },
+      { href: "/profile", label: t("profile"), icon: User },
+    ],
+    [t]
+  );
+
+  useEffect(() => {
+    navItems.forEach((item) => {
+      router.prefetch(localizeHref(locale, item.href));
+    });
+  }, [locale, navItems, router]);
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 sm:px-5">
@@ -45,7 +56,7 @@ export default function BottomNav() {
 
               if (item.isAction) {
                 return (
-                  <Link key={item.href} href={href} className="flex flex-1 justify-center">
+                  <Link key={item.href} href={href} prefetch className="flex flex-1 justify-center">
                     <div className="relative -mt-3.5 flex flex-col items-center">
                       <motion.div
                         whileHover={{ scale: 1.05 }}
@@ -77,6 +88,7 @@ export default function BottomNav() {
                 <Link
                   key={item.href}
                   href={href}
+                  prefetch
                   className="group flex flex-1 items-end justify-center"
                 >
                   <div
