@@ -2,6 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { routing } from "@/i18n/routing";
+import { localizeHref } from "@/lib/i18n/pathnames";
+import {
+  normalizePostAuthPath,
+  ONBOARDING_COOKIE_NAME,
+  parseOnboardingCookie,
+} from "@/lib/onboarding";
 
 function resolveLocaleFromPathname(pathname: string) {
   const [, segment] = pathname.split("/");
@@ -63,6 +69,7 @@ function resolveRequestLocale(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const locale = resolveRequestLocale(request);
   const pathname = stripLocaleFromPathname(request.nextUrl.pathname);
+  const nextPath = normalizePostAuthPath(`${pathname}${request.nextUrl.search}`);
 
   if (!resolveLocaleFromPathname(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
@@ -120,11 +127,44 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
+  const onboardingCookie = parseOnboardingCookie(
+    request.cookies.get(ONBOARDING_COOKIE_NAME)?.value
+  );
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
+
+  if (user && onboardingCookie === null) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/api/auth/bootstrap";
+    url.search = `?locale=${encodeURIComponent(locale)}&next=${encodeURIComponent(nextPath)}`;
+
+    return NextResponse.redirect(url);
+  }
+
+  if (user && onboardingCookie === false && !isOnboardingRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = localizeHref(locale, "/onboarding");
+    url.search = nextPath !== "/" ? `?next=${encodeURIComponent(nextPath)}` : "";
+
+    const redirectResponse = NextResponse.redirect(url);
+    redirectResponse.cookies.set("SWAPLY_LOCALE", locale);
+    return redirectResponse;
+  }
+
   // Redirect to home if logged in and trying to access auth pages
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
+    url.pathname =
+      onboardingCookie === false ? localizeHref(locale, "/onboarding") : `/${locale}`;
+    const redirectResponse = NextResponse.redirect(url);
+    redirectResponse.cookies.set("SWAPLY_LOCALE", locale);
+    return redirectResponse;
+  }
+
+  if (user && onboardingCookie === true && isOnboardingRoute) {
+    const url = request.nextUrl.clone();
     url.pathname = `/${locale}`;
+    url.search = "";
     const redirectResponse = NextResponse.redirect(url);
     redirectResponse.cookies.set("SWAPLY_LOCALE", locale);
     return redirectResponse;

@@ -174,7 +174,7 @@ export default function DiscoverPage() {
 
   return (
     <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
-      <TopNav unreadCount={0} user={null} />
+      <TopNav unreadCount={0} user={null} showGuestActions={false} />
       <Suspense
         fallback={
           <div className="flex flex-col items-center justify-center py-20">

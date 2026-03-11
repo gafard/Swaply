@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 
 import BottomNav from "@/components/BottomNav";
+import OnboardingStatusSync from "@/components/OnboardingStatusSync";
 import PreferredLanguageSync from "@/components/PreferredLanguageSync";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser } from "@/lib/auth";
@@ -70,6 +71,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
+      <OnboardingStatusSync hasCompletedOnboarding={user?.hasCompletedOnboarding ?? null} />
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
       <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#f8f2e9]/90 shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
         <Toaster position="top-center" />

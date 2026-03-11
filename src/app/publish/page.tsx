@@ -298,8 +298,8 @@ export default function PublishPage() {
       glow: "shadow-[0_22px_55px_rgba(15,118,110,0.18)]",
     },
   ];
-  const isPhotosStepComplete = uploadedImageCount >= 2;
-  const isAnalysisStepComplete = isPhotosStepComplete && !isUploading && !isAnalyzing;
+  const isPhotosStepComplete = photoCount >= 2 && !isCheckingQuality;
+  const isAnalysisStepComplete = isPhotosStepComplete && !isAnalyzing;
   const isDetailsStepComplete =
     normalizedTitle.length >= 2 &&
     (normalizedDescription.length === 0 || normalizedDescription.length >= 5);
@@ -847,7 +847,9 @@ export default function PublishPage() {
   }, []);
 
   const isFinalFlowStep = flowStep === flowSteps.length - 1;
-  const isNextFlowDisabled = !flowCompletion[flowStep];
+  const isNextFlowDisabled =
+    !flowCompletion[flowStep] ||
+    (flowStep === 0 && isCheckingQuality);
   const isSubmitDisabled =
     isSubmitting ||
     isUploading ||
@@ -862,9 +864,6 @@ export default function PublishPage() {
       {/* 1. App Header */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/70 bg-[#f8f2e9]/80 px-5 pb-5 pt-10 backdrop-blur-2xl">
         <div>
-          <p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
-            Swaply Studio
-          </p>
           <h1 className="font-display text-[2rem] font-bold tracking-[-0.05em] text-foreground">{t("title")}</h1>
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-[24px] border border-white/80 bg-white/80 shadow-[0_16px_35px_rgba(36,87,255,0.12)] transition-colors">

@@ -10,13 +10,14 @@ import {
   PlusCircle,
   Sparkles,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
 import { updateCurrentUserLocation } from "@/app/actions/location";
 import AppLogo from "@/components/AppLogo";
 import { GeoCatalog } from "@/lib/geo";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import { normalizePostAuthPath, sanitizeNextPath } from "@/lib/onboarding";
 
 type GeoPayload = {
   countries: GeoCatalog;
@@ -32,6 +33,7 @@ type GeoPayload = {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations("onboarding");
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -80,6 +82,10 @@ export default function OnboardingPage() {
     [availableCities, selectedCityId]
   );
   const availableZones = selectedCity?.zones ?? [];
+  const postOnboardingPath = useMemo(
+    () => normalizePostAuthPath(sanitizeNextPath(searchParams.get("next"))),
+    [searchParams]
+  );
 
   const getLocationError = (code: string) => {
     switch (code) {
@@ -206,7 +212,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      router.push(localizeHref(locale, "/"));
+      router.push(localizeHref(locale, postOnboardingPath));
       router.refresh();
     });
   };

@@ -6,6 +6,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { routing } from "@/i18n/routing";
 import { actionFail, actionOk } from "@/lib/actions/result";
+import {
+  ONBOARDING_COOKIE_NAME,
+  PERSISTENT_COOKIE_MAX_AGE,
+  serializeOnboardingCookie,
+} from "@/lib/onboarding";
 import prisma from "@/lib/prisma";
 import { resolveLocationSelection } from "@/lib/geo.server";
 
@@ -33,10 +38,17 @@ export async function updateCurrentUserLocation(formData: FormData) {
         lat: location.zone.lat ?? location.city.lat,
         lng: location.zone.lng ?? location.city.lng,
         preferredLanguage,
+        hasCompletedOnboarding: true,
       },
     });
 
     const cookieStore = await cookies();
+    cookieStore.set(ONBOARDING_COOKIE_NAME, serializeOnboardingCookie(true), {
+      path: "/",
+      sameSite: "lax",
+      maxAge: PERSISTENT_COOKIE_MAX_AGE,
+    });
+
     if (
       preferredLanguage &&
       routing.locales.includes(preferredLanguage as (typeof routing.locales)[number])
@@ -44,7 +56,7 @@ export async function updateCurrentUserLocation(formData: FormData) {
       cookieStore.set("SWAPLY_LOCALE", preferredLanguage, {
         path: "/",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 365,
+        maxAge: PERSISTENT_COOKIE_MAX_AGE,
       });
     }
 
@@ -89,7 +101,7 @@ export async function updatePreferredLanguage(nextLocale: string) {
     cookieStore.set("SWAPLY_LOCALE", nextLocale, {
       path: "/",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 365,
+      maxAge: PERSISTENT_COOKIE_MAX_AGE,
     });
 
     revalidatePath("/");

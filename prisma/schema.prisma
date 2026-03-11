@@ -146,6 +146,7 @@ model User {
   lng              Float?
 
   preferredLanguage String?  @default("fr")
+  hasCompletedOnboarding Boolean @default(false)
   trustScore       Int       @default(0)
   isVerified       Boolean   @default(false)
   isActive         Boolean   @default(true)

@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import AppLogo from "@/components/AppLogo";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { localizeHref, stripLocalePrefix } from "@/lib/i18n/pathnames";
+import { normalizePostAuthPath } from "@/lib/onboarding";
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -28,8 +29,27 @@ export default function LoginPage() {
         typeof window !== "undefined"
           ? new URLSearchParams(window.location.search).get("next")
           : null;
-      const targetPath = nextPath ? stripLocalePrefix(nextPath) : "/";
-      router.push(localizeHref(locale, targetPath));
+      const targetPath = normalizePostAuthPath(nextPath ? stripLocalePrefix(nextPath) : "/");
+      const bootstrapResponse = await fetch("/api/auth/bootstrap", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          locale,
+          next: targetPath,
+        }),
+      });
+
+      if (!bootstrapResponse.ok) {
+        window.location.assign(
+          `/api/auth/bootstrap?locale=${encodeURIComponent(locale)}&next=${encodeURIComponent(targetPath)}`
+        );
+        return;
+      }
+
+      const payload = (await bootstrapResponse.json()) as { targetPath?: string };
+      router.push(payload.targetPath || localizeHref(locale, "/"));
       router.refresh();
     } else {
       alert(t("errors.generic"));
