@@ -72,7 +72,7 @@ export default function LoginPage() {
           <AppLogo
             size={84}
             priority
-            className="mb-6 h-21 w-21 rounded-[2rem] border border-white/80 bg-white p-2 shadow-[0_18px_45px_rgba(36,87,255,0.16)]"
+            className="mb-6 h-21 w-21"
           />
           <h1 className="font-display text-4xl font-bold tracking-[-0.06em] text-slate-950">Swaply</h1>
         </div>

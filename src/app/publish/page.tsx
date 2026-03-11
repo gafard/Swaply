@@ -64,10 +64,6 @@ async function optimizeImageFileForUpload(
   maxDimension = 1600,
   quality = 0.86
 ) {
-  if (file.size <= 3_500_000) {
-    return file;
-  }
-
   const sourceUrl = await readFileAsDataUrl(file);
   const image = await loadImageElement(sourceUrl);
   const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
@@ -83,8 +79,9 @@ async function optimizeImageFileForUpload(
 
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
   const blob = await canvasToBlob(canvas, quality);
+  const sanitizedBaseName = file.name.replace(/\.[^.]+$/, "").trim() || "swaply-photo";
 
-  return new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+  return new File([blob], `${sanitizedBaseName}.jpg`, {
     type: "image/jpeg",
     lastModified: Date.now(),
   });
@@ -113,6 +110,9 @@ async function optimizeImageForAI(file: File, maxDimension = 1280, quality = 0.8
   return canvas.toDataURL("image/jpeg", quality);
 }
 
+type UploadSlotStatus = "idle" | "processing" | "uploading" | "uploaded" | "failed";
+const EMPTY_UPLOAD_STATUSES: UploadSlotStatus[] = ["idle", "idle", "idle", "idle"];
+
 export default function PublishPage() {
   const router = useRouter();
   const locale = useLocale();
@@ -122,6 +122,7 @@ export default function PublishPage() {
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [analysisPayloads, setAnalysisPayloads] = useState<string[]>([]);
+  const [uploadStatuses, setUploadStatuses] = useState<UploadSlotStatus[]>(EMPTY_UPLOAD_STATUSES);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [aiError, setAiError] = useState(false);
 
@@ -223,7 +224,14 @@ export default function PublishPage() {
   );
   const isElectronics = isElectronicsCategory(aiInsights.category);
   const photoCount = photoPreviews.filter(Boolean).length;
-  const uploadedImageCount = imageUrls.filter(Boolean).length;
+  const persistedImageUrls = useMemo(
+    () => imageUrls.filter((url): url is string => typeof url === "string" && url.trim().length > 0),
+    [imageUrls]
+  );
+  const uploadedImageCount = persistedImageUrls.length;
+  const hasFailedPhotoUploads = uploadStatuses.some(
+    (status, index) => Boolean(photoPreviews[index]) && status === "failed"
+  );
   const hasEnoughSelectedPhotos = photoCount >= 2;
   const hasAllPhotoUploadsReady = photoCount > 0 && uploadedImageCount === photoCount;
   const normalizedTitle = title.trim();
@@ -297,7 +305,12 @@ export default function PublishPage() {
   });
   const hasPendingPhotoUploads =
     photoCount > 0 &&
-    (isCheckingQuality || isUploading || uploadedImageCount < photoCount) &&
+    (isCheckingQuality ||
+      isUploading ||
+      uploadStatuses.some(
+        (status, index) => Boolean(photoPreviews[index]) && (status === "processing" || status === "uploading")
+      )) &&
+    !hasFailedPhotoUploads &&
     !uploadError;
   const flowSteps: Array<{
     id: "photos" | "analysis" | "details" | "publish";
@@ -350,6 +363,7 @@ export default function PublishPage() {
     hasAllPhotoUploadsReady &&
     !isCheckingQuality &&
     !isUploading &&
+    !hasFailedPhotoUploads &&
     !uploadError;
   const isAnalysisStepComplete = isPhotosStepComplete && !isAnalyzing;
   const isDetailsStepComplete =
@@ -657,6 +671,8 @@ export default function PublishPage() {
       nextErrors.images = t("errors.imagesRequired");
     } else if (isUploading || isCheckingQuality) {
       nextErrors.images = t("errors.imagesUploading");
+    } else if (hasFailedPhotoUploads) {
+      nextErrors.images = uploadError || t("errors.imagesUploadFailed");
     } else if (uploadedImageCount < photoCount) {
       nextErrors.images = uploadError || t("errors.imagesUploadFailed");
     }
@@ -685,6 +701,7 @@ export default function PublishPage() {
     description,
     isCheckingQuality,
     isUploading,
+    hasFailedPhotoUploads,
     photoCount,
     selectedCityId,
     selectedCountryId,
@@ -770,6 +787,7 @@ export default function PublishPage() {
     let nextUrls = [...imageUrls];
     let nextPayloads = [...analysisPayloads];
     let nextQuality = [...qualityResults];
+    let nextStatuses = [...uploadStatuses];
     let nextUploadError: string | null = null;
 
     setIsCheckingQuality(true);
@@ -783,40 +801,58 @@ export default function PublishPage() {
         const previewUrl = URL.createObjectURL(file);
         previewObjectUrlsRef.current[stepToIndex] = previewUrl;
         nextPreviews[stepToIndex] = previewUrl;
+        nextUrls[stepToIndex] = "";
+        nextQuality[stepToIndex] = null;
+        nextStatuses[stepToIndex] = "processing";
 
         try {
           const base64 = await optimizeImageForAI(file);
           nextPayloads[stepToIndex] = base64;
-          const quality = await analyzePhotoQuality(base64, stepToIndex);
-          const resolvedQuality = quality as PhotoQualityResult;
+        } catch (err) {
+          console.error("AI payload preparation error for file", i, err);
+          nextPayloads[stepToIndex] = "";
+        }
 
-          if (resolvedQuality.analysisError) {
-            nextQuality[stepToIndex] = null;
-          } else {
-            nextQuality[stepToIndex] = resolvedQuality;
+        try {
+          const base64ForQuality = nextPayloads[stepToIndex];
+          if (base64ForQuality) {
+            const quality = await analyzePhotoQuality(base64ForQuality, stepToIndex);
+            const resolvedQuality = quality as PhotoQualityResult;
 
-            if (stepToIndex === 0 && resolvedQuality.objectDetected) {
-              if (!title) setTitle(resolvedQuality.objectDetected);
-              setAiInsights((prev) => ({
-                ...prev,
-                subcategory: resolvedQuality.objectDetected || undefined,
-                brand: resolvedQuality.brandDetected || undefined,
-                confidence: resolvedQuality.qualityScore,
-              }));
+            if (!resolvedQuality.analysisError) {
+              nextQuality[stepToIndex] = resolvedQuality;
+
+              if (stepToIndex === 0 && resolvedQuality.objectDetected) {
+                if (!title) setTitle(resolvedQuality.objectDetected);
+                setAiInsights((prev) => ({
+                  ...prev,
+                  subcategory: resolvedQuality.objectDetected || undefined,
+                  brand: resolvedQuality.brandDetected || undefined,
+                  confidence: resolvedQuality.qualityScore,
+                }));
+              }
             }
           }
+        } catch (err) {
+          console.error("Quality analysis error for file", i, err);
+          nextQuality[stepToIndex] = null;
+        }
 
+        try {
+          nextStatuses[stepToIndex] = "uploading";
           const optimizedUploadFile = await optimizeImageFileForUpload(file);
           const result = await startUpload([optimizedUploadFile]);
           const uploadedUrl = result?.[0]?.ufsUrl ?? result?.[0]?.serverData?.imageUrl ?? null;
 
           if (uploadedUrl) {
             nextUrls[stepToIndex] = uploadedUrl;
+            nextStatuses[stepToIndex] = "uploaded";
           } else {
             throw new Error(t("errors.imagesUploadFailed"));
           }
         } catch (err) {
           console.error("Upload error for file", i, err);
+          nextStatuses[stepToIndex] = "failed";
           nextUploadError =
             err instanceof Error && err.message.length > 0
               ? err.message
@@ -831,12 +867,8 @@ export default function PublishPage() {
     setImageUrls(nextUrls);
     setAnalysisPayloads(nextPayloads);
     setQualityResults(nextQuality);
-    setUploadError(
-      nextUploadError ??
-        (nextPreviews.filter(Boolean).length > nextUrls.filter(Boolean).length
-          ? t("errors.imagesUploadFailed")
-          : null)
-    );
+    setUploadStatuses(nextStatuses);
+    setUploadError(nextUploadError);
 
     // Auto-advance logic: find first empty step
     const firstEmpty = nextPreviews.findIndex((p, idx) => !p && idx < totalSlots);
@@ -924,6 +956,7 @@ export default function PublishPage() {
     setPhotoPreviews([]);
     setImageUrls([]);
     setAnalysisPayloads([]);
+    setUploadStatuses(EMPTY_UPLOAD_STATUSES);
     setQualityResults([null, null, null, null]);
     setCurrentStep(0);
     setUploadError(null);
@@ -950,6 +983,7 @@ export default function PublishPage() {
     isCheckingQuality ||
     photoCount < 2 ||
     uploadedImageCount < photoCount ||
+    hasFailedPhotoUploads ||
     Boolean(uploadError) ||
     isLoadingGeo ||
     !selectedZoneId;
@@ -968,7 +1002,7 @@ export default function PublishPage() {
       
       <div className="z-10 flex-1 w-full px-5 pt-7">
         <form onSubmit={handleSubmit} className="space-y-8">
-          <input type="hidden" name="imageUrls" value={JSON.stringify(imageUrls)} />
+          <input type="hidden" name="imageUrls" value={JSON.stringify(persistedImageUrls)} />
           <input type="hidden" name="latitude" value={coords?.lat || ""} />
           <input type="hidden" name="longitude" value={coords?.lng || ""} />
           <input type="hidden" name="countryId" value={selectedCountryId} />

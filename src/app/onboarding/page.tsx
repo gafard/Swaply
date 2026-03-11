@@ -249,7 +249,7 @@ export default function OnboardingPage() {
               <AppLogo
                 size={56}
                 priority
-                className="h-14 w-14 rounded-[1.5rem] border border-white/10 shadow-xl shadow-cyan-400/10"
+                className="h-14 w-14"
               />
             </div>
 
@@ -373,7 +373,7 @@ export default function OnboardingPage() {
               <ChevronLeft className="h-5 w-5" />
             </button>
           ) : (
-            <AppLogo size={40} priority className="h-10 w-10 rounded-2xl shadow-lg shadow-black/20" />
+            <AppLogo size={40} priority className="h-10 w-10" />
           )}
 
           <button

@@ -53,10 +53,10 @@ export default function TopNav({
           <div className="pointer-events-none absolute left-8 top-0 h-px w-24 bg-gradient-to-r from-white/0 via-white/90 to-white/0" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-3">
-              <Link href={localizeHref(locale, "/")} prefetch className="shrink-0 rounded-[24px] border border-white/80 bg-white/85 p-2 shadow-[0_14px_34px_rgba(16,32,58,0.1)] sm:rounded-[28px] sm:p-2.5">
+              <Link href={localizeHref(locale, "/")} prefetch className="shrink-0">
                 <AppLogo
                   size={48}
-                  className="h-12 w-12 rounded-[18px] bg-white sm:h-[54px] sm:w-[54px] sm:rounded-[22px]"
+                  className="h-12 w-12 sm:h-[54px] sm:w-[54px]"
                   priority
                 />
               </Link>
