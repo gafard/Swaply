@@ -119,13 +119,13 @@ export default function ReserveButton({
 
   return (
     <div className="w-full max-w-md space-y-4">
-      <div className="mb-2 flex flex-col gap-3 rounded-3xl border border-border bg-slate-50/50 p-4">
+      <div className="mb-2 flex flex-col gap-3 rounded-3xl border border-border bg-surface/50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Wallet className="h-4 w-4" />
             </div>
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+            <span className="text-[11px] font-black uppercase tracking-widest text-muted">
               {t("hybridTitle")}
             </span>
           </div>
@@ -133,22 +133,23 @@ export default function ReserveButton({
             onClick={() => setIsHybridMode(!isHybridMode)}
             className={cn(
               "rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all",
-              isHybridMode ? "bg-indigo-500 text-white" : "bg-slate-200 text-slate-500"
+              isHybridMode ? "bg-primary text-white" : "bg-muted/20 text-muted"
             )}
           >
             {isHybridMode ? t("disableHybrid") : t("adjustHybrid")}
           </button>
         </div>
 
+
         {isHybridMode && (
           <div className="animate-in slide-in-from-top-2 pt-2 duration-300 fade-in">
-            <p className="mb-3 text-center text-[10px] font-bold italic text-slate-400">
+            <p className="mb-3 text-center text-[10px] font-bold italic text-muted">
               {t("hybridBody")}
             </p>
             <div className="mb-4 flex items-center justify-center gap-6">
               <button
                 onClick={() => adjustSwaps(-50)}
-                className="text-slate-400 transition-colors hover:text-indigo-500"
+                className="text-muted transition-colors hover:text-primary"
               >
                 <MinusCircle className="h-8 w-8" />
               </button>
@@ -156,28 +157,30 @@ export default function ReserveButton({
                 <span
                   className={cn(
                     "text-2xl font-black tabular-nums",
-                    swapsBalance === 0 ? "text-slate-300" : "text-indigo-600"
+                    swapsBalance === 0 ? "text-muted/30" : "text-primary"
                   )}
                 >
                   {swapsBalance > 0 ? "+" : ""}
                   {swapsBalance}
                 </span>
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted">
                   {t("swapsLabel")}
                 </p>
               </div>
               <button
                 onClick={() => adjustSwaps(50)}
-                className="text-slate-400 transition-colors hover:text-indigo-500"
+                className="text-muted transition-colors hover:text-primary"
               >
                 <PlusCircle className="h-8 w-8" />
               </button>
             </div>
+
             {swapsBalance > 0 && (
-              <div className="rounded-2xl border border-indigo-100/50 bg-indigo-50 p-3 text-center text-[10px] font-bold text-indigo-600">
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-center text-[10px] font-bold text-primary">
                 {t("hybridExtra", { amount: swapsBalance })}
               </div>
             )}
+
           </div>
         )}
       </div>
@@ -189,9 +192,10 @@ export default function ReserveButton({
           "flex w-full items-center justify-center gap-3 rounded-[20px] py-5 text-[14px] font-black uppercase tracking-widest text-white shadow-cta transition-all active:scale-[0.98]",
           loading ? "cursor-not-allowed opacity-70" : "",
           isDefective
-            ? "bg-amber-500 shadow-amber-100/50 hover:bg-amber-600"
-            : "bg-slate-900 shadow-slate-100/50 hover:bg-black"
+            ? "bg-warning shadow-warning/30 hover:bg-warning/90"
+            : "bg-foreground shadow-card hover:bg-foreground/90"
         )}
+
       >
         {loading ? (
           <Loader2 className="h-5 w-5 animate-spin" />

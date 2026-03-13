@@ -56,10 +56,12 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
   return (
     <div className="h-full">
       <Link href={localizeHref(locale, `/item/${item.id}`)} className="group block h-full">
-        <div className="group/card relative flex h-full flex-col overflow-hidden rounded-[32px] border border-white/80 bg-[#fffaf3] shadow-[0_18px_52px_rgba(16,32,58,0.09)] transition-all duration-300 hover:shadow-[0_24px_66px_rgba(16,32,58,0.13)]">
-          <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-blue-100/55 blur-3xl opacity-50" />
+        <div className="group/card relative flex h-full flex-col overflow-hidden rounded-[32px] border border-border bg-surface shadow-[0_18px_52px_rgba(0,0,0,0.09)] transition-all duration-300 hover:shadow-[0_24px_66px_rgba(0,0,0,0.13)]">
+          <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-primary/10 blur-3xl opacity-50" />
 
-          <div className="relative aspect-[3/4] overflow-hidden bg-[#efe7d7]">
+
+          <div className="relative aspect-[3/4] overflow-hidden bg-background">
+
             {primaryImage ? (
               <img
                 src={primaryImage}
@@ -95,7 +97,8 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                 "absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all backdrop-blur-md",
                 isSaved 
                    ? "border-rose-600 bg-rose-500 text-white" 
-                   : "border-white/70 bg-white/90 text-slate-400 hover:text-rose-500"
+                   : "border-border bg-surface/90 text-muted hover:text-rose-500"
+
               )}
             >
               <Heart className={cn("w-4 h-4", isSaved && "fill-white")} />
@@ -111,12 +114,13 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5 rounded-full border border-white/25 bg-white/88 px-3 py-1.5 shadow-sm backdrop-blur-md">
-                <MapPin className="w-3 h-3 text-slate-400" />
-                <span className="max-w-[90px] truncate text-[10px] font-medium text-slate-600 uppercase tracking-tight">
+              <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-background/88 px-3 py-1.5 shadow-sm backdrop-blur-md">
+                <MapPin className="w-3 h-3 text-muted" />
+                <span className="max-w-[90px] truncate text-[10px] font-medium text-muted uppercase tracking-tight">
                   {item.locationZone || "Local"}
                 </span>
               </div>
+
             </div>
           </div>
 
@@ -134,27 +138,28 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-100 bg-white/80 px-2.5 py-1.5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-surface/80 px-2.5 py-1.5 shadow-sm">
                 <Eye className="w-3 h-3" />
                 {item.views ?? 0}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-100 bg-white/80 px-2.5 py-1.5 shadow-sm">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-surface/80 px-2.5 py-1.5 shadow-sm">
                 <Heart className="w-3 h-3" />
                 {item.favoritesCount ?? 0}
               </span>
             </div>
 
-            <div className="mt-auto rounded-[22px] border border-slate-100 bg-white/75 px-3.5 py-3 shadow-[0_12px_30px_rgba(16,32,58,0.05)]">
-              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+
+            <div className="mt-auto rounded-[22px] border border-border bg-background/50 px-3.5 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.05)]">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-muted">
                 {t("by", { name: username })}
               </p>
               <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="truncate text-[12px] font-black text-slate-800">{username}</p>
+                <p className="truncate text-[12px] font-black text-foreground">{username}</p>
                 <CreditBadge score={swapCreditScore} />
               </div>
-
             </div>
+
           </div>
         </div>
       </Link>

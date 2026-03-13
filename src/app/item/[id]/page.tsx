@@ -51,7 +51,8 @@ export default async function ItemDetailPage(props: {
 
   if (!item || item.status === "REMOVED") {
     return (
-      <main className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center px-6">
+      <main className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
+
         <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-6">
           <AlertCircle className="w-10 h-10" />
         </div>
@@ -222,7 +223,7 @@ export default async function ItemDetailPage(props: {
       </div>
 
       {!isOwner && (
-        <div className="fixed bottom-0 inset-x-0 p-6 bg-surface/80 backdrop-blur-xl border-t border-border z-50 flex justify-center pb-8">
+        <div className="fixed bottom-0 inset-x-0 p-6 bg-surface/90 backdrop-blur-2xl border-t border-border z-[60] flex justify-center pb-[max(env(safe-area-inset-bottom),24px)]">
           <ReserveButton
             itemId={item.id}
             itemTitle={item.title}
@@ -230,9 +231,9 @@ export default async function ItemDetailPage(props: {
             userSwaps={user?.availableSwaps ?? 0}
             itemPrice={item.priceSwaps}
           />
-
         </div>
       )}
+
     </main>
   );
 }

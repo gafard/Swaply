@@ -93,10 +93,12 @@ body {
   background: var(--background);
   color: var(--foreground);
   background-image:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 32%),
-    radial-gradient(circle at top right, rgba(36, 87, 255, 0.08), transparent 28%),
-    linear-gradient(180deg, #fbf8f2 0%, #f6f1e8 55%, #f3ede3 100%);
+    radial-gradient(circle at top left, var(--surface), transparent 40%),
+    radial-gradient(circle at top right, var(--primary), transparent 15%),
+    linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
+  background-attachment: fixed;
 }
+
 
 html,
 body {

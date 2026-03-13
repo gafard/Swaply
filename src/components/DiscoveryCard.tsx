@@ -62,8 +62,9 @@ export default function DiscoveryCard({
 
   if (!isFront) {
     return (
-      <div className="absolute inset-0 scale-[0.96] rounded-[3.2rem] border border-slate-100 bg-white shadow-sm overflow-hidden translate-y-2 opacity-50">
-        <div className="flex h-full items-center justify-center bg-gray-50">
+      <div className="absolute inset-0 scale-[0.96] rounded-[3.2rem] border border-border bg-surface shadow-sm overflow-hidden translate-y-2 opacity-50">
+        <div className="flex h-full items-center justify-center bg-background/50">
+
            <Package className="w-12 h-12 text-slate-200" />
         </div>
       </div>
@@ -87,7 +88,8 @@ export default function DiscoveryCard({
         damping: 20,
         mass: 1
       }}
-      className="absolute inset-0 overflow-hidden rounded-[44px] bg-white shadow-popup border border-white/20 touch-none shadow-[0_32px_80px_rgba(0,0,0,0.22)]"
+      className="absolute inset-0 overflow-hidden rounded-[44px] bg-surface shadow-popup border border-white/10 touch-none shadow-[0_32px_80px_rgba(0,0,0,0.22)]"
+
     >
 
       {/* Swipe Feedback Labels */}
@@ -106,7 +108,8 @@ export default function DiscoveryCard({
       </motion.div>
 
       {/* Main Image Layer */}
-      <div className="relative h-full w-full bg-slate-50">
+      <div className="relative h-full w-full bg-background">
+
         {primaryImage ? (
           <img
             src={primaryImage}

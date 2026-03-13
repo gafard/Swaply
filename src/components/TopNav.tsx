@@ -49,7 +49,8 @@ export default function TopNav({
     >
 
 
-      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
 
       <div className="mb-4 space-y-3 sm:mb-5 sm:space-y-4">
         <div className="paper-panel relative overflow-hidden rounded-[34px] p-3.5 sm:p-5">
@@ -85,19 +86,22 @@ export default function TopNav({
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative flex h-12 min-w-12 items-center justify-center rounded-[20px] border border-white/80 bg-white/85 px-3 shadow-[0_14px_34px_rgba(16,32,58,0.1)]"
+                    className="relative flex h-12 min-w-12 items-center justify-center rounded-[20px] border border-border bg-surface px-3 shadow-[0_14px_34px_rgba(0,0,0,0.1)]"
+
                   >
                     <Bell className="h-5 w-5 text-foreground" strokeWidth={2.5} />
                     {unreadCount > 0 ? (
-                      <span className="absolute -right-1 -top-1 min-w-[22px] rounded-full border-2 border-[#fffaf2] bg-[#ff6b57] px-1.5 py-0.5 text-[9px] font-black text-white">
+                      <span className="absolute -right-1 -top-1 min-w-[22px] rounded-full border-2 border-background bg-danger px-1.5 py-0.5 text-[9px] font-black text-white">
+
                         {notificationLabel}
                       </span>
                     ) : null}
                   </motion.div>
                 </Link>
-                <div className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#10203a] text-sm font-bold uppercase text-white shadow-[0_12px_30px_rgba(16,32,58,0.28)]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[24px] bg-foreground text-sm font-bold uppercase text-background shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
                   {user?.username?.charAt(0) || "S"}
                 </div>
+
               </div>
             ) : null}
           </div>
@@ -105,13 +109,15 @@ export default function TopNav({
           {showBalance && (
             <div className="relative mt-4 grid gap-3 justify-items-center sm:mt-5">
               <div
-                className="w-full max-w-[22rem] rounded-[28px] border border-white/80 bg-white/88 px-4 py-3.5 text-center shadow-[0_14px_36px_rgba(16,32,58,0.06)] sm:py-4"
+                className="w-full max-w-[22rem] rounded-[28px] border border-border bg-surface px-4 py-3.5 text-center shadow-[0_14px_36px_rgba(0,0,0,0.06)] sm:py-4"
+
               >
                 <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                   {t("balance")}
                 </span>
                 <div className="mt-1.5 flex min-w-0 items-end justify-center gap-2 sm:mt-2">
-                  <span className="font-display text-[2.8rem] font-bold leading-none tracking-[-0.06em] text-slate-950 sm:text-[3.15rem]">
+                  <span className="font-display text-[2.8rem] font-bold leading-none tracking-[-0.06em] text-foreground sm:text-[3.15rem]">
+
                     {balance}
                   </span>
                   <span className="capsule-outline mb-1 inline-flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#8d6515] sm:px-4 sm:py-2 sm:text-[11px]">
@@ -126,7 +132,8 @@ export default function TopNav({
                   <Link
                     href={localizeHref(locale, "/login")}
                     prefetch
-                    className="rounded-full border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 transition-colors hover:text-slate-900"
+                    className="rounded-full border border-border bg-surface px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted transition-colors hover:text-foreground"
+
                   >
                     {t("login")}
                   </Link>
@@ -147,11 +154,13 @@ export default function TopNav({
 
 
       {showSearch ? (
-        <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-[#fffaf3] px-4 py-3.5 shadow-[0_18px_44px_rgba(16,32,58,0.08)] sm:py-4">
+        <div className="relative overflow-hidden rounded-[34px] border border-border bg-background px-4 py-3.5 shadow-[0_18px_44px_rgba(0,0,0,0.08)] sm:py-4">
+
           <div className="pointer-events-none absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-blue-100/40 to-transparent" />
           <motion.div
             whileTap={{ scale: 0.98 }}
-            className="relative z-10 flex items-center gap-3 rounded-[26px] border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-300 focus-within:border-slate-400 sm:py-4"
+            className="relative z-10 flex items-center gap-3 rounded-[26px] border border-border/50 bg-surface/80 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-300 focus-within:border-primary/50 sm:py-4"
+
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-[18px] bg-[#f2f5ff] text-primary shadow-inner">
               <Search className="w-5 h-5" strokeWidth={2.5} />

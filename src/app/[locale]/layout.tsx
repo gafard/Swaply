@@ -75,7 +75,8 @@ export default async function LocaleLayout({
     <NextIntlClientProvider messages={messages}>
       <OnboardingStatusSync hasCompletedOnboarding={user?.hasCompletedOnboarding ?? null} />
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
-      <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#f8f2e9]/90 shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
+      <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-background shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
+
 
         <Toaster
           position="top-center"

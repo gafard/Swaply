@@ -98,15 +98,16 @@ export default function DiscoverContent() {
       <div className="flex-1 relative mt-2">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="mb-4 h-8 w-8 animate-spin text-indigo-500" />
-            <p className="text-sm font-medium text-slate-500">{t("loading")}</p>
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-muted">{t("loading")}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <Package className="mb-4 h-16 w-16 text-slate-200" />
-            <h3 className="mb-1 text-lg font-bold text-slate-700">{t("emptyTitle")}</h3>
-            <p className="text-center text-sm text-slate-400">{t("emptyBody")}</p>
+            <Package className="mb-4 h-16 w-16 text-muted/20" />
+            <h3 className="mb-1 text-lg font-bold text-foreground">{t("emptyTitle")}</h3>
+            <p className="text-center text-sm text-muted">{t("emptyBody")}</p>
           </div>
+
         ) : (
           <div className="h-full">
             <DiscoveryStack items={mappedItems} key={JSON.stringify(filters) + searchQuery} />
