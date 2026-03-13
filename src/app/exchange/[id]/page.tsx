@@ -8,6 +8,8 @@ import RealtimeMessages from "@/components/RealtimeMessages";
 import { ArrowLeft, MoreVertical, Send, CheckCircle2 } from "lucide-react";
 import MeetingPointSelector from "@/components/MeetingPointSelector";
 import QRValidation from "@/components/QRValidation";
+import SwapAssistant from "@/components/exchange/SwapAssistant";
+
 
 export default async function ExchangePage({
   params,
@@ -139,9 +141,13 @@ export default async function ExchangePage({
           </div>
         </div>
 
-        <div className="bg-slate-50 w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100">
-          <MoreVertical className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          <SwapAssistant exchangeId={exchange.id} />
+          <div className="bg-slate-50 w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100">
+            <MoreVertical className="w-5 h-5" />
+          </div>
         </div>
+
       </AnimatedContainer>
 
       <div className="flex-1 overflow-y-auto pb-48 no-scrollbar bg-slate-50/30">

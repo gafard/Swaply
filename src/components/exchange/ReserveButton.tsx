@@ -9,24 +9,41 @@ import toast from "react-hot-toast";
 import { reserveItem } from "@/app/actions/exchange";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import { cn } from "@/lib/utils";
+import FeedbackSheet, { FeedbackType } from "../FeedbackSheet";
+
+
 
 interface ReserveButtonProps {
   itemId: string;
   itemTitle: string;
   isDefective: boolean;
   userSwaps: number;
+  itemPrice: number;
 }
+
 
 export default function ReserveButton({
   itemId,
   itemTitle,
   isDefective,
   userSwaps,
+  itemPrice,
 }: ReserveButtonProps) {
+
   const [loading, setLoading] = useState(false);
   const [isHybridMode, setIsHybridMode] = useState(false);
   const [swapsBalance, setSwapsBalance] = useState(0);
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    type: FeedbackType;
+    metadata?: { amount?: number; currentAmount?: number; exchangeId?: string };
+  }>({
+    isOpen: false,
+    type: "unexpected_error",
+  });
   const router = useRouter();
+
+
   const locale = useLocale();
   const t = useTranslations("exchange.reserve");
 
@@ -61,16 +78,35 @@ export default function ReserveButton({
 
     try {
       const result = await reserveItem(itemId, swapsBalance);
-      if (!result.ok || !result.data) {
-        toast.error(getErrorMessage(result.code, result.data));
+      if (!result.ok) {
+        if (result.code === "insufficient_swaps") {
+          setFeedback({
+            isOpen: true,
+            type: "insufficient_swaps",
+            metadata: { 
+              amount: itemPrice + swapsBalance,
+              currentAmount: userSwaps
+            }
+          });
+        } else if (result.code === "auth_required") {
+          setFeedback({ isOpen: true, type: "auth_required" });
+        } else if (result.code === "own_item_forbidden") {
+          setFeedback({ isOpen: true, type: "own_item_forbidden" });
+        } else {
+          setFeedback({ isOpen: true, type: "unexpected_error" });
+        }
         return;
       }
 
-      toast.success(t("success"));
-      router.push(localizeHref(locale, `/exchange/${result.data.exchangeId}`));
+      setFeedback({
+        isOpen: true,
+        type: "exchange_reserved",
+        metadata: { exchangeId: result.data?.exchangeId }
+      });
     } catch {
-      toast.error(t("errors.generic"));
+      setFeedback({ isOpen: true, type: "unexpected_error" });
     } finally {
+
       setLoading(false);
     }
   };
@@ -165,6 +201,20 @@ export default function ReserveButton({
           t("reserveThisItem")
         )}
       </button>
+
+      <FeedbackSheet 
+        isOpen={feedback.isOpen}
+        onClose={() => {
+          setFeedback(prev => ({ ...prev, isOpen: false }));
+          if (feedback.type === "exchange_reserved" && feedback.metadata?.exchangeId) {
+            router.push(localizeHref(locale, `/exchange/${feedback.metadata.exchangeId}`));
+          }
+        }}
+        type={feedback.type}
+        metadata={feedback.metadata}
+      />
     </div>
+
+
   );
 }

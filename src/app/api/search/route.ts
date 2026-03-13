@@ -6,7 +6,7 @@ import { presentItem } from "@/lib/item-presenter";
 export async function GET(request: NextRequest) {
   try {
     const identifier = request.headers.get("x-forwarded-for") || "anonymous";
-    const rateLimit = checkRateLimit(identifier, "search");
+    const rateLimit = await checkRateLimit(identifier, "search");
 
     if (!rateLimit.allowed) {
       return NextResponse.json(

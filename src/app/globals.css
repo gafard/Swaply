@@ -20,6 +20,41 @@
   --amber-soft-text: #B45309;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0B0E14;
+    --surface: #151921;
+    --foreground: #F1F5F9;
+    --muted: #8E9BAE;
+    --primary: #4172FF;
+    --border: #242933;
+
+    --indigo-soft-bg: #1E293B;
+    --indigo-soft-text: #818CF8;
+    --emerald-soft-bg: #064E3B;
+    --emerald-soft-text: #34D399;
+    --amber-soft-bg: #451A03;
+    --amber-soft-text: #FBBF24;
+  }
+}
+
+.dark {
+  --background: #0B0E14;
+  --surface: #151921;
+  --foreground: #F1F5F9;
+  --muted: #8E9BAE;
+  --primary: #4172FF;
+  --border: #242933;
+
+  --indigo-soft-bg: #1E293B;
+  --indigo-soft-text: #818CF8;
+  --emerald-soft-bg: #064E3B;
+  --emerald-soft-text: #34D399;
+  --amber-soft-bg: #451A03;
+  --amber-soft-text: #FBBF24;
+}
+
+
 @theme inline {
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-space-grotesk), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;

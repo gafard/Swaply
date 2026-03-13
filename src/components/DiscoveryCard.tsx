@@ -41,14 +41,24 @@ export default function DiscoveryCard({
   const reserveScale = useTransform(x, [60, 150], [0.8, 1]);
   const skipOpacity = useTransform(x, [-150, -60], [1, 0]);
   const skipScale = useTransform(x, [-150, -60], [1, 0.8]);
+  
+  // Exit transformations
+  const exitX = useMotionValue(0);
+  const exitOpacity = useTransform(exitX, [0, 400], [1, 0]);
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
-    if (info.offset.x > 120) {
+
+  const handleDragEnd = (_: any, info: any) => {
+    const threshold = 120;
+    const velocity = info.velocity.x;
+    const offset = info.offset.x;
+
+    if (offset > threshold || velocity > 500) {
       onSwipeRight();
-    } else if (info.offset.x < -120) {
+    } else if (offset < -threshold || velocity < -500) {
       onSwipeLeft();
     }
   };
+
 
   if (!isFront) {
     return (
@@ -66,10 +76,20 @@ export default function DiscoveryCard({
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      whileDrag={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className="absolute inset-0 overflow-hidden rounded-[40px] bg-white shadow-popup border border-white/20 touch-none shadow-[0_22px_70px_rgba(0,0,0,0.18)]"
+      whileDrag={{ scale: 1.05, cursor: "grabbing" }}
+      whileTap={{ scale: 1.02 }}
+      initial={{ scale: 0.9, opacity: 0, y: 30 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ x: x.get() > 0 ? 1000 : -1000, opacity: 0, scale: 0.5, transition: { duration: 0.4 } }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 260, 
+        damping: 20,
+        mass: 1
+      }}
+      className="absolute inset-0 overflow-hidden rounded-[44px] bg-white shadow-popup border border-white/20 touch-none shadow-[0_32px_80px_rgba(0,0,0,0.22)]"
     >
+
       {/* Swipe Feedback Labels */}
       <motion.div
         style={{ opacity: reserveOpacity, scale: reserveScale }}

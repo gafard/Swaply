@@ -45,15 +45,18 @@ export default function TopNav({
     <motion.div 
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-40 border-b border-white/70 bg-[#f8f2e9]/82 px-5 pb-4 pt-6 backdrop-blur-2xl sm:pb-6 sm:pt-8"
+      className="sticky top-0 z-40 border-b border-white/60 bg-background/75 px-5 pb-3 pt-4 backdrop-blur-[40px] shadow-[0_1px_3px_rgba(0,0,0,0.02),0_10px_40px_-10px_rgba(0,0,0,0.05)] sm:pb-4 sm:pt-6"
     >
+
+
       <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
 
       <div className="mb-4 space-y-3 sm:mb-5 sm:space-y-4">
         <div className="paper-panel relative overflow-hidden rounded-[34px] p-3.5 sm:p-5">
-          <div className="pointer-events-none absolute -right-10 top-0 h-28 w-28 rounded-full bg-blue-100/60 blur-3xl" />
-          <div className="pointer-events-none absolute left-8 top-0 h-px w-24 bg-gradient-to-r from-white/0 via-white/90 to-white/0" />
-          <div className="relative flex items-start justify-between gap-4">
+          <div className="pointer-events-none absolute -right-10 top-0 h-32 w-32 rounded-full bg-blue-100/40 blur-[80px]" />
+          <div className="pointer-events-none absolute left-8 top-0 h-px w-24 bg-gradient-to-r from-white/0 via-white/80 to-white/0" />
+          <div className="relative flex items-center justify-between gap-4">
+
             <div className="flex min-w-0 items-start gap-3">
               <Link href={localizeHref(locale, "/")} prefetch className="shrink-0">
                 <AppLogo
@@ -62,17 +65,18 @@ export default function TopNav({
                   priority
                 />
               </Link>
-              <div className="min-w-0 pt-1">
-                <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <div className="min-w-0 pt-0.5">
+                <span className="block text-[9px] font-black uppercase tracking-[0.22em] text-muted/60">
                   {t("hello")}
                 </span>
-                <div className="mt-1 flex items-center gap-2">
-                  <h1 className="truncate font-display text-[1.58rem] font-bold leading-none tracking-[-0.05em] text-slate-950 sm:text-[1.72rem]">
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <h1 className="truncate font-display text-[1.4rem] font-bold leading-tight tracking-[-0.04em] text-foreground sm:text-[1.6rem]">
                     {user?.username || t("friend")}
                   </h1>
-                  <span className="text-base">👋</span>
+                  <span className="text-sm">👋</span>
                 </div>
               </div>
+
             </div>
 
             {user ? (
@@ -139,6 +143,8 @@ export default function TopNav({
           )}
         </div>
       </div>
+
+
 
       {showSearch ? (
         <div className="relative overflow-hidden rounded-[34px] border border-white/80 bg-[#fffaf3] px-4 py-3.5 shadow-[0_18px_44px_rgba(16,32,58,0.08)] sm:py-4">

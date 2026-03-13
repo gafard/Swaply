@@ -8,6 +8,9 @@ import { toggleSaveItem } from "@/app/actions/item";
 import { AnimatedItem } from "@/components/AnimatedContainer";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import { cn } from "@/lib/utils";
+import CreditBadge from "@/components/CreditBadge";
+import { calculateSwapCredit } from "@/lib/credit-score";
+
 
  interface Item {
   id: string;
@@ -18,7 +21,13 @@ import { cn } from "@/lib/utils";
   owner: {
     username: string;
     trustScore: number;
+    completionRate: number;
+    avgResponseTime: number;
+    avgPhotoQuality: number;
+    level: number;
+    xp: number;
   };
+
   views?: number;
   favoritesCount?: number;
   distance?: number;
@@ -27,22 +36,34 @@ import { cn } from "@/lib/utils";
 }
 
 export default function ItemCard({ item, index }: { item: Item, index: number }) {
-  const [isSaved, setIsSaved] = useState(false); // Potential improvement: fetch actual state from prop
+  const [isSaved, setIsSaved] = useState(false);
   const locale = useLocale();
   const t = useTranslations("itemCard");
+  
+  if (!item) return null;
+
   const primaryImage = item.images?.[0]?.url;
+  const username = item.owner?.username ?? "Utilisateur";
+  const swapCreditScore = calculateSwapCredit({
+    completionRate: item.owner?.completionRate ?? 100,
+    avgResponseTime: item.owner?.avgResponseTime ?? 0,
+    avgPhotoQuality: item.owner?.avgPhotoQuality ?? 1,
+    level: item.owner?.level ?? 1,
+    xp: item.owner?.xp ?? 0
+  });
+
 
   return (
-    <AnimatedItem index={index}>
+    <div className="h-full">
       <Link href={localizeHref(locale, `/item/${item.id}`)} className="group block h-full">
-        <div className="group/card relative flex h-full flex-col overflow-hidden rounded-[32px] border border-white/80 bg-[#fffaf3] shadow-[0_18px_52px_rgba(16,32,58,0.09)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_66px_rgba(16,32,58,0.13)]">
-          <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-blue-100/55 blur-3xl" />
+        <div className="group/card relative flex h-full flex-col overflow-hidden rounded-[32px] border border-white/80 bg-[#fffaf3] shadow-[0_18px_52px_rgba(16,32,58,0.09)] transition-all duration-300 hover:shadow-[0_24px_66px_rgba(16,32,58,0.13)]">
+          <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-blue-100/55 blur-3xl opacity-50" />
 
           <div className="relative aspect-[3/4] overflow-hidden bg-[#efe7d7]">
             {primaryImage ? (
               <img
                 src={primaryImage}
-                alt={item.title}
+                alt={item.title || "Item"}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover/card:scale-105"
               />
             ) : (
@@ -73,8 +94,8 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
               className={cn(
                 "absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition-all backdrop-blur-md",
                 isSaved 
-                  ? "border-rose-600 bg-rose-500 text-white" 
-                  : "border-white/70 bg-white/90 text-slate-400 hover:text-rose-500"
+                   ? "border-rose-600 bg-rose-500 text-white" 
+                   : "border-white/70 bg-white/90 text-slate-400 hover:text-rose-500"
               )}
             >
               <Heart className={cn("w-4 h-4", isSaved && "fill-white")} />
@@ -86,14 +107,14 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                   Swaps
                 </p>
                 <p className="mt-1 text-sm font-black text-white">
-                  {item.creditValue} <span className="text-[10px] opacity-65">CR</span>
+                  {item.creditValue || 0} <span className="text-[10px] opacity-65">CR</span>
                 </p>
               </div>
 
               <div className="flex items-center gap-1.5 rounded-full border border-white/25 bg-white/88 px-3 py-1.5 shadow-sm backdrop-blur-md">
                 <MapPin className="w-3 h-3 text-slate-400" />
                 <span className="max-w-[90px] truncate text-[10px] font-medium text-slate-600 uppercase tracking-tight">
-                  {item.locationZone}
+                  {item.locationZone || "Local"}
                 </span>
               </div>
             </div>
@@ -102,13 +123,14 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
           <div className="flex flex-1 flex-col gap-3 p-4">
             <div className="flex items-start justify-between gap-3">
               <h3 className="line-clamp-2 font-display text-[15px] font-bold leading-tight tracking-[-0.03em] text-slate-900 transition-colors group-hover/card:text-primary">
-                {item.title}
+                {item.title || "Sans titre"}
               </h3>
               <div className="shrink-0 rounded-full bg-[#fff0d9] px-2.5 py-1.5">
                 <div className="flex items-center gap-1">
                   <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
-                  <span className="text-[10px] font-bold text-slate-700">{item.owner.trustScore}</span>
+                  <span className="text-[10px] font-bold text-slate-700">{item.owner?.trustScore ?? 0}</span>
                 </div>
+
               </div>
             </div>
 
@@ -125,19 +147,17 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
 
             <div className="mt-auto rounded-[22px] border border-slate-100 bg-white/75 px-3.5 py-3 shadow-[0_12px_30px_rgba(16,32,58,0.05)]">
               <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                {t("by", { name: item.owner.username })}
+                {t("by", { name: username })}
               </p>
               <div className="mt-1 flex items-center justify-between gap-3">
-                <p className="truncate text-[12px] font-black text-slate-800">{item.owner.username}</p>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#10203a] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white">
-                  <Star className="h-2.5 w-2.5 fill-current" />
-                  {item.owner.trustScore}
-                </span>
+                <p className="truncate text-[12px] font-black text-slate-800">{username}</p>
+                <CreditBadge score={swapCreditScore} />
               </div>
+
             </div>
           </div>
         </div>
       </Link>
-    </AnimatedItem>
+    </div>
   );
 }

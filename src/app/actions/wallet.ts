@@ -4,6 +4,7 @@ import { PaymentStatus } from "@prisma/client";
 
 import { getCurrentUser } from "@/lib/auth";
 import { actionFail, actionOk } from "@/lib/actions/result";
+import { TopUpSchema } from "@/lib/validations";
 import { createTopupPayment, getPaymentStatusForUser } from "@/lib/payments";
 import { isPhoneBasedProvider, normalizeProviderCode } from "@/lib/payments/config";
 
@@ -13,10 +14,20 @@ export async function topUpSwaps(formData: FormData) {
     return actionFail("auth_required");
   }
 
-  const packageId = formData.get("packageId")?.toString().trim() || "";
-  const providerCode = normalizeProviderCode(formData.get("providerCode")?.toString() || "");
-  const phoneNumber = formData.get("phoneNumber")?.toString().trim() || "";
-  const origin = formData.get("origin")?.toString().trim() || "";
+  const rawData = {
+    packageId: formData.get("packageId")?.toString().trim() || "",
+    providerCode: normalizeProviderCode(formData.get("providerCode")?.toString() || ""),
+    phoneNumber: formData.get("phoneNumber")?.toString().trim() || "",
+    origin: formData.get("origin")?.toString().trim() || "",
+  };
+
+  const validation = TopUpSchema.safeParse(rawData);
+  if (!validation.success) {
+    const firstError = validation.error.issues[0];
+    return actionFail(firstError.path[0] === "packageId" ? "package_required" : "provider_required");
+  }
+
+  const { packageId, providerCode, phoneNumber, origin } = validation.data;
 
   if (!user.countryId) {
     return actionFail("country_required");
@@ -31,7 +42,7 @@ export async function topUpSwaps(formData: FormData) {
   }
 
   if (isPhoneBasedProvider(providerCode)) {
-    if (phoneNumber.length < 8) {
+    if (!phoneNumber || phoneNumber.length < 8) {
       return actionFail("phone_invalid");
     }
   }

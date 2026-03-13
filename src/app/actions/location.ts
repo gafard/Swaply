@@ -14,17 +14,32 @@ import {
 import prisma from "@/lib/prisma";
 import { resolveLocationSelection } from "@/lib/geo.server";
 
+import { UpdateLocationSchema } from "@/lib/validations";
+
 export async function updateCurrentUserLocation(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) {
     return actionFail("auth_required");
   }
 
+  const rawData = {
+    countryId: formData.get("countryId")?.toString(),
+    cityId: formData.get("cityId")?.toString(),
+    zoneId: formData.get("zoneId")?.toString(),
+  };
+
+  const validation = UpdateLocationSchema.safeParse(rawData);
+  if (!validation.success) {
+    return actionFail("location_invalid");
+  }
+
+  const { countryId, cityId, zoneId } = validation.data;
+
   try {
     const location = await resolveLocationSelection({
-      countryId: formData.get("countryId")?.toString(),
-      cityId: formData.get("cityId")?.toString(),
-      zoneId: formData.get("zoneId")?.toString(),
+      countryId,
+      cityId,
+      zoneId,
     });
 
     const preferredLanguage = user.preferredLanguage ?? location.country.defaultLanguage;

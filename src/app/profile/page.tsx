@@ -17,6 +17,11 @@ import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer"
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { formatDate } from "@/lib/i18n/format";
 import { localizeHref } from "@/lib/i18n/pathnames";
+import { LevelProgress } from "@/components/profile/LevelProgress";
+import { BadgeGrid } from "@/components/profile/BadgeGrid";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
@@ -74,16 +79,31 @@ export default async function ProfilePage() {
   const totalSwaps = (wallet?.balanceSwaps ?? 0) + (wallet?.promoSwaps ?? 0);
   const transactions = wallet?.transactions ?? [];
 
+  const allAchievements = await prisma.achievement.findMany();
+  const userBadges = await prisma.userAchievement.findMany({
+    where: { userId: user.id },
+    include: { achievement: true },
+  });
+  const normalizedBadges = userBadges.map((ub) => ({
+    ...ub.achievement,
+    earnedAt: ub.earnedAt,
+  }));
+
+
   return (
     <main className="min-h-screen bg-background pb-24 font-sans sm:pb-8 relative">
       <div className="bg-surface rounded-b-[40px] pt-16 pb-10 px-6 shadow-card relative z-10 border-b border-border">
         <AnimatedContainer initialY={-20} className="flex justify-between items-start mb-8">
+
           <h1 className="text-2xl font-semibold text-foreground tracking-tight">
             {t("title")}
           </h1>
-          <button className="w-11 h-11 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 border border-border hover:bg-slate-100 transition-all active:scale-95 shadow-sm">
-            <Settings className="w-5.5 h-5.5" />
-          </button>
+          <div className="flex gap-2">
+            <ThemeToggle />
+            <button className="w-11 h-11 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-500 border border-border hover:bg-slate-100 transition-all active:scale-95 shadow-sm">
+              <Settings className="w-5.5 h-5.5" />
+            </button>
+          </div>
         </AnimatedContainer>
 
         <AnimatedContainer delay={0.1} className="flex items-center gap-6">
@@ -140,6 +160,16 @@ export default async function ProfilePage() {
             </div>
           </div>
         </AnimatedContainer>
+      </div>
+
+      <div className="px-5 pt-8 space-y-6">
+        <AnimatedItem index={-2}>
+          <LevelProgress level={user.level} xp={user.xp} />
+        </AnimatedItem>
+
+        <AnimatedItem index={-1.5}>
+          <BadgeGrid badges={normalizedBadges} allAchievements={allAchievements} />
+        </AnimatedItem>
       </div>
 
       <div className="px-5 pt-8">

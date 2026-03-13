@@ -17,6 +17,10 @@ import { cn } from "@/lib/utils";
 import { PhotoQualityResult } from "@/lib/validations";
 import PhotoScanner, { type PublishScanStep } from "@/components/publish/PhotoScanner";
 import PricingSlider from "@/components/publish/PricingSlider";
+import PhotoStep from "@/components/publish/steps/PhotoStep";
+import AnalysisStep from "@/components/publish/steps/AnalysisStep";
+import DetailsStep from "@/components/publish/steps/DetailsStep";
+import PublishStep from "@/components/publish/steps/PublishStep";
 import AIInsightsCard, { type PublishAIInsights } from "@/components/publish/AIInsightsCard";
 import LocationSelector from "@/components/publish/LocationSelector";
 import {
@@ -1006,7 +1010,19 @@ export default function PublishPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await publishItem(new FormData(event.currentTarget));
+      const formData = new FormData(event.currentTarget);
+      
+      // Remove raw files from FormData to stay under Vercel's 4.5MB server action limit
+      // We already uploaded them and passed the URLs in 'imageUrls'
+      const keysToRemove: string[] = [];
+      formData.forEach((value, key) => {
+        if (value instanceof File) {
+          keysToRemove.push(key);
+        }
+      });
+      keysToRemove.forEach(key => formData.delete(key));
+
+      const result = await publishItem(formData);
       if (!result.ok) {
         toast.error(getPublishErrorMessage(result.code));
         return;
@@ -1182,11 +1198,10 @@ export default function PublishPage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -16, scale: 0.98 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-5"
                 >
-                  <PhotoScanner
+                  <PhotoStep
                     currentStep={currentStep}
-                    errorMessage={scannerErrorMessage}
+                    scannerErrorMessage={scannerErrorMessage}
                     isCheckingQuality={isCheckingQuality}
                     currentUploadProgress={currentUploadProgress}
                     currentUploadStatus={currentUploadStatus}
@@ -1194,27 +1209,15 @@ export default function PublishPage() {
                     onReset={resetScanner}
                     onStepChange={setCurrentStep}
                     photoPreviews={photoPreviews}
-                    uploadProgressByStep={uploadProgressBySlot}
+                    uploadProgressBySlot={uploadProgressBySlot}
                     uploadStatuses={uploadStatuses}
                     qualityResults={qualityResults}
                     scanSteps={scanSteps}
+                    photoCount={photoCount}
+                    hasPendingPhotoUploads={hasPendingPhotoUploads}
+                    addMoreLabel={t("addOneMorePhoto")}
+                    uploadingLabel={t("uploading")}
                   />
-
-                  {photoCount > 0 && photoCount < 2 ? (
-                    <div className="flex items-center justify-center gap-2 animate-bounce">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                        {t("addOneMorePhoto")}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {hasPendingPhotoUploads ? (
-                    <div className="flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                        {t("uploading")}
-                      </p>
-                    </div>
-                  ) : null}
                 </motion.div>
               ) : null}
 
@@ -1225,165 +1228,53 @@ export default function PublishPage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -16, scale: 0.98 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-6"
                 >
-                {photoPreviews.length > 0 ? (
-                  <div className="space-y-5 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700">
-                        <ShieldCheck className="h-4.5 w-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-semibold tracking-tight text-slate-900">
-                          {t("condition.title")}
-                        </h3>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {t("condition.subtitle")}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2.5">
-                      {conditionOptions.map((status) => (
-                        <button
-                          key={status.id}
-                          type="button"
-                          onClick={() => {
-                            setFunctionalStatus(status.id as any);
-                            if (isElectronics) {
-                              setTechFunctionality(status.techId);
-                              refreshEstimation(aiInsights, techAge, status.techId);
-                            }
-                          }}
-                          className={cn(
-                            "group flex items-start gap-4 rounded-[22px] border px-4 py-4 text-left transition-colors duration-200",
-                            functionalStatus === status.id
-                              ? "border-slate-900 bg-slate-50"
-                              : "border-slate-200 bg-white hover:border-slate-300"
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-colors duration-200",
-                              functionalStatus === status.id
-                                ? "border-slate-900 bg-slate-900 text-white"
-                                : "border-slate-200 bg-slate-50 text-slate-500"
-                            )}
-                          >
-                            <status.icon className="h-5 w-5" />
-                          </div>
-                          <div className="flex-1 text-left">
-                            <p
-                              className={cn(
-                                "text-sm font-semibold tracking-tight transition-colors",
-                                functionalStatus === status.id ? "text-slate-950" : "text-slate-800"
-                              )}
-                            >
-                              {status.label}
-                            </p>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              {status.desc}
-                            </p>
-                          </div>
-                          <div
-                            className={cn(
-                              "mt-1 flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-200",
-                              functionalStatus === status.id
-                                ? "border-slate-900 bg-slate-900"
-                                : "border-slate-300 bg-white group-hover:border-slate-400"
-                            )}
-                          >
-                            {functionalStatus === status.id ? (
-                              <Check className="h-3 w-3 text-white" strokeWidth={4} />
-                            ) : null}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    {isConditionInconsistent ? (
-                      <div className="flex gap-3 rounded-[22px] border border-amber-200 bg-amber-50 p-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-white text-amber-600">
-                          <AlertTriangle className="h-4.5 w-4.5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="mb-1 text-xs font-semibold text-amber-900">
-                            {t("condition.consistencyAlertTitle")}
-                          </p>
-                          <p className="text-xs leading-5 text-amber-800">
-                            {t.rich("condition.consistencyAlertBody", {
-                              status:
-                                aiInsights.visualStatus === "BROKEN"
-                                  ? t("condition.visualStatus.broken")
-                                  : t("condition.visualStatus.defective"),
-                              strong: (chunks) => (
-                                <span className="font-semibold">
-                                  {chunks}
-                                </span>
-                              ),
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {aiInsights.isStockPhoto ? (
-                      <div className="flex gap-3 rounded-[22px] border border-slate-200 bg-slate-50 p-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600">
-                          <Camera className="h-4.5 w-4.5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="mb-1 text-xs font-semibold text-slate-900">
-                            {t("catalogPhoto.title")}
-                          </p>
-                          <p className="text-xs leading-5 text-slate-600">
-                            {t.rich("catalogPhoto.body", {
-                              strong: (chunks) => (
-                                <span className="font-semibold text-slate-900">{chunks}</span>
-                              ),
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {photoPreviews.length > 0 ? (
-                  aiInsights.category || isAnalyzing ? (
-                    <AIInsightsCard
-                      accessoryOptions={accessoryOptions}
-                      ageOptions={ageOptions}
-                      aiInsights={aiInsights}
-                      isAnalyzing={isAnalyzing}
-                      isElectronics={isElectronics}
-                      modelGuess={modelGuess}
-                      onAccessoryToggle={(accessoryId) => {
-                        const nextAccessories = techAccessories.includes(accessoryId)
-                          ? techAccessories.filter((item) => item !== accessoryId)
-                          : [...techAccessories, accessoryId];
-                        setTechAccessories(nextAccessories);
-                        refreshEstimation(aiInsights, techAge, techFunctionality, nextAccessories);
-                      }}
-                      onAgeChange={(ageId) => {
-                        setTechAge(ageId);
-                        refreshEstimation(aiInsights, ageId);
-                      }}
-                      onModelGuessChange={setModelGuess}
-                      techAccessories={techAccessories}
-                      techAge={techAge}
-                    />
-                  ) : (
-                    <div className="rounded-[32px] border border-slate-200/70 bg-[#F8FAFC] p-6 shadow-sm">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-                        {t("flow.aiFallback.title")}
-                      </p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
-                        {t("flow.aiFallback.body")}
-                      </p>
-                    </div>
-                  )
-                ) : null}
+                  <AnalysisStep
+                    photoPreviews={photoPreviews}
+                    conditionOptions={conditionOptions}
+                    functionalStatus={functionalStatus}
+                    onFunctionalStatusChange={(id, techId) => {
+                      setFunctionalStatus(id as any);
+                      if (isElectronics) {
+                        setTechFunctionality(techId);
+                        refreshEstimation(aiInsights, techAge, techId);
+                      }
+                    }}
+                    isConditionInconsistent={Boolean(isConditionInconsistent)}
+                    aiInsights={aiInsights}
+                    isAnalyzing={isAnalyzing}
+                    isElectronics={isElectronics}
+                    modelGuess={modelGuess}
+                    onModelGuessChange={setModelGuess}
+                    techAge={techAge}
+                    techAccessories={techAccessories}
+                    ageOptions={ageOptions}
+                    accessoryOptions={accessoryOptions}
+                    onAgeChange={(ageId) => {
+                      setTechAge(ageId);
+                      refreshEstimation(aiInsights, ageId);
+                    }}
+                    onAccessoryToggle={(accessoryId) => {
+                      const nextAccessories = techAccessories.includes(accessoryId)
+                        ? techAccessories.filter((item) => item !== accessoryId)
+                        : [...techAccessories, accessoryId];
+                      setTechAccessories(nextAccessories);
+                      refreshEstimation(aiInsights, techAge, techFunctionality, nextAccessories);
+                    }}
+                    conditionTitle={t("condition.title")}
+                    conditionSubtitle={t("condition.subtitle")}
+                    consistencyAlertTitle={t("condition.consistencyAlertTitle")}
+                    consistencyAlertBody={t.rich("condition.consistencyAlertBody", {
+                      status: aiInsights.visualStatus === "BROKEN" ? t("condition.visualStatus.broken") : t("condition.visualStatus.defective"),
+                      strong: (chunks) => <span className="font-semibold">{chunks}</span>,
+                    })}
+                    catalogPhotoTitle={t("catalogPhoto.title")}
+                    catalogPhotoBody={t.rich("catalogPhoto.body", {
+                      strong: (chunks) => <span className="font-semibold text-slate-900">{chunks}</span>,
+                    })}
+                    aiFallbackTitle={t("flow.aiFallback.title")}
+                    aiFallbackBody={t("flow.aiFallback.body")}
+                  />
                 </motion.div>
               ) : null}
 
@@ -1394,90 +1285,23 @@ export default function PublishPage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -16, scale: 0.98 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-6"
                 >
-                  <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm space-y-5">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700">
-                        <Info className="h-4.5 w-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-semibold tracking-tight text-slate-900">
-                          {t("details.title")}
-                        </h3>
-                        <p className="mt-1 text-sm leading-6 text-slate-500">
-                          {t("details.subtitle")}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-800" htmlFor="title">
-                        {t("details.fields.title")}
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        required
-                        value={title}
-                        onChange={(e) => {
-                          setTitle(e.target.value);
-                          clearClientError("title");
-                        }}
-                        aria-invalid={Boolean(clientErrors.title)}
-                        aria-describedby={clientErrors.title ? "title-error" : undefined}
-                        className={cn(
-                          "w-full rounded-2xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-400",
-                          clientErrors.title ? "border-rose-300" : "border-slate-200"
-                        )}
-                        placeholder={t("details.placeholders.title")}
-                      />
-                      {clientErrors.title ? (
-                        <p id="title-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
-                          {clientErrors.title}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-800" htmlFor="description">
-                        {t("details.fields.descriptionOptional")}
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        rows={3}
-                        value={description}
-                        onChange={(e) => {
-                          setDescription(e.target.value);
-                          clearClientError("description");
-                        }}
-                        aria-invalid={Boolean(clientErrors.description)}
-                        aria-describedby={clientErrors.description ? "description-error" : undefined}
-                        className={cn(
-                          "w-full resize-none rounded-2xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-400",
-                          clientErrors.description ? "border-rose-300" : "border-slate-200"
-                        )}
-                        placeholder={t("details.placeholders.description")}
-                      />
-                      {clientErrors.description ? (
-                        <p id="description-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
-                          {clientErrors.description}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <PricingSlider
+                  <DetailsStep
+                    title={title}
+                    description={description}
                     creditValue={creditValue}
-                    errorMessage={clientErrors.creditValue}
                     estimation={aiInsights.estimation}
                     isOutOfRange={Boolean(isOutOfRange)}
-                    onChange={(value) => {
-                      setCreditValue(value);
-                      clearClientError("creditValue");
-                    }}
+                    clientErrors={{ title: clientErrors.title, description: clientErrors.description, creditValue: clientErrors.creditValue }}
+                    onTitleChange={(v) => { setTitle(v); clearClientError("title"); }}
+                    onDescriptionChange={(v) => { setDescription(v); clearClientError("description"); }}
+                    onCreditValueChange={(v) => { setCreditValue(v); clearClientError("creditValue"); }}
+                    sectionTitle={t("details.title")}
+                    sectionSubtitle={t("details.subtitle")}
+                    titleLabel={t("details.fields.title")}
+                    titlePlaceholder={t("details.placeholders.title")}
+                    descriptionLabel={t("details.fields.descriptionOptional")}
+                    descriptionPlaceholder={t("details.placeholders.description")}
                   />
                 </motion.div>
               ) : null}
@@ -1489,73 +1313,36 @@ export default function PublishPage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -16, scale: 0.98 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="space-y-6"
                 >
-                <LocationSelector
-                  availableCities={availableCities}
-                  availableZones={availableZones}
-                  clientError={clientErrors.location}
-                  geoCatalog={geoCatalog}
-                  geoError={geoError}
-                  gpsError={gpsError}
-                  isDetectingZone={Boolean(
-                    (isRequestingLocation || (coords && !selectedZoneId)) &&
-                      !isLoadingGeo &&
-                      !gpsError
-                  )}
-                  isLoadingGeo={isLoadingGeo}
-                  onCityChange={(cityId) => {
-                    setSelectedCityId(cityId);
-                    clearClientError("location");
-                  }}
-                  onCountryChange={(countryId) => {
-                    setSelectedCountryId(countryId);
-                    clearClientError("location");
-                  }}
-                  onZoneChange={(zoneId) => {
-                    setSelectedZoneId(zoneId);
-                    clearClientError("location");
-                  }}
-                  selectedCityId={selectedCityId}
-                  selectedCountryId={selectedCountryId}
-                  selectedZone={selectedZone}
-                  selectedZoneId={selectedZoneId}
-                />
-
-                <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-                    {t("flow.summary.title")}
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#fff7ec,_#ffffff)] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                        {t("flow.summary.item")}
-                      </p>
-                      <p className="mt-2 text-sm font-black text-slate-900">
-                        {normalizedTitle || t("flow.summary.itemFallback")}
-                      </p>
-                      <p className="mt-1 text-[10px] font-bold text-slate-500">
-                        {t("flow.summary.photos", { count: photoCount })}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#f6f3ff,_#ffffff)] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                        {t("flow.summary.price")}
-                      </p>
-                      <p className="mt-2 text-sm font-black text-slate-900">
-                        {creditValue} {t("pricing.creditsShort")}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#eefbf8,_#ffffff)] p-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                        {t("flow.summary.zone")}
-                      </p>
-                      <p className="mt-2 text-sm font-black text-slate-900">
-                        {selectedZone?.name || t("flow.summary.zoneFallback")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  <PublishStep
+                    geoCatalog={geoCatalog}
+                    availableCities={availableCities}
+                    availableZones={availableZones}
+                    selectedCountryId={selectedCountryId}
+                    selectedCityId={selectedCityId}
+                    selectedZoneId={selectedZoneId}
+                    selectedZone={selectedZone}
+                    isLoadingGeo={isLoadingGeo}
+                    isRequestingLocation={isRequestingLocation}
+                    coords={coords}
+                    geoError={geoError}
+                    gpsError={gpsError}
+                    clientError={clientErrors.location}
+                    onCountryChange={(id) => { setSelectedCountryId(id); clearClientError("location"); }}
+                    onCityChange={(id) => { setSelectedCityId(id); clearClientError("location"); }}
+                    onZoneChange={(id) => { setSelectedZoneId(id); clearClientError("location"); }}
+                    normalizedTitle={normalizedTitle}
+                    creditValue={creditValue}
+                    photoCount={photoCount}
+                    summaryTitle={t("flow.summary.title")}
+                    summaryItemLabel={t("flow.summary.item")}
+                    summaryItemFallback={t("flow.summary.itemFallback")}
+                    summaryPhotosLabel={t("flow.summary.photos", { count: photoCount })}
+                    summaryPriceLabel={t("flow.summary.price")}
+                    summaryCreditsShort={t("pricing.creditsShort")}
+                    summaryZoneLabel={t("flow.summary.zone")}
+                    summaryZoneFallback={t("flow.summary.zoneFallback")}
+                  />
                 </motion.div>
               ) : null}
             </AnimatePresence>

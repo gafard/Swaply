@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client' // Updated schema with ItemImage relation
+import { PrismaClient } from '@prisma/client' // Force re-build 1
+
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 

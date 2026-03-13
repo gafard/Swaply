@@ -12,7 +12,7 @@ interface ImageGalleryProps {
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (images.length === 0) {
+  if (!images || images.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-slate-100 opacity-30">
         <Package className="w-20 h-20 text-slate-400" />

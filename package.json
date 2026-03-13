@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "backfill:notifications": "npx tsx scripts/backfill_notification_templates.ts"
+    "backfill:notifications": "npx tsx scripts/backfill_notification_templates.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",
@@ -17,6 +18,8 @@
     "@types/leaflet": "^1.9.21",
     "@types/qrcode": "^1.5.6",
     "@uploadthing/react": "^7.3.3",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.1",
@@ -35,19 +38,26 @@
     "resend": "^6.9.3",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
-    "uploadthing": "^7.7.4"
+    "uploadthing": "^7.7.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/pg": "^8.18.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.1.0",
     "prisma": "^7.4.2",
+    "server-only": "^0.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -228,7 +228,9 @@ export default async function ItemDetailPage(props: {
             itemTitle={item.title}
             isDefective={false}
             userSwaps={user?.availableSwaps ?? 0}
+            itemPrice={item.priceSwaps}
           />
+
         </div>
       )}
     </main>

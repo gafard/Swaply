@@ -48,8 +48,15 @@ const createCustomIcon = (color: string, isOfficial: boolean) => {
   });
 };
 
-const officialIcon = createCustomIcon("#10B981", true);
-const standardIcon = createCustomIcon("#4F46E5", false);
+// Defer icon creation to avoid SSR/Evaluation issues
+let officialIcon: L.DivIcon;
+let standardIcon: L.DivIcon;
+
+function getIcons() {
+  if (!officialIcon) officialIcon = createCustomIcon("#10B981", true);
+  if (!standardIcon) standardIcon = createCustomIcon("#4F46E5", false);
+  return { officialIcon, standardIcon };
+}
 
 interface MeetingPoint {
   id: string;
@@ -105,7 +112,7 @@ export default function MeetingMap({ points, selectedPointId, onSelect }: Meetin
           <Marker 
             key={point.id} 
             position={[point.lat, point.lng]} 
-            icon={point.isOfficial ? officialIcon : standardIcon}
+            icon={point.isOfficial ? getIcons().officialIcon : getIcons().standardIcon}
             eventHandlers={{
               click: () => onSelect(point),
             }}

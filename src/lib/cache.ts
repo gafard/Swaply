@@ -1,7 +1,4 @@
-/**
- * Simple in-memory cache with TTL support
- * For production, consider using Redis or similar
- */
+import { redis } from "./redis";
 
 interface CacheEntry<T> {
   data: T;
@@ -9,38 +6,74 @@ interface CacheEntry<T> {
   ttl: number; // Time to live in ms
 }
 
-const cache = new Map<string, CacheEntry<any>>();
+const localCache = new Map<string, CacheEntry<any>>();
 
-export function getFromCache<T>(key: string): T | null {
-  const entry = cache.get(key);
-  
+export async function getFromCache<T>(key: string): Promise<T | null> {
+  if (redis) {
+    try {
+      return await redis.get<T>(key);
+    } catch (e) {
+      console.error("[Redis Cache Error] get:", e);
+    }
+  }
+
+  const entry = localCache.get(key);
   if (!entry) return null;
   
   const now = Date.now();
   if (now - entry.timestamp > entry.ttl) {
-    cache.delete(key);
+    localCache.delete(key);
     return null;
   }
   
   return entry.data as T;
 }
 
-export function setInCache<T>(key: string, data: T, ttlMs: number = 60_000): void {
-  cache.set(key, {
+export async function setInCache<T>(key: string, data: T, ttlMs: number = 60_000): Promise<void> {
+  if (redis) {
+    try {
+      await redis.set(key, data, { px: ttlMs });
+      return;
+    } catch (e) {
+      console.error("[Redis Cache Error] set:", e);
+    }
+  }
+
+  localCache.set(key, {
     data,
     timestamp: Date.now(),
     ttl: ttlMs,
   });
 }
 
-export function invalidateCache(key: string): void {
-  cache.delete(key);
+export async function invalidateCache(key: string): Promise<void> {
+  if (redis) {
+    try {
+      await redis.del(key);
+      return;
+    } catch (e) {
+      console.error("[Redis Cache Error] del:", e);
+    }
+  }
+  localCache.delete(key);
 }
 
-export function invalidateCachePattern(pattern: string): void {
-  for (const key of cache.keys()) {
+export async function invalidateCachePattern(pattern: string): Promise<void> {
+  if (redis) {
+    try {
+      const keys = await redis.keys(pattern.includes("*") ? pattern : `*${pattern}*`);
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+      return;
+    } catch (e) {
+      console.error("[Redis Cache Error] invalidatePattern:", e);
+    }
+  }
+
+  for (const key of localCache.keys()) {
     if (key.includes(pattern)) {
-      cache.delete(key);
+      localCache.delete(key);
     }
   }
 }

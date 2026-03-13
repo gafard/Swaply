@@ -135,9 +135,13 @@ async function ensureCurrentUser(authUser: {
 
     if (!updated.wallet) {
       await prisma.wallet.create({
-        data: { userId: updated.id },
+        data: { 
+          userId: updated.id,
+          promoSwaps: 60 // Signup bonus for legacy users without wallet
+        },
       });
     }
+
 
     return prisma.user.findUnique({
       where: { id: updated.id },
@@ -164,8 +168,11 @@ async function ensureCurrentUser(authUser: {
       acceptedTermsAt: termsAcceptance.acceptedTermsAt,
       acceptedTermsVersion: termsAcceptance.acceptedTermsVersion,
       wallet: {
-        create: {},
+        create: {
+          promoSwaps: 60 // Signup bonus
+        },
       },
+
     },
     include: {
       wallet: true,

@@ -10,6 +10,8 @@ import OnboardingStatusSync from "@/components/OnboardingStatusSync";
 import PreferredLanguageSync from "@/components/PreferredLanguageSync";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser } from "@/lib/auth";
+import SwapGainListener from "@/components/wallet/SwapGainListener";
+
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -74,6 +76,7 @@ export default async function LocaleLayout({
       <OnboardingStatusSync hasCompletedOnboarding={user?.hasCompletedOnboarding ?? null} />
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
       <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#f8f2e9]/90 shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
+
         <Toaster
           position="top-center"
           reverseOrder={false}
@@ -81,17 +84,14 @@ export default async function LocaleLayout({
           toastOptions={{
             duration: 4000,
             style: {
-              background: "rgba(255, 255, 255, 0.85)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid rgba(255, 255, 255, 0.5)",
-              padding: "16px 24px",
+              background: "#fff",
               color: "#0f172a",
-              borderRadius: "28px",
+              borderRadius: "16px",
               fontSize: "14px",
-              fontWeight: "700",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
+              fontWeight: "600",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
               maxWidth: "400px",
+              padding: "12px 20px",
             },
             success: {
               iconTheme: {
@@ -104,14 +104,13 @@ export default async function LocaleLayout({
                 primary: "#f43f5e",
                 secondary: "#fff",
               },
-              style: {
-                background: "rgba(255, 250, 250, 0.9)",
-                border: "1px solid rgba(244, 63, 94, 0.2)",
-              }
             },
           }}
         />
+        <SwapGainListener />
+
         {children}
+
         <BottomNav />
       </div>
     </NextIntlClientProvider>

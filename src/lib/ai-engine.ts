@@ -176,7 +176,7 @@ async function fetchMarketSamples(
   const filters = getScopeFilters(scope, marketContext);
   const normalizedBrand = brand?.trim();
   const cacheKey = `ai-market:${scope}:${filters.countryId || "all"}:${filters.cityId || "all"}:${category}:${normalizedBrand || "all"}`;
-  const cached = getFromCache<{ listingPrices: number[]; exchangePrices: number[] }>(cacheKey);
+  const cached = await getFromCache<{ listingPrices: number[]; exchangePrices: number[] }>(cacheKey);
 
   if (cached) {
     return cached;
@@ -239,7 +239,7 @@ async function fetchMarketSamples(
       `Swaply market layer unavailable (${scope}/${normalizedBrand || category}, ${errorCode})`
     );
     const emptyPayload = { listingPrices: [], exchangePrices: [] };
-    setInCache(cacheKey, emptyPayload, 30_000);
+    await setInCache(cacheKey, emptyPayload, 30_000);
     return emptyPayload;
   }
 
@@ -254,7 +254,7 @@ async function fetchMarketSamples(
       .filter((value) => Number.isFinite(value) && value > 0),
   };
 
-  setInCache(cacheKey, payload, MARKET_CACHE_TTL_MS);
+  await setInCache(cacheKey, payload, MARKET_CACHE_TTL_MS);
   return payload;
 }
 

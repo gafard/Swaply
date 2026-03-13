@@ -266,6 +266,14 @@
     }
   },
   "exchange": {
+    "insufficient": {
+      "title": "Oups ! Swaps insuffisants",
+      "body": "Il vous manque {amount} Swaps pour réserver cet objet.",
+      "current": "Votre solde",
+      "required": "Requis",
+      "topup": "Recharger mon compte",
+      "cancel": "Peut-être plus tard"
+    },
     "reserve": {
       "hybridTitle": "Troc hybride",
       "disableHybrid": "Désactiver",
@@ -346,7 +354,40 @@
       }
     }
   },
+  "feedbackSheet": {
+    "insufficient_swaps": {
+      "title": "Oups ! Swaps insuffisants",
+      "body": "Il vous manque {amount} Swaps pour réserver cet objet. Participez à l'économie circulaire pour en gagner davantage.",
+      "cta": "Recharger mon compte",
+      "secondary": "Peut-être plus tard"
+    },
+    "own_item_forbidden": {
+      "title": "C'est votre objet !",
+      "body": "Vous ne pouvez pas réserver un objet que vous avez vous-même publié. C'est le moment de le partager avec la communauté !",
+      "cta": "Voir mes publications",
+      "secondary": "Fermer"
+    },
+    "auth_required": {
+      "title": "Prêt pour le troc ?",
+      "body": "Connectez-vous pour rejoindre la communauté Swaply et commencer à échanger en toute sécurité.",
+      "cta": "Se connecter",
+      "secondary": "Explorer encore"
+    },
+    "unexpected_error": {
+      "title": "Petit contretemps",
+      "body": "Une erreur inattendue est survenue. Veuillez réessayer dans quelques instants.",
+      "cta": "Réessayer",
+      "secondary": "Fermer"
+    },
+    "exchange_reserved": {
+      "title": "Réservation réussie !",
+      "body": "L'objet est maintenant réservé pour vous pendant 24 heures. Discutez avec le propriétaire pour finaliser l'échange.",
+      "cta": "Ouvrir la discussion",
+      "secondary": "Continuer à découvrir"
+    }
+  },
   "discoverStack": {
+
     "title": "Découverte",
     "items": "objets",
     "localMarket": "Marché local",

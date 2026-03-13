@@ -15,9 +15,12 @@ import {
 import { toast } from "react-hot-toast";
 
 import { reserveItem } from "@/app/actions/exchange";
+
 import { toggleSaveItem } from "@/app/actions/item";
 import DiscoveryCard from "@/components/DiscoveryCard";
+import FeedbackSheet, { FeedbackType } from "@/components/FeedbackSheet";
 import { localizeHref } from "@/lib/i18n/pathnames";
+
 
 interface Item {
   id: string;
@@ -38,7 +41,16 @@ export default function DiscoveryStack({
 }) {
   const [items] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [feedback, setFeedback] = useState<{
+    isOpen: boolean;
+    type: FeedbackType;
+    metadata?: { amount?: number; exchangeId?: string };
+  }>({
+    isOpen: false,
+    type: "unexpected_error",
+  });
   const [toastState, setToastState] = useState<{
+
     show: boolean;
     text: string;
     type: "RESERVE" | "SAVE";
@@ -60,19 +72,34 @@ export default function DiscoveryStack({
 
     try {
       const result = await reserveItem(currentItem.id);
-      if (!result.ok || !result.data) {
-        toast.error(t("reserveError"));
+      if (!result.ok) {
+        if (result.code === "insufficient_swaps") {
+          // We assume result.data might contain the missing amount if we updated reserveItem
+          // For now let's just show the sheet
+          setFeedback({
+            isOpen: true,
+            type: "insufficient_swaps",
+            metadata: { amount: currentItem.creditValue } // Simplified
+          });
+        } else if (result.code === "auth_required") {
+          setFeedback({ isOpen: true, type: "auth_required" });
+        } else if (result.code === "own_item_forbidden") {
+          setFeedback({ isOpen: true, type: "own_item_forbidden" });
+        } else {
+          setFeedback({ isOpen: true, type: "unexpected_error" });
+        }
+        console.error("[reserveItem failure]:", result.code);
         return;
       }
 
-      setToastState({
-        show: true,
-        text: t("reserved"),
-        type: "RESERVE",
-        exchangeId: result.data.exchangeId,
+      setFeedback({
+        isOpen: true,
+        type: "exchange_reserved",
+        metadata: { exchangeId: result.data?.exchangeId }
       });
+
     } catch {
-      toast.error(t("reserveError"));
+      setFeedback({ isOpen: true, type: "unexpected_error" });
     }
   };
 
@@ -204,6 +231,13 @@ export default function DiscoveryStack({
           </motion.div>
         )}
       </AnimatePresence>
+      <FeedbackSheet 
+        isOpen={feedback.isOpen}
+        onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+        type={feedback.type}
+        metadata={feedback.metadata}
+      />
     </div>
   );
 }
+

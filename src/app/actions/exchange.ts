@@ -12,9 +12,17 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { actionFail, actionOk } from "@/lib/actions/result";
-import { assert } from "@/lib/validations";
+import {
+  assert,
+  ReserveItemSchema,
+  ConfirmExchangeSchema,
+  SubmitReviewSchema,
+} from "@/lib/validations";
 import { notifyUser } from "@/lib/notify";
-import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  checkRateLimit,
+} from "@/lib/rate-limit";
+import { addXP, checkAndAwardAchievements, XP_REWARDS } from "@/lib/gamification";
 import { addSwaps, deductSwaps } from "@/lib/swaps";
 
 function toReviewRating(value: number): ReviewRating | null {
@@ -40,7 +48,14 @@ export async function reserveItem(itemId: string, swapsBalance: number = 0) {
     return actionFail("auth_required");
   }
 
-  const rateLimit = checkRateLimit(currentUser.id, "reserve");
+  const validation = ReserveItemSchema.safeParse({ itemId, swapsBalance });
+  if (!validation.success) {
+    return actionFail("invalid_input");
+  }
+
+  const { itemId: validatedItemId, swapsBalance: validatedBalance } = validation.data;
+
+  const rateLimit = await checkRateLimit(currentUser.id, "reserve");
   if (!rateLimit.allowed) {
     return actionFail("rate_limited", {
       retryAfterSeconds: Math.ceil(rateLimit.resetIn / 1000),
@@ -48,7 +63,7 @@ export async function reserveItem(itemId: string, swapsBalance: number = 0) {
   }
 
   const item = await prisma.item.findUnique({
-    where: { id: itemId },
+    where: { id: validatedItemId },
     include: {
       owner: true,
     },
@@ -119,11 +134,14 @@ export async function reserveItem(itemId: string, swapsBalance: number = 0) {
 
     revalidatePath("/");
     revalidatePath(`/item/${item.id}`);
+    console.log(`[reserveItem] Success for user ${currentUser.id} on item ${item.id}`);
     return actionOk("exchange_reserved", { exchangeId: exchange.id });
-  } catch {
+  } catch (error) {
+    console.error(`[reserveItem] Transaction error:`, error);
     return actionFail("unexpected_error");
   }
 }
+
 
 export async function cancelReservation(exchangeId: string) {
   const currentUser = await getCurrentUser();
@@ -258,8 +276,15 @@ export async function confirmExchangeWithToken(exchangeId: string, token: string
     return actionFail("auth_required");
   }
 
+  const validation = ConfirmExchangeSchema.safeParse({ exchangeId, token });
+  if (!validation.success) {
+    return actionFail("invalid_token");
+  }
+
+  const { exchangeId: validatedExchangeId, token: validatedToken } = validation.data;
+
   const exchange = await prisma.exchange.findUnique({
-    where: { id: exchangeId },
+    where: { id: validatedExchangeId },
     include: {
       item: true,
       owner: true,
@@ -275,7 +300,7 @@ export async function confirmExchangeWithToken(exchangeId: string, token: string
     return actionFail("exchange_not_pending");
   }
 
-  if (exchange.qrToken !== token) {
+  if (exchange.qrToken !== validatedToken) {
     return actionFail("invalid_token");
   }
 
@@ -358,8 +383,15 @@ export async function submitReview(data: {
     return actionFail("auth_required");
   }
 
+  const validation = SubmitReviewSchema.safeParse(data);
+  if (!validation.success) {
+    return actionFail("invalid_input", { errors: validation.error.issues });
+  }
+
+  const validatedData = validation.data;
+
   const exchange = await prisma.exchange.findUnique({
-    where: { id: data.exchangeId },
+    where: { id: validatedData.exchangeId },
     include: {
       reviews: true,
     },
@@ -382,20 +414,20 @@ export async function submitReview(data: {
 
   const targetUserId =
     exchange.ownerId === currentUser.id ? exchange.requesterId : exchange.ownerId;
-  const rating = toReviewRating(data.rating);
-  if (!rating) {
+  const ratingValue = toReviewRating(validatedData.rating);
+  if (!ratingValue) {
     return actionFail("rating_invalid");
   }
-  const trustDelta = data.rating - 3;
+  const trustDelta = validatedData.rating - 3;
 
   const review = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const createdReview = await tx.review.create({
       data: {
-        exchangeId: data.exchangeId,
+        exchangeId: validatedData.exchangeId,
         authorId: currentUser.id,
         targetUserId,
-        rating,
-        comment: data.comment?.trim() || null,
+        rating: ratingValue,
+        comment: validatedData.comment?.trim() || null,
       },
     });
 

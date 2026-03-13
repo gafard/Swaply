@@ -28,5 +28,7 @@ export function presentItem(item: any) {
       item?.city?.name ??
       "Zone inconnue",
     images,
+    createdAt: item?.createdAt ? new Date(item.createdAt).toISOString() : undefined,
+    updatedAt: item?.updatedAt ? new Date(item.updatedAt).toISOString() : undefined,
   };
 }

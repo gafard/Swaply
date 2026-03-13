@@ -150,8 +150,14 @@ model User {
   acceptedTermsAt  DateTime?
   acceptedTermsVersion String?
   trustScore       Int       @default(0)
+  xp               Int       @default(0)
+  level            Int       @default(1)
   isVerified       Boolean   @default(false)
+  completionRate   Float     @default(0)
+  avgResponseTime  Int       @default(0) // minutes
+  avgPhotoQuality  Float     @default(0)
   isActive         Boolean   @default(true)
+
 
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -174,12 +180,44 @@ model User {
   payments         PaymentTransaction[]
   itemViews        ItemView[]
   itemReports      ItemReport[]
+  achievements     UserAchievement[]
+  stories          Story[]
+
 
   @@index([countryId])
   @@index([cityId])
   @@index([zoneId])
   @@index([isActive])
 }
+
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. 'FIRST_PUBLISH', 'TEN_SWAPS'
+  name        String
+  description String?
+  icon        String?  // Lucide icon name or URL
+  xpReward    Int      @default(0)
+  isHidden    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  users       UserAchievement[]
+
+  @@index([code])
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
 
 model Wallet {
   id              String   @id @default(cuid())
@@ -529,4 +567,18 @@ model PaymentTransaction {
   @@index([userId, createdAt])
   @@index([status])
   @@index([countryId, providerId])
+}
+model Story {
+  id        String   @id @default(cuid())
+  userId    String
+  imageUrl  String
+  caption   String?
+  type      String   @default("showcase") // showcase | auction
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }

@@ -240,6 +240,38 @@ const markets = [
   },
 ];
 
+const achievements = [
+  {
+    code: "FIRST_PUBLISH",
+    name: "Premier Pas",
+    description: "Vous avez publié votre premier objet !",
+    icon: "Package",
+    xpReward: 50,
+  },
+  {
+    code: "TEN_PUBLISHES",
+    name: "Collectionneur",
+    description: "Vous avez publié 10 objets sur Swaply.",
+    icon: "Boxes",
+    xpReward: 200,
+  },
+  {
+    code: "FIRST_SWAP",
+    name: "Troc Initie",
+    description: "Vous avez réussi votre premier échange !",
+    icon: "RefreshCw",
+    xpReward: 100,
+  },
+  {
+    code: "TEN_SWAPS",
+    name: "Swap Master",
+    description: "10 échanges réussis. Le troc n'a plus de secret pour vous.",
+    icon: "Zap",
+    xpReward: 500,
+  },
+];
+
+
 async function main() {
   console.log("Seeding Swaply Global...");
 
@@ -390,7 +422,28 @@ async function main() {
     console.log(`Seeded ${country.name} / ${city.name}`);
   }
 
+  console.log("Seeding Achievements...");
+  for (const ach of achievements) {
+    await prisma.achievement.upsert({
+      where: { code: ach.code },
+      update: {
+        name: ach.name,
+        description: ach.description,
+        icon: ach.icon,
+        xpReward: ach.xpReward,
+      },
+      create: {
+        code: ach.code,
+        name: ach.name,
+        description: ach.description,
+        icon: ach.icon,
+        xpReward: ach.xpReward,
+      },
+    });
+  }
+
   console.log("Seed completed.");
+
 }
 
 main()

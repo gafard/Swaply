@@ -8,7 +8,7 @@ import { ITEM_CATEGORIES, ItemCategory } from "@/lib/validations";
 import { cn } from "@/lib/utils";
 
 interface FilterBarProps {
-  onFilterChange: (filters: FilterState) => void;
+  onFilterChange?: (filters: FilterState) => void;
 }
 
 interface FilterState {
@@ -39,7 +39,7 @@ const CATEGORY_KEYS: Record<ItemCategory, string> = {
   "Autre": "other",
 };
 
-export default function FilterBar({ onFilterChange }: FilterBarProps) {
+export default function FilterBar({ onFilterChange = () => {} }: FilterBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [countryOptions, setCountryOptions] = useState<string[]>([]);
   const [cityOptions, setCityOptions] = useState<string[]>([]);
@@ -96,7 +96,7 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
   const updateFilter = (key: keyof FilterState, value: string) => {
     const nextFilters = { ...filters, [key]: value };
     setFilters(nextFilters);
-    onFilterChange(nextFilters);
+    onFilterChange?.(nextFilters);
   };
 
   const activeFiltersCount = Object.values(filters).filter(Boolean).length;
@@ -229,7 +229,7 @@ export default function FilterBar({ onFilterChange }: FilterBarProps) {
                   maxPrice: "",
                 };
                 setFilters(emptyFilters);
-                onFilterChange(emptyFilters);
+                onFilterChange?.(emptyFilters);
               }}
               className="w-full rounded-xl py-2.5 text-[11px] font-bold text-rose-500 transition-colors hover:bg-rose-50"
             >

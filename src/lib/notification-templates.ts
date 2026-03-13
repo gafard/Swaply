@@ -11,7 +11,9 @@ export type NotificationTemplate =
   | "item_removed_after_review"
   | "report_reviewed_without_action"
   | "reservation_expired_owner"
-  | "reservation_expired_requester";
+  | "reservation_expired_requester"
+  | "wishlist_match_found";
+
 
 export type NotificationPayloadMap = {
   new_local_item: {
@@ -44,7 +46,12 @@ export type NotificationPayloadMap = {
   reservation_expired_requester: {
     itemTitle: string;
   };
+  wishlist_match_found: {
+    itemTitle: string;
+    wishlistTitle: string;
+  };
 };
+
 
 type NotificationContent = {
   title: string;
@@ -100,7 +107,12 @@ const COPY: Record<
       title: "Réservation expirée",
       body: 'Votre réservation pour "{itemTitle}" a expiré.',
     },
+    wishlist_match_found: {
+      title: "Trouvaille pour votre wishlist !",
+      body: 'Un objet correspondant à votre recherche "{wishlistTitle}" est disponible : {itemTitle}.',
+    },
   },
+
   en: {
     new_local_item: {
       title: "New item near you",
@@ -139,7 +151,12 @@ const COPY: Record<
       title: "Reservation expired",
       body: 'Your reservation for "{itemTitle}" expired.',
     },
+    wishlist_match_found: {
+      title: "Match found for your wishlist!",
+      body: 'An item matching your search "{wishlistTitle}" is now available: {itemTitle}.',
+    },
   },
+
   es: {
     new_local_item: {
       title: "Nuevo artículo cerca de ti",
@@ -178,7 +195,12 @@ const COPY: Record<
       title: "Reserva expirada",
       body: 'Tu reserva de "{itemTitle}" expiró.',
     },
+    wishlist_match_found: {
+      title: "¡Encontramos algo para tu wishlist!",
+      body: 'Un artículo que coincide con tu búsqueda "{wishlistTitle}" está disponible: {itemTitle}.',
+    },
   },
+
   pt: {
     new_local_item: {
       title: "Novo item perto de você",
@@ -217,7 +239,12 @@ const COPY: Record<
       title: "Reserva expirada",
       body: 'Sua reserva de "{itemTitle}" expirou.',
     },
+    wishlist_match_found: {
+      title: "Encontramos algo para sua wishlist!",
+      body: 'Um item correspondente à sua busca "{wishlistTitle}" está disponível: {itemTitle}.',
+    },
   },
+
 };
 
 function interpolate(
