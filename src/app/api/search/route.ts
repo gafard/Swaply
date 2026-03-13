@@ -98,7 +98,18 @@ export async function GET(request: NextRequest) {
     const items = await prisma.item.findMany({
       where,
       include: {
-        owner: { select: { username: true, trustScore: true } },
+        owner: {
+          select: {
+            username: true,
+            trustScore: true,
+            completionRate: true,
+            avgResponseTime: true,
+            avgPhotoQuality: true,
+            level: true,
+            xp: true,
+          }
+        },
+
         city: { select: { name: true } },
         zone: { select: { name: true } },
         metric: true,

@@ -207,8 +207,9 @@ export async function publishItem(formData: FormData) {
         OR: [
           { zoneId: location.zoneId },
           { cityId: location.cityId, zoneId: null },
-          { countryId: location.countryId, cityId: null }
+          { countryId: location.countryId }
         ]
+
       },
       include: { user: { select: { id: true, email: true } } }
     });

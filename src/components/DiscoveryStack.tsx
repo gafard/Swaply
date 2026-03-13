@@ -31,7 +31,13 @@ interface Item {
   owner: {
     username: string;
     trustScore: number;
+    completionRate: number;
+    avgResponseTime: number;
+    avgPhotoQuality: number;
+    level: number;
+    xp: number;
   };
+
 }
 
 export default function DiscoveryStack({

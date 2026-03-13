@@ -28,8 +28,14 @@ export default async function ExplorePage() {
         select: {
           username: true,
           trustScore: true,
+          completionRate: true,
+          avgResponseTime: true,
+          avgPhotoQuality: true,
+          level: true,
+          xp: true,
         },
       },
+
       city: { select: { name: true } },
       zone: { select: { name: true } },
       metric: true,
