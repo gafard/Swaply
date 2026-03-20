@@ -95,6 +95,22 @@
         "paymentFailed": "O pagamento não foi confirmado.",
         "rateLimited": "Muitas tentativas. Tente novamente em {seconds}s."
       }
+    },
+    "availableNow": "Disponível agora",
+    "regularBalance": "Swaps padrão",
+    "regularBalanceBody": "Comprados ou ganhos em trocas. Eles permanecem sempre na sua carteira.",
+    "promoBalance": "Swaps bônus",
+    "promoBalanceBody": "Oferecidos pela Swaply para começar mais rápido. Você já pode usá-los.",
+    "bonusExplainTitle": "Como seu saldo funciona",
+    "bonusExplainBody": "Seus Swaps bônus já podem ser usados para reservar itens. As recargas adicionam Swaps padrão, separados para deixar a carteira mais clara.",
+    "welcomeSheet": {
+      "title": "Seus Swaps iniciais estão prontos",
+      "body": "A Swaply ativou {amount} Swaps bônus para você começar sem esperar.",
+      "availableBody": "Este é o seu saldo utilizável imediatamente para reservas.",
+      "tipTitle": "Importante",
+      "tipBody": "Os Swaps bônus já podem ser gastos em reservas. Depois, as compras de pacotes adicionam Swaps padrão.",
+      "primary": "Descobrir agora",
+      "secondary": "Ver minha carteira"
     }
   },
   "justification": {
@@ -123,7 +139,14 @@
     "emptyBadge": "Mercado vivo",
     "emptyTitle": "Esta vitrine espera seu primeiro anúncio marcante",
     "emptyBody": "Publique um item bem apresentado e dê tração real a este mercado local.",
-    "publishCta": "Publicar"
+    "publishCta": "Publicar",
+    "heroEyebrow": "Mercado local ativo",
+    "heroTitle": "Troque melhor, perto de você.",
+    "heroBody": "Uma vitrine mais limpa, objetos mais claros e ações diretas para publicar ou descobrir sem ruído visual.",
+    "heroPrimary": "Descobrir",
+    "heroSecondary": "Publicar um objeto",
+    "heroCounter": "anúncios visíveis",
+    "welcomeBonusChip": "+{amount} bônus ativos"
   },
   "discover": {
     "searchPlaceholder": "Pesquisar por nome, descrição...",
@@ -758,5 +781,12 @@
     "reserve": "Reservar",
     "skip": "Pular",
     "nearby": "Perto de voce"
+  },
+  "feedbackSheet": {
+    "metrics": {
+      "current": "Seu saldo",
+      "required": "Necessário",
+      "missing": "Faltam"
+    }
   }
 }

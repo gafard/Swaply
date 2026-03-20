@@ -29,6 +29,7 @@ import {
 } from "@/lib/geo";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import SuccessView from "@/components/SuccessView";
+import { triggerSwapGain } from "@/components/wallet/SwapGainListener";
 
 function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -1026,6 +1027,10 @@ export default function PublishPage() {
       if (!result.ok) {
         toast.error(getPublishErrorMessage(result.code));
         return;
+      }
+
+      if (result.data?.awardedFirstPublishBonus) {
+        triggerSwapGain(3);
       }
 
       setHasBonus(!!result.data?.awardedFirstPublishBonus);

@@ -85,7 +85,6 @@ export default function ItemCard({ item, index }: { item: Item, index: number })
                   {item.status === "AVAILABLE" ? t("available") : t("reserved")}
                </div>
             </div>
-
             <button 
               onClick={(e) => {
                 e.preventDefault();

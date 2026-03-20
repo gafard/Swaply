@@ -99,6 +99,22 @@
         "paymentFailed": "Le paiement n'a pas été confirmé.",
         "rateLimited": "Trop de tentatives. Réessayez dans {seconds}s."
       }
+    },
+    "availableNow": "Disponible maintenant",
+    "regularBalance": "Swaps standards",
+    "regularBalanceBody": "Achetés ou gagnés sur vos échanges. Ils restent toujours dans votre wallet.",
+    "promoBalance": "Swaps bonus",
+    "promoBalanceBody": "Offerts par Swaply pour démarrer plus vite. Ils sont utilisables dès maintenant.",
+    "bonusExplainTitle": "Comment fonctionne votre solde",
+    "bonusExplainBody": "Vos Swaps bonus peuvent déjà servir à réserver des objets. Les recharges ajoutent des Swaps standards, séparés pour garder un wallet clair.",
+    "welcomeSheet": {
+      "title": "Vos Swaps de départ sont prêts",
+      "body": "Swaply a activé {amount} Swaps bonus pour vous lancer sans attendre.",
+      "availableBody": "C’est votre solde immédiatement utilisable pour réserver.",
+      "tipTitle": "À savoir",
+      "tipBody": "Les bonus sont déjà dépensables pour réserver. Les achats de packs ajoutent ensuite des Swaps standards en plus.",
+      "primary": "Découvrir maintenant",
+      "secondary": "Voir mon wallet"
     }
   },
   "justification": {
@@ -127,7 +143,14 @@
     "emptyBadge": "Marché vivant",
     "emptyTitle": "Ce rayon attend sa première belle annonce",
     "emptyBody": "Publie un objet proprement présenté et donne du relief à ce marché local dès maintenant.",
-    "publishCta": "Publier"
+    "publishCta": "Publier",
+    "heroEyebrow": "Marché local actif",
+    "heroTitle": "Troquez mieux, près de chez vous.",
+    "heroBody": "Une vitrine plus propre, des objets plus lisibles, et des actions directes pour publier ou découvrir sans bruit inutile.",
+    "heroPrimary": "Découvrir",
+    "heroSecondary": "Publier un objet",
+    "heroCounter": "annonces visibles",
+    "welcomeBonusChip": "+{amount} bonus actifs"
   },
   "discover": {
     "searchPlaceholder": "Rechercher par nom, description...",
@@ -384,10 +407,14 @@
       "body": "L'objet est maintenant réservé pour vous pendant 24 heures. Discutez avec le propriétaire pour finaliser l'échange.",
       "cta": "Ouvrir la discussion",
       "secondary": "Continuer à découvrir"
+    },
+    "metrics": {
+      "current": "Votre solde",
+      "required": "Requis",
+      "missing": "Manque"
     }
   },
   "discoverStack": {
-
     "title": "Découverte",
     "items": "objets",
     "localMarket": "Marché local",

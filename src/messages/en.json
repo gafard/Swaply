@@ -232,6 +232,22 @@
         "paymentFailed": "Payment was not confirmed.",
         "rateLimited": "Too many attempts. Try again in {seconds}s."
       }
+    },
+    "availableNow": "Available now",
+    "regularBalance": "Standard swaps",
+    "regularBalanceBody": "Bought or earned through trades. They always stay in your wallet.",
+    "promoBalance": "Bonus swaps",
+    "promoBalanceBody": "Granted by Swaply to help you start faster. You can use them right away.",
+    "bonusExplainTitle": "How your balance works",
+    "bonusExplainBody": "Your bonus Swaps can already be used to reserve items. Top-ups add standard Swaps, kept separate to make the wallet clearer.",
+    "welcomeSheet": {
+      "title": "Your starter Swaps are ready",
+      "body": "Swaply activated {amount} bonus Swaps so you can start immediately.",
+      "availableBody": "This is your instantly usable balance for reservations.",
+      "tipTitle": "Good to know",
+      "tipBody": "Bonus Swaps are already spendable for reservations. Pack purchases then add extra standard Swaps.",
+      "primary": "Start discovering",
+      "secondary": "Open my wallet"
     }
   },
   "justification": {
@@ -260,7 +276,14 @@
     "emptyBadge": "Live market",
     "emptyTitle": "This shelf is waiting for its first standout listing",
     "emptyBody": "Publish a well-presented item and give this local market real momentum.",
-    "publishCta": "Publish"
+    "publishCta": "Publish",
+    "heroEyebrow": "Active local market",
+    "heroTitle": "Trade better, close to home.",
+    "heroBody": "A cleaner storefront, clearer items and direct actions to publish or discover without visual noise.",
+    "heroPrimary": "Discover",
+    "heroSecondary": "Publish an item",
+    "heroCounter": "live listings",
+    "welcomeBonusChip": "+{amount} active bonus"
   },
   "discover": {
     "searchPlaceholder": "Search by name, description...",
@@ -758,5 +781,12 @@
     "reserve": "Reserve",
     "skip": "Skip",
     "nearby": "Nearby"
+  },
+  "feedbackSheet": {
+    "metrics": {
+      "current": "Your balance",
+      "required": "Required",
+      "missing": "Missing"
+    }
   }
 }

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft, Wallet, Info, Sparkles, ShoppingBag, Lock } from "lucide-react";
+import { ArrowLeft, Gift, Info, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+
 import { AnimatedContainer, AnimatedItem } from "@/components/AnimatedContainer";
 import RechargeModal from "./RechargeModal";
 import { formatMoney } from "@/lib/geo";
@@ -38,6 +39,10 @@ export default function WalletClient({ userData, topupPackages }: Props) {
   const locale = useLocale();
   const t = useTranslations("wallet");
 
+  const availableSwaps = userData.availableSwaps ?? ((userData.swaps ?? 0) + (userData.promoSwaps ?? 0));
+  const regularSwaps = userData.swaps ?? 0;
+  const promoSwaps = userData.promoSwaps ?? 0;
+
   const packBadge = (swapsAmount: number) => {
     if (swapsAmount >= 150) return "🐳";
     if (swapsAmount >= 80) return "🔥";
@@ -61,181 +66,188 @@ export default function WalletClient({ userData, topupPackages }: Props) {
 
   return (
     <main className="min-h-screen bg-background pb-20 font-sans">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#F0B429] to-[#C8860A] pt-16 pb-12 px-6 rounded-b-[40px] shadow-lg shadow-gold/20 text-white relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
-            <Wallet className="w-48 h-48" />
-         </div>
-         
-         <AnimatedContainer initialY={-10} className="flex items-center gap-4 mb-8">
-            <Link href={localizeHref(locale, "/profile")} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
-               <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-xl font-black uppercase tracking-widest">{t("title")}</h1>
-         </AnimatedContainer>
+      <div className="rounded-b-[38px] bg-[linear-gradient(145deg,#10203a_0%,#173768_60%,#2457ff_100%)] px-6 pb-10 pt-16 text-white shadow-[0_24px_80px_rgba(16,32,58,0.2)]">
+        <AnimatedContainer initialY={-10} className="mb-8 flex items-center gap-4">
+          <Link href={localizeHref(locale, "/profile")} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 backdrop-blur-md">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="text-xl font-black uppercase tracking-[0.18em]">{t("title")}</h1>
+        </AnimatedContainer>
 
-         <AnimatedContainer delay={0.1} className="relative z-10 text-center py-4">
-            <p className="text-white/70 text-xs font-black uppercase tracking-[0.2em] mb-2">{t("currentBalance")}</p>
-            <div className="flex items-center justify-center gap-3">
-               <span className="text-6xl font-black tracking-tighter">{userData.swaps ?? 0}</span>
-               <div className="flex flex-col items-start leading-none">
-                  <span className="text-lg font-black italic">SWAPS</span>
-                  <Sparkles className="w-4 h-4 text-white/50" />
-               </div>
-            </div>
-         </AnimatedContainer>
+        <AnimatedContainer delay={0.05} className="rounded-[32px] border border-white/12 bg-white/10 p-5 backdrop-blur-xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/65">{t("availableNow")}</p>
+          <div className="mt-2 flex items-end gap-3">
+            <span className="font-display text-[3.75rem] font-bold leading-none tracking-[-0.06em]">{availableSwaps}</span>
+            <span className="mb-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/70">Swaps</span>
+          </div>
+          <p className="mt-3 max-w-[20rem] text-sm leading-6 text-white/68">{t("welcomeSheet.tipBody")}</p>
+        </AnimatedContainer>
 
-         <div className="flex gap-3 mt-8">
-            <div className="flex-1 bg-white/15 backdrop-blur-md text-white border border-white/15 font-black text-[11px] uppercase tracking-widest py-3 rounded-2xl flex items-center justify-center gap-2 opacity-90">
-               <Lock className="w-3.5 h-3.5" />
-               {t("transfersClosed")}
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <AnimatedItem index={0}>
+            <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-md">
+              <div className="flex items-center gap-2 text-white/72">
+                <Wallet className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-[0.16em]">{t("regularBalance")}</span>
+              </div>
+              <p className="mt-3 font-display text-[2rem] font-bold leading-none tracking-[-0.05em] text-white">{regularSwaps}</p>
+              <p className="mt-2 text-[11px] font-medium leading-5 text-white/58">{t("regularBalanceBody")}</p>
             </div>
-            <Link
-              href={localizeHref(locale, "/profile/history")}
-              className="flex-1 bg-white text-[#C8860A] font-black text-[11px] uppercase tracking-widest py-3 rounded-2xl shadow-md active:scale-95 transition-all text-center"
-            >
-               {t("history")}
-            </Link>
-         </div>
+          </AnimatedItem>
+          <AnimatedItem index={1}>
+            <div className="rounded-[26px] border border-[#ffdc93]/25 bg-[linear-gradient(180deg,rgba(255,223,154,0.18),rgba(255,255,255,0.08))] p-4 backdrop-blur-md">
+              <div className="flex items-center gap-2 text-[#ffe1a7]">
+                <Gift className="h-4 w-4" />
+                <span className="text-[10px] font-black uppercase tracking-[0.16em]">{t("promoBalance")}</span>
+              </div>
+              <p className="mt-3 font-display text-[2rem] font-bold leading-none tracking-[-0.05em] text-white">{promoSwaps}</p>
+              <p className="mt-2 text-[11px] font-medium leading-5 text-white/62">{t("promoBalanceBody")}</p>
+            </div>
+          </AnimatedItem>
+        </div>
       </div>
 
-      <div className="px-5 -mt-6 relative z-20">
-         {/* History Card */}
-         <div className="bg-surface rounded-[40px] border border-border shadow-card p-6">
-            <div className="flex items-center justify-between mb-6">
-               <h2 className="text-[13px] font-black text-foreground uppercase tracking-wider">{t("recentHistory")}</h2>
-               <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-muted" />
-               </div>
+      <div className="relative z-10 -mt-5 px-5">
+        <div className="rounded-[34px] border border-border bg-surface p-6 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <Sparkles className="h-5 w-5" />
             </div>
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-foreground">{t("bonusExplainTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted">{t("bonusExplainBody")}</p>
+            </div>
+          </div>
+        </div>
 
-            <div className="space-y-4">
-               {userData.transactions.length === 0 ? (
-                 <div className="py-12 text-center">
-                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                       <Info className="w-8 h-8" />
-                    </div>
-                    <p className="text-sm font-medium text-muted">{t("noTransactions")}</p>
-                 </div>
-               ) : (
-                 userData.transactions.slice(0, 3).map((tx: any, idx: number) => {
-                  const totalAmount = (tx.amount ?? 0) + (tx.promoAmount ?? 0);
-                  return (
-                  <AnimatedItem key={tx.id} index={idx} className="flex items-center justify-between border-b border-border/50 pb-4 last:border-0 last:pb-0">
-                     <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-[20px] flex items-center justify-center text-xl shadow-sm ${
-                           totalAmount > 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
-                        }`}>
-                           {tx.type === 'SIGNUP_BONUS' ? '✨' :
-                            tx.type === 'TOPUP' ? '💳' :
-                            tx.type === 'EXCHANGE_IN' || tx.type === 'EXCHANGE_OUT' ? '🔄' :
-                            tx.type === 'REFUND' ? '↩️' : '◈'}
-                        </div>
-                        <div>
-                           <p className="text-sm font-black text-foreground leading-tight tracking-tight">{tx.description || tx.type}</p>
-                           <p className="text-[10px] font-bold text-muted mt-1 uppercase tracking-tighter italic">
-                              {formatDate(locale, tx.createdAt, { day: "numeric", month: "long" })}
-                           </p>
-                        </div>
-                     </div>
-                     <span className={`text-sm font-black ${totalAmount > 0 ? 'text-emerald-500 italic' : 'text-slate-500'}`}>
-                        {totalAmount > 0 ? '+' : ''}{totalAmount}
-                     </span>
-                  </AnimatedItem>
-                 );
-                 })
-               )}
-            </div>
-         </div>
+        <div className="mt-8 rounded-[34px] border border-border bg-surface p-6 shadow-[0_16px_42px_rgba(16,32,58,0.06)]">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-[13px] font-black uppercase tracking-[0.18em] text-foreground">{t("recentHistory")}</h2>
+            <Link href={localizeHref(locale, "/profile/history")} className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+              {t("history")}
+            </Link>
+          </div>
 
-         {/* Purchase Packs */}
-         <div className="mt-10">
-            <div className="flex items-center gap-2 mb-4 px-3">
-               <ShoppingBag className="w-4 h-4 text-primary" />
-               <div>
-                 <h2 className="text-[12px] font-black text-foreground uppercase tracking-widest">{t("buySwaps")}</h2>
-                 <p className="text-[10px] font-bold text-muted uppercase tracking-widest mt-1">
-                   {userData.countryName ?? t("undefinedMarket")}
-                 </p>
-               </div>
-            </div>
-            {topupPackages.length === 0 ? (
-              <div className="rounded-[32px] border border-dashed border-border bg-surface px-6 py-8 text-center">
-                <p className="text-sm font-semibold text-foreground">{t("noPackage")}</p>
-                <p className="text-[11px] text-muted font-medium mt-2 leading-relaxed">
-                  {t("configureCountry")}
-                </p>
+          <div className="space-y-4">
+            {userData.transactions.length === 0 ? (
+              <div className="py-10 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+                  <Info className="h-8 w-8" />
+                </div>
+                <p className="text-sm font-medium text-muted">{t("noTransactions")}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                 {topupPackages.map((pack, idx) => {
-                   const isPopular = idx === 1 || pack.swapsAmount === 12;
-                   return (
-                    <AnimatedItem key={pack.id} index={idx}>
-                      <button
-                        onClick={() => handleBuyPack(pack)}
-                        className={`w-full bg-surface border p-5 rounded-[32px] flex flex-col items-center text-center relative active:scale-95 transition-all text-left ${
-                          isPopular ? 'border-primary shadow-lg shadow-primary/10' : 'border-border'
-                        }`}
-                      >
-                        {isPopular && (
-                            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-cta">
-                              {t("popular")}
-                            </span>
-                        )}
-                        <span className="text-3xl mb-3">{packBadge(pack.swapsAmount)}</span>
-                        <p className="text-xl font-black text-foreground tracking-tighter">{pack.swapsAmount} SC</p>
-                        <p className="text-[10px] font-bold text-muted uppercase mt-1">{packLabel(pack.swapsAmount)}</p>
-                        <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest mt-2">
-                          {pack.paymentProvider.name}
+              userData.transactions.slice(0, 4).map((tx: any, idx: number) => {
+                const totalAmount = (tx.amount ?? 0) + (tx.promoAmount ?? 0);
+                return (
+                  <AnimatedItem key={tx.id} index={idx} className="flex items-center justify-between border-b border-border/60 pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-4">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-[18px] text-xl shadow-sm ${
+                        totalAmount > 0
+                          ? "border border-emerald-100 bg-emerald-50 text-emerald-600"
+                          : "border border-rose-100 bg-rose-50 text-rose-600"
+                      }`}>
+                        {tx.type === "SIGNUP_BONUS"
+                          ? "✨"
+                          : tx.type === "TOPUP"
+                            ? "💳"
+                            : tx.type === "EXCHANGE_IN" || tx.type === "EXCHANGE_OUT"
+                              ? "🔄"
+                              : tx.type === "REFUND"
+                                ? "↩️"
+                                : "◈"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-black tracking-tight text-foreground">{tx.description || tx.type}</p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted/70">
+                          {formatDate(locale, tx.createdAt, { day: "numeric", month: "long" })}
                         </p>
-                        <div className="w-full h-px bg-border my-3" />
-                        <p className="text-sm font-black text-primary">
-                          {formatMoney(pack.localAmount, pack.currencyCode, locale)}
-                        </p>
-                      </button>
-                    </AnimatedItem>
-                   );
-                 })}
-              </div>
+                      </div>
+                    </div>
+                    <span className={`text-sm font-black ${totalAmount > 0 ? "text-emerald-500" : "text-slate-500"}`}>
+                      {totalAmount > 0 ? "+" : ""}
+                      {totalAmount}
+                    </span>
+                  </AnimatedItem>
+                );
+              })
             )}
-         </div>
+          </div>
+        </div>
 
-         {/* Rules Section */}
-         <div className="mt-10 bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden">
-            <h2 className="text-lg font-black uppercase tracking-widest mb-6 flex items-center gap-3">
-               <div className="w-1.5 h-6 bg-gold rounded-full" />
-               {t("rules")}
-            </h2>
-            <div className="space-y-6">
-               <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">🔒</div>
-                  <div>
-                     <p className="text-xs font-black uppercase tracking-wider mb-1">{t("noWithdrawal")}</p>
-                     <p className="text-[11px] text-white/60 leading-relaxed font-medium">
-                        {t("noWithdrawalBody")}
-                     </p>
-                  </div>
-               </div>
-               <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">⚖️</div>
-                  <div>
-                     <p className="text-xs font-black uppercase tracking-wider mb-1">{t("localEconomy")}</p>
-                     <p className="text-[11px] text-white/60 leading-relaxed font-medium italic">
-                        {t("localEconomyBody")}
-                     </p>
-                  </div>
-               </div>
+        <div className="mt-10">
+          <div className="mb-4 flex items-center gap-3 px-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <ShoppingBag className="h-4.5 w-4.5" />
             </div>
-         </div>
+            <div>
+              <h2 className="text-[13px] font-black uppercase tracking-[0.18em] text-foreground">{t("buySwaps")}</h2>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted/70">
+                {userData.countryName ?? t("undefinedMarket")}
+              </p>
+            </div>
+          </div>
+          {topupPackages.length === 0 ? (
+            <div className="rounded-[28px] border border-dashed border-border bg-surface px-6 py-8 text-center">
+              <p className="text-sm font-semibold text-foreground">{t("noPackage")}</p>
+              <p className="mt-2 text-[11px] leading-5 text-muted">{t("configureCountry")}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {topupPackages.map((pack, idx) => {
+                const isPopular = idx === 1 || pack.swapsAmount === 12;
+                return (
+                  <AnimatedItem key={pack.id} index={idx}>
+                    <button
+                      onClick={() => handleBuyPack(pack)}
+                      className={`relative w-full rounded-[28px] border bg-surface p-5 text-left transition-all active:scale-[0.98] ${
+                        isPopular ? "border-primary shadow-[0_18px_38px_rgba(36,87,255,0.1)]" : "border-border shadow-sm"
+                      }`}
+                    >
+                      {isPopular ? (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-white shadow-cta">
+                          {t("popular")}
+                        </span>
+                      ) : null}
+                      <span className="text-3xl">{packBadge(pack.swapsAmount)}</span>
+                      <p className="mt-3 text-xl font-black tracking-tight text-foreground">{pack.swapsAmount} SC</p>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-muted">{packLabel(pack.swapsAmount)}</p>
+                      <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-primary/70">{pack.paymentProvider.name}</p>
+                      <div className="my-3 h-px bg-border" />
+                      <p className="text-sm font-black text-primary">{formatMoney(pack.localAmount, pack.currencyCode, locale)}</p>
+                    </button>
+                  </AnimatedItem>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-10 rounded-[34px] bg-slate-950 p-7 text-white shadow-[0_18px_44px_rgba(16,32,58,0.14)]">
+          <h2 className="mb-6 flex items-center gap-3 text-[13px] font-black uppercase tracking-[0.18em]">
+            <div className="h-6 w-1.5 rounded-full bg-[#f0b429]" />
+            {t("rules")}
+          </h2>
+          <div className="space-y-5">
+            <div className="flex gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10">🔒</div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em]">{t("noWithdrawal")}</p>
+                <p className="mt-1 text-[11px] leading-5 text-white/60">{t("noWithdrawalBody")}</p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10">⚖️</div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em]">{t("localEconomy")}</p>
+                <p className="mt-1 text-[11px] leading-5 text-white/60">{t("localEconomyBody")}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <RechargeModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        selectedPack={selectedPack}
-      />
+      <RechargeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedPack={selectedPack} />
     </main>
   );
 }

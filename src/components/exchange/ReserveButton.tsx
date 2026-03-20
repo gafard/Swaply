@@ -83,9 +83,9 @@ export default function ReserveButton({
           setFeedback({
             isOpen: true,
             type: "insufficient_swaps",
-            metadata: { 
-              amount: itemPrice + swapsBalance,
-              currentAmount: userSwaps
+            metadata: {
+              amount: (result.data as any)?.requiredAmount ?? itemPrice + swapsBalance,
+              currentAmount: (result.data as any)?.currentAmount ?? userSwaps
             }
           });
         } else if (result.code === "auth_required") {

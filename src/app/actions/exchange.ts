@@ -85,7 +85,11 @@ export async function reserveItem(itemId: string, swapsBalance: number = 0) {
   const requesterSwaps = item.priceSwaps + requesterExtra;
 
   if (currentUser.availableSwaps < requesterSwaps) {
-    return actionFail("insufficient_swaps");
+    return actionFail("insufficient_swaps", {
+      requiredAmount: requesterSwaps,
+      currentAmount: currentUser.availableSwaps,
+      missingAmount: requesterSwaps - currentUser.availableSwaps,
+    });
   }
 
   const reservedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);

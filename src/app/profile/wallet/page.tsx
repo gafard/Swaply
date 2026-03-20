@@ -13,9 +13,9 @@ export default async function WalletPage() {
     include: {
       transactions: {
         orderBy: { createdAt: "desc" },
-        take: 10
-      }
-    }
+        take: 10,
+      },
+    },
   });
 
   if (!wallet) return null;
@@ -26,7 +26,9 @@ export default async function WalletPage() {
     <WalletClient
       userData={{
         ...user,
-        swaps: wallet.balanceSwaps + wallet.promoSwaps,
+        swaps: wallet.balanceSwaps,
+        promoSwaps: wallet.promoSwaps,
+        availableSwaps: wallet.balanceSwaps + wallet.promoSwaps,
         transactions: wallet.transactions,
         countryName: user.country?.name ?? null,
         countryCode: user.country?.code ?? null,

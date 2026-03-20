@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 import StoryViewer from "./StoryViewer";
 
 interface Story {

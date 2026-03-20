@@ -4,23 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  CheckCircle2,
-  MapPin,
-  MessageSquare,
-  RefreshCw,
-  Star,
-  X,
-} from "lucide-react";
+import { CheckCircle2, MessageSquare, RefreshCw, Star, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 import { reserveItem } from "@/app/actions/exchange";
-
 import { toggleSaveItem } from "@/app/actions/item";
 import DiscoveryCard from "@/components/DiscoveryCard";
 import FeedbackSheet, { FeedbackType } from "@/components/FeedbackSheet";
 import { localizeHref } from "@/lib/i18n/pathnames";
-
 
 interface Item {
   id: string;
@@ -37,26 +28,21 @@ interface Item {
     level: number;
     xp: number;
   };
-
+  images?: Array<{ url: string; orderIndex: number }> | null;
 }
 
-export default function DiscoveryStack({
-  items: initialItems,
-}: {
-  items: Item[];
-}) {
+export default function DiscoveryStack({ items: initialItems }: { items: Item[] }) {
   const [items] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     type: FeedbackType;
-    metadata?: { amount?: number; exchangeId?: string };
+    metadata?: { amount?: number; currentAmount?: number; exchangeId?: string };
   }>({
     isOpen: false,
     type: "unexpected_error",
   });
   const [toastState, setToastState] = useState<{
-
     show: boolean;
     text: string;
     type: "RESERVE" | "SAVE";
@@ -66,10 +52,11 @@ export default function DiscoveryStack({
     text: "",
     type: "SAVE",
   });
+
   const locale = useLocale();
   const t = useTranslations("discoverStack");
-
   const currentItem = items[currentIndex];
+  const remaining = Math.max(items.length - currentIndex, 0);
 
   const handleSwipeRight = async () => {
     if (!currentItem) {
@@ -80,12 +67,13 @@ export default function DiscoveryStack({
       const result = await reserveItem(currentItem.id);
       if (!result.ok) {
         if (result.code === "insufficient_swaps") {
-          // We assume result.data might contain the missing amount if we updated reserveItem
-          // For now let's just show the sheet
           setFeedback({
             isOpen: true,
             type: "insufficient_swaps",
-            metadata: { amount: currentItem.creditValue } // Simplified
+            metadata: {
+              amount: (result.data as any)?.requiredAmount ?? currentItem.creditValue,
+              currentAmount: (result.data as any)?.currentAmount ?? 0,
+            },
           });
         } else if (result.code === "auth_required") {
           setFeedback({ isOpen: true, type: "auth_required" });
@@ -94,16 +82,14 @@ export default function DiscoveryStack({
         } else {
           setFeedback({ isOpen: true, type: "unexpected_error" });
         }
-        console.error("[reserveItem failure]:", result.code);
         return;
       }
 
       setFeedback({
         isOpen: true,
         type: "exchange_reserved",
-        metadata: { exchangeId: result.data?.exchangeId }
+        metadata: { exchangeId: result.data?.exchangeId },
       });
-
     } catch {
       setFeedback({ isOpen: true, type: "unexpected_error" });
     }
@@ -116,23 +102,14 @@ export default function DiscoveryStack({
 
     try {
       const { saved } = await toggleSaveItem(currentItem.id);
-      setToastState({
-        show: true,
-        text: saved ? t("saved") : t("unsaved"),
-        type: "SAVE",
-      });
-
-      setTimeout(() => {
-        setToastState((prev) => ({ ...prev, show: false }));
-      }, 1800);
+      setToastState({ show: true, text: saved ? t("saved") : t("unsaved"), type: "SAVE" });
+      window.setTimeout(() => setToastState((prev) => ({ ...prev, show: false })), 1800);
     } catch {
       toast.error(t("saveError"));
     }
   };
 
-  const handleSwipeLeft = () => {
-    setCurrentIndex((prev) => prev + 1);
-  };
+  const handleSwipeLeft = () => setCurrentIndex((prev) => prev + 1);
 
   if (currentIndex >= items.length) {
     return (
@@ -144,12 +121,8 @@ export default function DiscoveryStack({
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
           <RefreshCw className="h-7 w-7 text-slate-500" />
         </div>
-
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
-          {t("emptyTitle")}
-        </h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{t("emptyTitle")}</h2>
         <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">{t("emptyBody")}</p>
-
         <Link
           href={localizeHref(locale, "/")}
           className="mt-8 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
@@ -161,8 +134,25 @@ export default function DiscoveryStack({
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col bg-background pb-8 overflow-hidden">
-      <div className="relative flex-1 mb-6">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-background pb-8">
+      <div className="mb-4 flex items-center justify-between rounded-[24px] border border-border bg-surface/90 px-4 py-3 shadow-sm">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted/70">{t("title")}</p>
+          <div className="mt-1 flex items-end gap-2">
+            <span className="font-display text-[1.65rem] font-bold leading-none tracking-[-0.05em] text-foreground">
+              {String(currentIndex + 1).padStart(2, "0")}
+            </span>
+            <span className="pb-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-muted/70">
+              / {String(items.length).padStart(2, "0")}
+            </span>
+          </div>
+        </div>
+        <div className="rounded-full border border-border bg-background px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+          {remaining} {t("items")}
+        </div>
+      </div>
+
+      <div className="relative mb-6 flex-1">
         <AnimatePresence>
           {items
             .slice(currentIndex, currentIndex + 2)
@@ -182,34 +172,34 @@ export default function DiscoveryStack({
         </AnimatePresence>
       </div>
 
-      <div className="relative z-50 flex items-center justify-center gap-6 shrink-0 pt-2 bg-background/80 backdrop-blur-md rounded-t-3xl">
+      <div className="relative z-50 flex items-center justify-center gap-6 rounded-t-[28px] bg-background/92 pt-3 backdrop-blur-md">
         <button
           onClick={handleSwipeLeft}
-          className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-danger"
+          className="group flex h-13 w-13 items-center justify-center rounded-[22px] border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-500"
           aria-label={t("skip")}
         >
-          <X className="h-5 w-5 transition-transform duration-500 group-hover:rotate-90" />
+          <X className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
         </button>
 
         <button
           onClick={handleSave}
-          className="group flex h-[4rem] w-[4rem] items-center justify-center rounded-[2rem] bg-slate-950 text-white shadow-cta transition-all active:scale-95 hover:bg-slate-900"
+          className="group flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-[2rem] bg-slate-950 text-white shadow-[0_20px_40px_rgba(16,32,58,0.22)] transition-all active:scale-95 hover:bg-slate-900"
           aria-label={t("save")}
         >
-          <Star className="h-6 w-6 transition-transform duration-500 group-hover:scale-110" />
+          <Star className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
         </button>
 
         <button
           onClick={handleSwipeRight}
-          className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-success"
+          className="group flex h-13 w-13 items-center justify-center rounded-[22px] border border-border bg-surface text-muted shadow-sm transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-500"
           aria-label={t("reserve")}
         >
-          <MessageSquare className="h-5 w-5 transition-all group-hover:scale-110" />
+          <MessageSquare className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
         </button>
       </div>
 
       <AnimatePresence>
-        {toastState.show && (
+        {toastState.show ? (
           <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -218,32 +208,30 @@ export default function DiscoveryStack({
           >
             <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-popup">
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-100 bg-emerald-50">
-                <CheckCircle2 className="h-5 w-5 text-success" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
-
               <div className="flex flex-col">
                 <span className="text-sm font-semibold text-foreground">{toastState.text}</span>
-
-                {toastState.type === "RESERVE" && toastState.exchangeId && (
+                {toastState.type === "RESERVE" && toastState.exchangeId ? (
                   <Link
                     href={localizeHref(locale, `/exchange/${toastState.exchangeId}`)}
                     className="mt-0.5 text-xs font-semibold text-primary hover:underline underline-offset-2"
                   >
                     {t("goToChat")}
                   </Link>
-                )}
+                ) : null}
               </div>
             </div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
-      <FeedbackSheet 
+
+      <FeedbackSheet
         isOpen={feedback.isOpen}
-        onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setFeedback((prev) => ({ ...prev, isOpen: false }))}
         type={feedback.type}
         metadata={feedback.metadata}
       />
     </div>
   );
 }
-

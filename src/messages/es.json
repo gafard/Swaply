@@ -95,6 +95,22 @@
         "paymentFailed": "El pago no fue confirmado.",
         "rateLimited": "Demasiados intentos. Vuelve a intentarlo en {seconds}s."
       }
+    },
+    "availableNow": "Disponible ahora",
+    "regularBalance": "Swaps estándar",
+    "regularBalanceBody": "Comprados o ganados en intercambios. Siempre permanecen en tu wallet.",
+    "promoBalance": "Swaps bonus",
+    "promoBalanceBody": "Ofrecidos por Swaply para empezar más rápido. Ya puedes usarlos.",
+    "bonusExplainTitle": "Cómo funciona tu saldo",
+    "bonusExplainBody": "Tus Swaps bonus ya pueden servir para reservar objetos. Las recargas añaden Swaps estándar, separados para que el wallet sea más claro.",
+    "welcomeSheet": {
+      "title": "Tus Swaps iniciales están listos",
+      "body": "Swaply activó {amount} Swaps bonus para que empieces sin esperar.",
+      "availableBody": "Es tu saldo utilizable inmediatamente para reservar.",
+      "tipTitle": "Importante",
+      "tipBody": "Los Swaps bonus ya se pueden gastar para reservar. Luego las compras de packs añaden Swaps estándar.",
+      "primary": "Descubrir ahora",
+      "secondary": "Ver mi wallet"
     }
   },
   "justification": {
@@ -123,7 +139,14 @@
     "emptyBadge": "Mercado activo",
     "emptyTitle": "Esta vitrina espera su primer anuncio fuerte",
     "emptyBody": "Publica un objeto bien presentado y dale impulso real a este mercado local.",
-    "publishCta": "Publicar"
+    "publishCta": "Publicar",
+    "heroEyebrow": "Mercado local activo",
+    "heroTitle": "Intercambia mejor, cerca de ti.",
+    "heroBody": "Una vitrina más limpia, objetos más claros y acciones directas para publicar o descubrir sin ruido visual.",
+    "heroPrimary": "Descubrir",
+    "heroSecondary": "Publicar un objeto",
+    "heroCounter": "anuncios visibles",
+    "welcomeBonusChip": "+{amount} bonus activos"
   },
   "discover": {
     "searchPlaceholder": "Buscar por nombre, descripción...",
@@ -758,5 +781,12 @@
     "reserve": "Reservar",
     "skip": "Omitir",
     "nearby": "Cerca de ti"
+  },
+  "feedbackSheet": {
+    "metrics": {
+      "current": "Tu saldo",
+      "required": "Necesario",
+      "missing": "Faltan"
+    }
   }
 }
