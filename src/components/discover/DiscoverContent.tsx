@@ -91,11 +91,11 @@ export default function DiscoverContent() {
 
   return (
     <div className="flex h-[calc(100vh-84px)] flex-col overflow-hidden px-4 pb-2 pt-3">
-      <div className="mb-4 shrink-0 overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,251,246,0.88))] p-4 shadow-[0_18px_42px_rgba(16,32,58,0.06)]">
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 shrink-0 overflow-hidden rounded-[26px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,251,246,0.88))] p-3.5 shadow-[0_18px_42px_rgba(16,32,58,0.06)]">
+        <div className="mb-2 flex items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted/70">{t("title")}</p>
-            <h1 className="mt-1 font-display text-[1.8rem] font-bold tracking-[-0.05em] text-foreground">
+            <h1 className="mt-1 font-display text-[1.55rem] font-bold tracking-[-0.05em] text-foreground">
               {t("heading")}
             </h1>
           </div>

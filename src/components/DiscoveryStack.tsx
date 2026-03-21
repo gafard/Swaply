@@ -134,8 +134,8 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden pb-8">
-      <div className="mb-4 overflow-hidden rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,251,246,0.86))] px-4 py-4 shadow-[0_18px_42px_rgba(16,32,58,0.06)]">
+    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden pb-4">
+      <div className="mb-3 overflow-hidden rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,251,246,0.86))] px-4 py-3 shadow-[0_14px_32px_rgba(16,32,58,0.05)]">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted/70">{t("title")}</p>
@@ -153,7 +153,7 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
           </div>
         </div>
 
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
           <motion.div
             className="h-full rounded-full bg-[linear-gradient(90deg,#10203a,#2457ff,#7ebdff)]"
             initial={false}
@@ -163,8 +163,8 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
         </div>
       </div>
 
-      <div className="relative mb-6 flex-1">
-        <div className="pointer-events-none absolute inset-x-6 top-3 bottom-5 rounded-[38px] bg-[#dfe8ff]/40 blur-3xl" />
+      <div className="relative mb-4 flex-1 min-h-[30rem]">
+        <div className="pointer-events-none absolute inset-x-4 top-4 bottom-4 rounded-[42px] bg-[#dfe8ff]/40 blur-3xl" />
         <AnimatePresence>
           {items
             .slice(currentIndex, currentIndex + 2)
@@ -184,10 +184,10 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
         </AnimatePresence>
       </div>
 
-      <div className="relative z-50 mx-auto flex w-full max-w-[18rem] items-center justify-center gap-5 rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.84))] px-4 py-3 shadow-[0_20px_44px_rgba(16,32,58,0.1)] backdrop-blur-md">
+      <div className="relative z-50 mx-auto flex w-full max-w-[17rem] items-center justify-center gap-4 rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.84))] px-4 py-2.5 shadow-[0_20px_44px_rgba(16,32,58,0.1)] backdrop-blur-md">
         <button
           onClick={handleSwipeLeft}
-          className="group flex h-13 w-13 items-center justify-center rounded-[22px] border border-white/80 bg-white text-muted shadow-sm transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-500"
+          className="group flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/80 bg-white text-muted shadow-sm transition-all active:scale-95 hover:border-rose-100 hover:bg-rose-50 hover:text-rose-500"
           aria-label={t("skip")}
         >
           <X className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
@@ -195,7 +195,7 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
 
         <button
           onClick={handleSave}
-          className="group flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-[2rem] bg-[linear-gradient(145deg,#10203a,#2457ff)] text-white shadow-[0_20px_40px_rgba(16,32,58,0.22)] transition-all active:scale-95 hover:brightness-105"
+          className="group flex h-[3.8rem] w-[3.8rem] items-center justify-center rounded-[1.7rem] bg-[linear-gradient(145deg,#10203a,#2457ff)] text-white shadow-[0_20px_40px_rgba(16,32,58,0.22)] transition-all active:scale-95 hover:brightness-105"
           aria-label={t("save")}
         >
           <Star className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
@@ -203,7 +203,7 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
 
         <button
           onClick={handleSwipeRight}
-          className="group flex h-13 w-13 items-center justify-center rounded-[22px] border border-white/80 bg-white text-muted shadow-sm transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-500"
+          className="group flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/80 bg-white text-muted shadow-sm transition-all active:scale-95 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-500"
           aria-label={t("reserve")}
         >
           <MessageSquare className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
