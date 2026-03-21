@@ -90,12 +90,23 @@ export default function DiscoverContent() {
   }));
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] space-y-2 px-4 pt-2 overflow-hidden">
-      <div className="shrink-0">
+    <div className="flex h-[calc(100vh-84px)] flex-col overflow-hidden px-4 pb-2 pt-3">
+      <div className="mb-4 shrink-0 overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,251,246,0.88))] p-4 shadow-[0_18px_42px_rgba(16,32,58,0.06)]">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted/70">{t("title")}</p>
+            <h1 className="mt-1 font-display text-[1.8rem] font-bold tracking-[-0.05em] text-foreground">
+              {t("heading")}
+            </h1>
+          </div>
+          <div className="rounded-full border border-[#dfe8ff] bg-[#eef4ff] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+            Swipe
+          </div>
+        </div>
         <SearchBar onSearch={setSearchQuery} placeholder={t("searchPlaceholder")} />
       </div>
 
-      <div className="flex-1 relative mt-2">
+      <div className="relative flex-1">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />

@@ -17,7 +17,7 @@ export default async function DiscoverPage() {
     : 0;
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(126,189,255,0.16),transparent_25%),linear-gradient(180deg,#f8f6f1_0%,#f4f0e8_100%)] pb-24 font-sans">
       <TopNav unreadCount={unreadCount} user={user} showGuestActions={false} showSearch={false} showBalance={false} />
       <Suspense
         fallback={

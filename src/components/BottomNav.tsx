@@ -47,10 +47,11 @@ export default function BottomNav() {
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 sm:px-5">
 
       <div className="pointer-events-auto mx-auto max-w-md">
-        <div className="relative overflow-visible rounded-[32px] border border-border/50 bg-surface/90 px-2 pb-2.5 pt-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.14)] backdrop-blur-2xl">
+        <div className="relative overflow-visible rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.84))] px-2 pb-2.5 pt-1.5 shadow-[0_24px_60px_rgba(16,32,58,0.14)] backdrop-blur-2xl">
 
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
           <div className="pointer-events-none absolute left-1/2 top-0 h-16 w-28 -translate-x-1/2 rounded-full bg-blue-100/55 blur-3xl" />
+          <div className="pointer-events-none absolute -left-3 bottom-0 h-16 w-16 rounded-full bg-[#ffb16a]/16 blur-2xl" />
 
           <div className="flex items-end justify-between gap-1">
             {navItems.map((item) => {
@@ -72,7 +73,7 @@ export default function BottomNav() {
 
                           isActive
                             ? "from-[#163fb8] via-[#2457ff] to-[#79b7ff]"
-                            : "from-[#2457ff] via-[#3d6bff] to-[#7ebdff]"
+                            : "from-[#2457ff] via-[#3d6bff] to-[#87c6ff]"
                         )}
                       >
                         <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]" />
@@ -102,15 +103,15 @@ export default function BottomNav() {
                     className={cn(
                       "relative flex w-full max-w-[70px] flex-col items-center gap-0.5 rounded-[20px] px-2 py-2 transition-all duration-300",
                       isActive
-                        ? "bg-surface shadow-[0_14px_34px_rgba(0,0,0,0.1)]"
-                        : "hover:bg-surface/60"
+                        ? "bg-white/70 shadow-[0_14px_34px_rgba(16,32,58,0.08)]"
+                        : "hover:bg-white/50"
 
                     )}
                   >
                     {isActive ? (
                       <motion.div
                         layoutId="bottom-nav-active-pill"
-                        className="absolute inset-0 rounded-[20px] border border-border/30 bg-background/50 shadow-[0_14px_34px_rgba(0,0,0,0.08)]"
+                        className="absolute inset-0 rounded-[20px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.86))] shadow-[0_14px_34px_rgba(16,32,58,0.08)]"
 
                       />
                     ) : null}

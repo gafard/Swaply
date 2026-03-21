@@ -22,29 +22,18 @@ export default async function Home() {
 
   const discoverHref = localizeHref(locale, "/discover");
   const publishHref = localizeHref(locale, "/publish");
-  const totalVisible = nearby.length + popular.length + deals.length;
-
-  const marketPulse = [
+  const heroCards = [
     {
-      icon: MapPin,
-      label: t("nearbyTitle"),
-      value: nearby.length,
-      tone: "border-[#dbe7ff] bg-[#f4f7ff] text-[#2457ff]",
+      title: t("heroCardOneTitle"),
+      body: t("heroCardOneBody"),
+      accent: "from-[#ffffff] to-[#eef4ff]",
     },
     {
-      icon: TrendingUp,
-      label: t("popularTitle"),
-      value: popular.length,
-      tone: "border-[#ffdce6] bg-[#fff5f8] text-[#e24878]",
+      title: t("heroCardTwoTitle"),
+      body: t("heroCardTwoBody"),
+      accent: "from-[#fff7eb] to-[#fffdf8]",
     },
-    {
-      icon: Zap,
-      label: t("dealsTitle"),
-      value: deals.length,
-      tone: "border-[#ffe7bf] bg-[#fff8ea] text-[#d88913]",
-    },
-  ] as const;
-
+  ];
   const sectionTone = {
     nearby: "border-[#dfe8ff] bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(242,246,255,0.96)_100%)]",
     popular: "border-[#ffe0e8] bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(255,244,247,0.96)_100%)]",
@@ -110,11 +99,12 @@ export default async function Home() {
       <TopNav unreadCount={unreadCount} user={user} showSearch={false} showBalance={false} />
 
       <div className="space-y-8 px-5 pt-6 sm:space-y-10">
-        <section className="relative overflow-hidden rounded-[36px] border border-border bg-[linear-gradient(140deg,#10203a_0%,#173768_55%,#2457ff_100%)] px-5 py-6 text-white shadow-[0_28px_90px_rgba(16,32,58,0.18)] sm:px-6 sm:py-7">
-          <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -left-10 bottom-0 h-32 w-40 rounded-full bg-[#ffb16a]/18 blur-3xl" />
-          <div className="relative z-10 space-y-6">
-            <div className="space-y-3">
+        <section className="relative overflow-hidden rounded-[40px] border border-[#18345d] bg-[radial-gradient(circle_at_top_right,rgba(126,189,255,0.34),transparent_25%),linear-gradient(140deg,#091220_0%,#10203a_42%,#173768_68%,#2457ff_100%)] px-5 py-6 text-white shadow-[0_28px_90px_rgba(16,32,58,0.18)] sm:px-6 sm:py-7">
+          <div className="absolute -right-12 top-2 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -left-8 bottom-0 h-36 w-44 rounded-full bg-[#ffb16a]/20 blur-3xl" />
+          <div className="relative z-10 grid gap-6">
+            <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_190px] md:items-end">
+              <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/72">
                   {t("heroEyebrow")}
@@ -136,28 +126,22 @@ export default async function Home() {
               <p className="max-w-[24rem] text-[14px] font-medium leading-6 text-white/74">
                 {t("heroBody")}
               </p>
-            </div>
+              </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {marketPulse.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <div
-                    key={card.label}
-                    className={`rounded-[24px] border px-3 py-4 shadow-[0_18px_34px_rgba(9,16,31,0.12)] backdrop-blur-xl ${card.tone}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-white/80">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <span className="font-display text-[1.45rem] font-bold leading-none tracking-[-0.05em]">
-                        {String(card.value).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-current/80">{card.label}</p>
-                  </div>
-                );
-              })}
+              <div className="relative flex min-h-[178px] items-end justify-end">
+                <div className="absolute right-0 top-0 w-[9.5rem] rounded-[28px] border border-white/15 bg-white/10 p-4 backdrop-blur-xl shadow-[0_20px_45px_rgba(5,10,20,0.2)]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/56">{t("heroPanelBadge")}</p>
+                  <p className="mt-3 font-display text-[1.55rem] font-bold leading-[0.94] tracking-[-0.05em] text-white">
+                    {userZone ?? t("localMarket")}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/64">{t("heroPanelBody")}</p>
+                </div>
+                <div className="absolute left-0 bottom-0 w-[8.75rem] rounded-[26px] border border-[#ffe2a9]/20 bg-[linear-gradient(145deg,rgba(255,255,255,0.16),rgba(255,177,106,0.18))] p-4 backdrop-blur-xl shadow-[0_18px_40px_rgba(5,10,20,0.18)]">
+                  <Compass className="h-5 w-5 text-[#ffe2a9]" />
+                  <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-white/72">{t("heroPrimary")}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/60">{t("heroCardTagline")}</p>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -175,14 +159,25 @@ export default async function Home() {
                 {t("heroSecondary")}
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/55">
-                {totalVisible} {t("heroCounter")}
-              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {heroCards.map((card) => (
+                <div
+                  key={card.title}
+                  className={`rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.08))] p-4 shadow-[0_18px_40px_rgba(5,10,20,0.12)] backdrop-blur-xl`}
+                >
+                  <div className={`inline-flex rounded-full bg-gradient-to-r px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-900 ${card.accent}`}>
+                    {card.title}
+                  </div>
+                  <p className="mt-3 max-w-[15rem] text-sm leading-6 text-white/74">{card.body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-border bg-surface/90 p-3 shadow-[0_14px_42px_rgba(16,32,58,0.05)]">
+        <section className="rounded-[34px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.84))] p-3 shadow-[0_14px_42px_rgba(16,32,58,0.05)]">
           <FilterBar />
         </section>
 
