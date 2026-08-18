@@ -90,35 +90,35 @@ export default function PublishStep({
         selectedZoneId={selectedZoneId}
       />
 
-      <div className="rounded-[32px] border border-slate-100 bg-white p-6 shadow-[0_18px_48px_rgba(16,32,58,0.08)]">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+      <div className="rounded-[30px] border border-border bg-surface p-5 shadow-sm">
+        <p className="text-[9px] font-black uppercase tracking-widest text-muted">
           {summaryTitle}
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#fff7ec,_#ffffff)] p-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+          <div className="rounded-2xl border border-border bg-surface-raised/60 p-3.5">
+            <p className="text-[8px] font-black uppercase tracking-wider text-muted">
               {summaryItemLabel}
             </p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="mt-1 text-sm font-bold text-foreground truncate">
               {normalizedTitle || summaryItemFallback}
             </p>
-            <p className="mt-1 text-[10px] font-bold text-slate-500">
+            <p className="mt-0.5 text-[10px] text-muted">
               {summaryPhotosLabel}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#f6f3ff,_#ffffff)] p-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+          <div className="rounded-2xl border border-border bg-surface-raised/60 p-3.5">
+            <p className="text-[8px] font-black uppercase tracking-wider text-muted">
               {summaryPriceLabel}
             </p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="mt-1 text-sm font-bold text-primary">
               {creditValue} {summaryCreditsShort}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(135deg,_#eefbf8,_#ffffff)] p-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+          <div className="rounded-2xl border border-border bg-surface-raised/60 p-3.5">
+            <p className="text-[8px] font-black uppercase tracking-wider text-muted">
               {summaryZoneLabel}
             </p>
-            <p className="mt-2 text-sm font-black text-slate-900">
+            <p className="mt-1 text-sm font-bold text-foreground truncate">
               {selectedZone?.name || summaryZoneFallback}
             </p>
           </div>

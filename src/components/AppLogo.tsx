@@ -1,31 +1,14 @@
 "use client";
 
-import Image from "next/image";
+import React from "react";
+import SwaplyLogo from "@/components/brand/SwaplyLogo";
 
-import { cn } from "@/lib/utils";
-
-type AppLogoProps = {
+interface AppLogoProps {
   size?: number;
-  alt?: string;
   className?: string;
   priority?: boolean;
-};
+}
 
-export default function AppLogo({
-  size = 48,
-  alt = "Swaply",
-  className,
-  priority = false,
-}: AppLogoProps) {
-  return (
-    <Image
-      src="/Logo-512x512.png"
-      alt={alt}
-      width={size}
-      height={size}
-      priority={priority}
-      className={cn("object-cover", className)}
-      sizes={`${size}px`}
-    />
-  );
+export default function AppLogo({ size = 44, className, priority = false }: AppLogoProps) {
+  return <SwaplyLogo size={size} className={className} animate priority={priority} />;
 }

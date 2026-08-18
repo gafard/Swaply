@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, Search, Wallet } from "lucide-react";
+import { Bell, Search, Sparkles, Wallet } from "lucide-react";
 
 import AppLogo from "@/components/AppLogo";
+import NumberTicker from "@/components/ui/NumberTicker";
 import { localizeHref } from "@/lib/i18n/pathnames";
 import { cn } from "@/lib/utils";
 
@@ -62,22 +63,23 @@ export default function TopNav({
     <motion.header
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-40 px-5 pb-3 pt-4 backdrop-blur-2xl sm:pb-4 sm:pt-6"
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="sticky top-0 z-40 px-4 pb-3 pt-3 backdrop-blur-2xl sm:px-6 sm:pb-4 sm:pt-4"
     >
-      <div className="mx-auto max-w-md space-y-3">
-        <div className="relative overflow-hidden rounded-[32px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,252,247,0.82))] p-3.5 shadow-[0_22px_54px_rgba(16,32,58,0.08)]">
-          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
-          <div className="pointer-events-none absolute -right-6 top-1 h-16 w-16 rounded-full bg-[#2457ff]/8 blur-2xl" />
-          <div className="pointer-events-none absolute -left-6 bottom-0 h-16 w-16 rounded-full bg-[#ffb16a]/10 blur-2xl" />
+      <div className="mx-auto max-w-md space-y-2.5">
+        <div className="relative overflow-hidden rounded-[28px] border border-border bg-surface/85 p-3.5 shadow-md backdrop-blur-2xl">
+          {/* Top highlight glow */}
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
           <div className="relative flex items-center justify-between gap-3">
-            <Link href={localizeHref(locale, "/")} prefetch className="min-w-0 flex-1">
+            <Link href={localizeHref(locale, "/")} prefetch className="min-w-0 flex-1 group">
               <div className="flex items-center gap-3">
-                <AppLogo size={40} className="h-10 w-10 shrink-0 drop-shadow-[0_8px_18px_rgba(36,87,255,0.18)]" priority />
+                <AppLogo size={38} className="shrink-0" priority />
                 <div className="min-w-0">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[#2457ff]/72">
+                  <span className="block text-[9px] font-black uppercase tracking-[0.2em] text-primary">
                     Swaply
                   </span>
-                  <p className="mt-0.5 truncate font-display text-[1.12rem] font-bold tracking-[-0.05em] text-foreground">
+                  <p className="truncate font-display text-[1.1rem] font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
                     {user?.username ? `${t("hello")}, ${user.username}` : "Swaply"}
                   </p>
                 </div>
@@ -85,26 +87,27 @@ export default function TopNav({
             </Link>
 
             {user ? (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Link
                   href={localizeHref(locale, "/notifications")}
                   prefetch
-                  className="relative flex h-11 w-11 items-center justify-center rounded-[18px] border border-white/70 bg-white/80 text-foreground shadow-[0_12px_24px_rgba(16,32,58,0.08)]"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-surface-raised/80 text-foreground transition-all hover:border-primary/40 active:scale-95 shadow-sm"
                   aria-label="Notifications"
                 >
-                  <Bell className="h-4.5 w-4.5" strokeWidth={2.4} />
-                  {unreadCount > 0 ? (
-                    <span className="absolute -right-1 -top-1 min-w-[20px] rounded-full border-2 border-background bg-rose-500 px-1.5 py-0.5 text-[9px] font-black text-white">
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full border-2 border-surface bg-danger px-1 py-0.2 text-[8px] font-black text-white shadow-sm">
                       {notificationLabel}
                     </span>
-                  ) : null}
+                  )}
                 </Link>
                 <Link
                   href={localizeHref(locale, "/profile")}
                   prefetch
-                  className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[linear-gradient(145deg,#10203a,#2457ff)] text-sm font-black uppercase text-white shadow-[0_16px_30px_rgba(16,32,58,0.2)]"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-indigo-600 to-pink-500 text-sm font-black uppercase text-white shadow-cta transition-transform hover:scale-105 active:scale-95"
                 >
                   {user?.username?.charAt(0) || "S"}
+                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-success" />
                 </Link>
               </div>
             ) : hasGuestActions ? (
@@ -112,14 +115,14 @@ export default function TopNav({
                 <Link
                   href={localizeHref(locale, "/login")}
                   prefetch
-                  className="rounded-full border border-white/80 bg-white/80 px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-muted shadow-sm"
+                  className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-foreground-muted shadow-sm hover:text-foreground transition-colors"
                 >
                   {t("login")}
                 </Link>
                 <Link
                   href={localizeHref(locale, "/signup")}
                   prefetch
-                  className="rounded-full bg-[#2457ff] px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_10px_24px_rgba(36,87,255,0.24)]"
+                  className="rounded-full bg-primary px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-white shadow-cta hover:bg-primary-hover transition-all"
                 >
                   {t("signup")}
                 </Link>
@@ -127,62 +130,70 @@ export default function TopNav({
             ) : null}
           </div>
 
-          {showBalance && user ? (
-            <div className="relative mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[24px] border border-[#e7ddcf] bg-[linear-gradient(135deg,#fff8ee,#fffdf8)] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-              <div className="pointer-events-none absolute -right-5 top-0 h-16 w-16 rounded-full bg-[#ffb16a]/10 blur-2xl" />
+          {showBalance && user && (
+            <Link
+              href={localizeHref(locale, "/profile/wallet")}
+              className="group relative mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[20px] border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3.5 py-2.5 transition-all hover:border-amber-500/40"
+            >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[linear-gradient(145deg,#fff3d8,#ffe2a8)] text-amber-700 shadow-[0_10px_20px_rgba(255,177,106,0.18)]">
-                  <Wallet className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm">
+                  <Wallet className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9a7b3b]">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
                     {t("balance")}
                   </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="font-display text-[1.5rem] font-bold leading-none tracking-[-0.05em] text-foreground">
-                      {balance}
+                  <div className="mt-0.5 flex items-baseline gap-1.5">
+                    <span className="font-display text-xl font-bold leading-none tracking-tight text-foreground">
+                      <NumberTicker value={balance} />
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
                       Swaps
                     </span>
                   </div>
                 </div>
               </div>
+
               {promoSwaps > 0 ? (
-                <div className="rounded-full border border-amber-200/80 bg-white/80 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-amber-700 shadow-sm">
+                <div className="flex items-center gap-1 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                  <Sparkles className="h-3 w-3" />
                   +{promoSwaps} bonus
                 </div>
-              ) : null}
-            </div>
-          ) : null}
+              ) : (
+                <span className="text-[10px] font-bold text-muted group-hover:text-primary transition-colors">
+                  Recharger &rarr;
+                </span>
+              )}
+            </Link>
+          )}
         </div>
 
-        {showSearch ? (
+        {showSearch && (
           <form
             onSubmit={handleSearchSubmit}
-            className="flex items-center gap-3 rounded-[28px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.84))] px-4 py-3 shadow-[0_18px_42px_rgba(16,32,58,0.06)]"
+            className="flex items-center gap-2.5 rounded-[22px] border border-border bg-surface/80 px-3.5 py-2 shadow-sm backdrop-blur-xl transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[linear-gradient(145deg,#edf3ff,#f6f9ff)] text-primary shadow-sm">
-              <Search className="h-4.5 w-4.5" />
-            </div>
+            <Search className="h-4 w-4 text-muted shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground outline-none placeholder:text-muted/70"
+              className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-foreground outline-none placeholder:text-muted"
             />
             <button
               type="submit"
               className={cn(
-                "rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.16em] transition-colors",
-                query.trim() ? "bg-primary text-white shadow-[0_10px_24px_rgba(36,87,255,0.22)]" : "bg-slate-100 text-slate-500"
+                "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider transition-all",
+                query.trim()
+                  ? "bg-primary text-white shadow-cta"
+                  : "bg-surface-raised text-muted"
               )}
             >
-              Go
+              OK
             </button>
           </form>
-        ) : null}
+        )}
       </div>
     </motion.header>
   );

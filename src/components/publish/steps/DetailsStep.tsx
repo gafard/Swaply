@@ -48,23 +48,23 @@ export default function DetailsStep({
 }: DetailsStepProps) {
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm space-y-5">
+      <div className="rounded-[30px] border border-border bg-surface p-5 shadow-sm space-y-4">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
             <Info className="h-4.5 w-4.5" />
           </div>
           <div>
-            <h3 className="text-base font-semibold tracking-tight text-slate-900">
+            <h3 className="font-display text-base font-bold text-foreground">
               {sectionTitle}
             </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
+            <p className="mt-0.5 text-xs text-muted">
               {sectionSubtitle}
             </p>
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-800" htmlFor="title">
+          <label className="mb-1.5 block text-xs font-bold text-foreground" htmlFor="title">
             {titleLabel}
           </label>
           <input
@@ -77,20 +77,20 @@ export default function DetailsStep({
             aria-invalid={Boolean(clientErrors.title)}
             aria-describedby={clientErrors.title ? "title-error" : undefined}
             className={cn(
-              "w-full rounded-2xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-400",
-              clientErrors.title ? "border-rose-300" : "border-slate-200"
+              "w-full rounded-2xl border bg-surface-raised px-4 py-3.5 text-sm text-foreground outline-none transition-all placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10",
+              clientErrors.title ? "border-danger" : "border-border"
             )}
             placeholder={titlePlaceholder}
           />
-          {clientErrors.title ? (
-            <p id="title-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
+          {clientErrors.title && (
+            <p id="title-error" role="alert" className="mt-1.5 text-xs font-bold text-danger">
               {clientErrors.title}
             </p>
-          ) : null}
+          )}
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-800" htmlFor="description">
+          <label className="mb-1.5 block text-xs font-bold text-foreground" htmlFor="description">
             {descriptionLabel}
           </label>
           <textarea
@@ -102,16 +102,16 @@ export default function DetailsStep({
             aria-invalid={Boolean(clientErrors.description)}
             aria-describedby={clientErrors.description ? "description-error" : undefined}
             className={cn(
-              "w-full resize-none rounded-2xl border bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-slate-400",
-              clientErrors.description ? "border-rose-300" : "border-slate-200"
+              "w-full resize-none rounded-2xl border bg-surface-raised px-4 py-3.5 text-sm text-foreground outline-none transition-all placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/10",
+              clientErrors.description ? "border-danger" : "border-border"
             )}
             placeholder={descriptionPlaceholder}
           />
-          {clientErrors.description ? (
-            <p id="description-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
+          {clientErrors.description && (
+            <p id="description-error" role="alert" className="mt-1.5 text-xs font-bold text-danger">
               {clientErrors.description}
             </p>
-          ) : null}
+          )}
         </div>
       </div>
 

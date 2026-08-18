@@ -1,162 +1,235 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f1e8;
-  --surface: #fffaf2;
-  --foreground: #10203a;
-  --muted: #6a778f;
-  --primary: #2457ff;
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --danger: #E11D48;
-  --border: #d8dfec;
+  /* Alabaster Silk (Light Theme) */
+  --background: #F8F9FC;
+  --surface: #FFFFFF;
+  --surface-raised: #F1F3F9;
+  --foreground: #0A0D14;
+  --foreground-muted: #525C76;
+  --muted: #64748B;
   
-  /* Soft accents */
-  --indigo-soft-bg: #EEF2FF;
-  --indigo-soft-text: #4338CA;
-  --emerald-soft-bg: #ECFDF5;
-  --emerald-soft-text: #047857;
-  --amber-soft-bg: #FFFBEB;
-  --amber-soft-text: #B45309;
-}
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-glow: rgba(37, 99, 235, 0.25);
+  
+  --accent: #F59E0B;
+  --accent-glow: rgba(245, 158, 11, 0.25);
+  
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  
+  --border: rgba(15, 23, 42, 0.08);
+  --border-focus: rgba(37, 99, 235, 0.4);
+  --border-subtle: rgba(15, 23, 42, 0.04);
+  
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 20px 50px rgba(10, 13, 20, 0.06);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0B0E14;
-    --surface: #151921;
-    --foreground: #F1F5F9;
-    --muted: #8E9BAE;
-    --primary: #4172FF;
-    --border: #242933;
-
-    --indigo-soft-bg: #1E293B;
-    --indigo-soft-text: #818CF8;
-    --emerald-soft-bg: #064E3B;
-    --emerald-soft-text: #34D399;
-    --amber-soft-bg: #451A03;
-    --amber-soft-text: #FBBF24;
-  }
+  /* Card and Panel Shadows */
+  --shadow-sm: 0 2px 8px rgba(10, 13, 20, 0.04);
+  --shadow-md: 0 12px 30px rgba(10, 13, 20, 0.06);
+  --shadow-lg: 0 24px 60px rgba(10, 13, 20, 0.09);
+  --shadow-glow: 0 0 40px var(--primary-glow);
 }
 
 .dark {
-  --background: #0B0E14;
-  --surface: #151921;
-  --foreground: #F1F5F9;
-  --muted: #8E9BAE;
-  --primary: #4172FF;
-  --border: #242933;
+  /* Deep OLED Obsidian (Dark Theme) */
+  --background: #06080D;
+  --surface: #0D111A;
+  --surface-raised: #141A26;
+  --foreground: #F8FAFC;
+  --foreground-muted: #94A3B8;
+  --muted: #64748B;
+  
+  --primary: #3B82F6;
+  --primary-hover: #60A5FA;
+  --primary-glow: rgba(59, 130, 246, 0.35);
+  
+  --accent: #FBBF24;
+  --accent-glow: rgba(251, 191, 36, 0.3);
+  
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(59, 130, 246, 0.5);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  
+  --glass-bg: rgba(13, 17, 26, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
 
-  --indigo-soft-bg: #1E293B;
-  --indigo-soft-text: #818CF8;
-  --emerald-soft-bg: #064E3B;
-  --emerald-soft-text: #34D399;
-  --amber-soft-bg: #451A03;
-  --amber-soft-text: #FBBF24;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 14px 35px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 50px var(--primary-glow);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #06080D;
+    --surface: #0D111A;
+    --surface-raised: #141A26;
+    --foreground: #F8FAFC;
+    --foreground-muted: #94A3B8;
+    --muted: #64748B;
+    
+    --primary: #3B82F6;
+    --primary-hover: #60A5FA;
+    --primary-glow: rgba(59, 130, 246, 0.35);
+    
+    --accent: #FBBF24;
+    --accent-glow: rgba(251, 191, 36, 0.3);
+    
+    --success: #34D399;
+    --warning: #FBBF24;
+    --danger: #F87171;
+    
+    --border: rgba(255, 255, 255, 0.08);
+    --border-focus: rgba(59, 130, 246, 0.5);
+    --border-subtle: rgba(255, 255, 255, 0.04);
+    
+    --glass-bg: rgba(13, 17, 26, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 14px 35px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 50px var(--primary-glow);
+  }
+}
 
 @theme inline {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-space-grotesk), var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-border: var(--border);
+  --color-border-focus: var(--border-focus);
+  --color-border-subtle: var(--border-subtle);
 
-  /* Radius Tokens */
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
-  --radius-2xl: 32px;
-  
-  /* Spacing Tokens */
-  --spacing-dense: 12px;
-  --spacing-standard: 16px;
-  --spacing-block: 20px;
-  --spacing-section: 32px;
-  --spacing-wide: 40px;
-
-  /* Shadows */
-  --shadow-card: 0 14px 42px rgba(16, 32, 58, 0.08);
-  --shadow-popup: 0 18px 50px rgba(16, 32, 58, 0.14);
-  --shadow-cta: 0 12px 26px rgba(36, 87, 255, 0.24);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  background-image:
-    radial-gradient(circle at top left, var(--surface), transparent 40%),
-    radial-gradient(circle at top right, var(--primary), transparent 15%),
-    linear-gradient(180deg, var(--background) 0%, var(--surface) 100%);
-  background-attachment: fixed;
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-
-html,
-body {
-  overscroll-behavior-y: contain;
-  overscroll-behavior-x: none;
-}
-
+/* Ambient Radial Mesh Background */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(16, 32, 58, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 32, 58, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.22), transparent 70%);
+  background-image: 
+    radial-gradient(ellipse 60% 40% at 50% -10%, var(--primary-glow), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 100% 30%, var(--accent-glow), transparent 60%);
   z-index: 0;
+  opacity: 0.6;
 }
 
-/* Utilities for Glassmorphism */
+.dark body::before {
+  opacity: 0.45;
+}
+
+/* Glassmorphism Utilities */
 @layer utilities {
-  .font-display {
-    font-family: var(--font-display);
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
-  .glass {
-    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)];
+
+  .glass-nav {
+    background: var(--glass-bg);
+    backdrop-filter: blur(32px) saturate(190%);
+    -webkit-backdrop-filter: blur(32px) saturate(190%);
+    border: 1px solid var(--border);
   }
-  .card-premium {
-    @apply bg-white border border-slate-100 rounded-[2.5rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] transition-all duration-500;
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--foreground) 0%, var(--foreground-muted) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  .glass-dark {
-    @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-lg text-white;
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  .paper-panel {
-    @apply border border-white/70 bg-[#fffaf2]/90 backdrop-blur-xl shadow-[0_18px_55px_rgba(16,32,58,0.08)];
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #D97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  .ink-title {
-    @apply font-display tracking-[-0.04em] text-[#10203a];
-  }
-  .capsule-outline {
-    @apply rounded-full border border-slate-200/80 bg-white/75 shadow-[0_10px_24px_rgba(16,32,58,0.08)];
+
+  .glow-border {
+    position: relative;
   }
   
-  /* Smooth hiding scrollbar while keeping scroll functionality */
+  .glow-border::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%, rgba(59,130,246,0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+}
 
-  @keyframes gradient-x {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-  .animate-gradient-x {
-    animation: gradient-x 3s ease infinite;
-  }
+/* Interactive Animations */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.98); }
+}
+
+@keyframes scan-beam {
+  0% { top: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-scan {
+  animation: scan-beam 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
 }

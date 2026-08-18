@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Loader2, QrCode, Scan, Star, X } from "lucide-react";
+import { CheckCircle2, Loader2, QrCode, Scan, Star, X, Sparkles } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import QRCode from "qrcode";
 
 import { confirmExchangeWithToken, generateExchangeToken } from "@/app/actions/exchange";
 import ReviewModal from "./ReviewModal";
+import LiquidButton from "@/components/ui/LiquidButton";
+import HoloBadge from "@/components/ui/HoloBadge";
 
 interface QRValidationProps {
   exchangeId: string;
@@ -51,15 +53,13 @@ export default function QRValidation({
   };
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     QRCode.toDataURL(token, {
-      width: 300,
+      width: 320,
       margin: 2,
       color: {
-        dark: "#4F46E5",
+        dark: "#2563EB",
         light: "#FFFFFF",
       },
     }).then(setQrDataUrl);
@@ -124,21 +124,22 @@ export default function QRValidation({
 
   if (isCompleted) {
     return (
-      <div className="animate-in zoom-in duration-500 fade-in flex flex-col items-center gap-4 rounded-[2rem] border border-emerald-100 bg-emerald-50 p-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+      <div className="animate-in zoom-in-95 duration-500 fade-in flex flex-col items-center gap-4 rounded-[32px] border border-success/30 bg-success/10 p-6 text-center shadow-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success/20 text-success shadow-sm">
           <CheckCircle2 className="h-10 w-10" />
         </div>
         <div>
-          <h3 className="text-lg font-black text-emerald-900">{t("completedTitle")}</h3>
-          <p className="text-sm font-medium text-emerald-600/80">{t("completedBody")}</p>
+          <h3 className="font-display text-xl font-bold text-foreground">{t("completedTitle")}</h3>
+          <p className="text-xs font-semibold text-success mt-1">{t("completedBody")}</p>
         </div>
-        <button
+        <LiquidButton
+          variant="primary"
+          size="md"
+          icon={<Star className="h-4 w-4" />}
           onClick={() => setShowReviewModal(true)}
-          className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200 transition-transform active:scale-95"
         >
-          <Star className="h-4 w-4" />
           {t("leaveReview")}
-        </button>
+        </LiquidButton>
 
         {showReviewModal && (
           <ReviewModal exchangeId={exchangeId} onClose={() => setShowReviewModal(false)} />
@@ -150,71 +151,76 @@ export default function QRValidation({
   return (
     <div className="space-y-4">
       {isOwner ? (
-        <div className="flex flex-col items-center gap-6 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-col items-center gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-sm">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <QrCode className="h-6 w-6" />
             </div>
-            <h3 className="font-black text-slate-900">{t("ownerTitle")}</h3>
-            <p className="px-4 text-xs text-slate-400">{t("ownerBody")}</p>
+            <h3 className="font-display font-bold text-foreground">{t("ownerTitle")}</h3>
+            <p className="px-2 text-xs text-muted leading-relaxed">{t("ownerBody")}</p>
           </div>
 
           {qrDataUrl ? (
-            <div className="group relative rounded-[2.5rem] border-4 border-white bg-slate-50 p-4 shadow-xl">
+            <div className="relative rounded-[28px] border-4 border-surface-raised bg-white p-4 shadow-lg">
               <img src={qrDataUrl} alt="Exchange QR Code" className="h-48 w-48 rounded-2xl" />
-              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/10 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
-                <span className="rounded-full bg-slate-900 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/10 opacity-0 backdrop-blur-[2px] transition-opacity hover:opacity-100">
+                <HoloBadge variant="primary" size="sm">
                   {t("readyToScan")}
-                </span>
+                </HoloBadge>
               </div>
             </div>
           ) : (
-            <button
+            <LiquidButton
+              variant="primary"
+              size="lg"
+              fullWidth
               onClick={handleGenerate}
-              className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-black text-white transition-transform active:scale-95"
             >
               {t("generate")}
-            </button>
+            </LiquidButton>
           )}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-6 rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-col items-center gap-5 rounded-[32px] border border-border bg-surface p-6 shadow-sm">
           <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
               <Scan className="h-6 w-6" />
             </div>
-            <h3 className="font-black text-slate-900">{t("requesterTitle")}</h3>
-            <p className="px-4 text-xs text-slate-400">{t("requesterBody")}</p>
+            <h3 className="font-display font-bold text-foreground">{t("requesterTitle")}</h3>
+            <p className="px-2 text-xs text-muted leading-relaxed">{t("requesterBody")}</p>
           </div>
 
-          <button
+          <LiquidButton
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={isValidating}
+            icon={<Scan className="h-5 w-5" />}
             onClick={() => setIsScanning(true)}
-            disabled={isValidating}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-4 text-sm font-black text-white shadow-lg shadow-emerald-100 transition-transform active:scale-95 disabled:opacity-50"
           >
-            {isValidating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Scan className="h-5 w-5" />}
             {t("scanToValidate")}
-          </button>
+          </LiquidButton>
         </div>
       )}
 
+      {/* Holographic Scanner Modal */}
       {isScanning && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 p-6 backdrop-blur-xl">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 p-6 backdrop-blur-2xl">
           <button
             onClick={() => setIsScanning(false)}
-            className="absolute right-10 top-10 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white active:scale-90"
+            className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white active:scale-90 transition-all hover:bg-white/20"
           >
-            <X />
+            <X className="h-6 w-6" />
           </button>
 
-          <div className="relative aspect-square w-full max-w-sm overflow-hidden rounded-[3rem] border-4 border-white/20 bg-black">
+          <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-[36px] border-4 border-primary/40 bg-black shadow-glow">
             <div id="qr-reader" className="h-full w-full" />
-            <div className="animate-scan absolute inset-x-0 top-1/2 h-0.5 bg-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+            <div className="animate-scan absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_20px_#3B82F6]" />
           </div>
 
-          <div className="mt-12 space-y-2 text-center">
-            <p className="text-xl font-black text-white">{t("scannerTitle")}</p>
-            <p className="text-sm font-medium text-emerald-400">{t("scannerBody")}</p>
+          <div className="mt-8 space-y-1.5 text-center">
+            <p className="font-display text-xl font-bold text-white">{t("scannerTitle")}</p>
+            <p className="text-xs font-semibold text-primary">{t("scannerBody")}</p>
           </div>
         </div>
       )}

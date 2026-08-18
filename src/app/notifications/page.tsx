@@ -24,37 +24,21 @@ import prisma from "@/lib/prisma";
 function getIcon(type: string | null | undefined, fallbackTitle?: string | null) {
   switch (type) {
     case "new_message":
-      return <MessageCircle className="h-5 w-5 text-blue-500" />;
+      return <MessageCircle className="h-5 w-5 text-primary" />;
     case "exchange_reserved":
     case "new_local_item":
-      return <PackageOpen className="h-5 w-5 text-indigo-500" />;
+      return <PackageOpen className="h-5 w-5 text-primary" />;
     case "exchange_confirmed":
-      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      return <CheckCircle2 className="h-5 w-5 text-success" />;
     case "reservation_expired_owner":
     case "reservation_expired_requester":
-      return <Clock className="h-5 w-5 text-rose-500" />;
+      return <Clock className="h-5 w-5 text-danger" />;
     case "item_reported_owner":
     case "item_removed_after_review":
     case "report_reviewed_without_action":
-      return <ShieldAlert className="h-5 w-5 text-amber-500" />;
-    default: {
-      const normalized = fallbackTitle?.toLowerCase() ?? "";
-
-      if (normalized.includes("message")) {
-        return <MessageCircle className="h-5 w-5 text-blue-500" />;
-      }
-      if (normalized.includes("reserve")) {
-        return <PackageOpen className="h-5 w-5 text-indigo-500" />;
-      }
-      if (normalized.includes("valide") || normalized.includes("confirmed")) {
-        return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
-      }
-      if (normalized.includes("expire")) {
-        return <Clock className="h-5 w-5 text-rose-500" />;
-      }
-
-      return <BellRing className="h-5 w-5 text-indigo-500" />;
-    }
+      return <ShieldAlert className="h-5 w-5 text-warning" />;
+    default:
+      return <BellRing className="h-5 w-5 text-primary" />;
   }
 }
 
@@ -64,8 +48,8 @@ export default async function NotificationsPage() {
 
   if (!user) {
     return (
-      <main className="flex h-screen items-center justify-center p-6">
-        <p className="text-gray-500">{t("loginPrompt")}</p>
+      <main className="flex h-screen items-center justify-center p-6 bg-background">
+        <p className="text-muted">{t("loginPrompt")}</p>
       </main>
     );
   }
@@ -83,28 +67,28 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] pb-24 font-sans sm:pb-8">
+    <main className="min-h-screen bg-background pb-32 font-sans">
       <AnimatedContainer
         initialY={-20}
-        className="sticky top-0 z-40 flex items-center gap-3 border-b border-gray-100/50 bg-white/80 px-5 pb-4 pt-12 shadow-[0_4px_30px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl"
+        className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-surface/85 px-5 pb-4 pt-10 shadow-sm backdrop-blur-2xl"
       >
         <Link href={localizeHref(locale, "/")}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-700 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] transition-all hover:bg-gray-50 active:scale-95">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-surface text-foreground shadow-sm transition-all hover:border-primary/40 active:scale-95">
             <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
           </div>
         </Link>
-        <h1 className="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-xl font-bold text-transparent">
+        <h1 className="font-display text-xl font-bold text-foreground">
           {t("title")}
         </h1>
       </AnimatedContainer>
 
-      <div className="space-y-4 px-5 pt-6">
+      <div className="space-y-3 px-4 pt-6 max-w-md mx-auto">
         {notifications.length === 0 ? (
           <AnimatedContainer delay={0.1} className="py-20 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-50">
-              <BellRing className="h-8 w-8 text-gray-300" />
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-surface-raised text-muted border border-border">
+              <BellRing className="h-8 w-8 opacity-40" />
             </div>
-            <p className="font-medium text-gray-500">{t("empty")}</p>
+            <p className="font-semibold text-muted text-sm">{t("empty")}</p>
           </AnimatedContainer>
         ) : (
           notifications.map((notification, index) => {
@@ -121,42 +105,42 @@ export default async function NotificationsPage() {
               <AnimatedItem
                 key={notification.id}
                 index={index}
-                className={`relative overflow-hidden rounded-[1.5rem] border p-4 shadow-sm transition-all duration-300 ${
+                className={`relative overflow-hidden rounded-[24px] border p-4 shadow-sm transition-all duration-300 ${
                   !notification.read
-                    ? "border-indigo-100 bg-white shadow-[0_4px_20px_-5px_rgba(79,70,229,0.15)] ring-1 ring-indigo-50"
-                    : "border-gray-100/60 bg-white/60 shadow-[0_2px_10px_-5px_rgba(0,0,0,0.05)] hover:bg-white"
+                    ? "border-primary/30 bg-surface shadow-md ring-1 ring-primary/20"
+                    : "border-border bg-surface hover:border-primary/30"
                 }`}
               >
                 {!notification.read && (
-                  <div className="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-indigo-500 to-purple-500" />
+                  <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
                 )}
 
-                <div className="flex gap-4">
+                <div className="flex gap-3.5">
                   <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.25rem] border shadow-inner ${
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm ${
                       !notification.read
-                        ? "border-indigo-100/50 bg-indigo-50"
-                        : "border-gray-100 bg-gray-50"
+                        ? "border-primary/20 bg-primary/10"
+                        : "border-border bg-surface-raised"
                     }`}
                   >
                     {getIcon(notification.type, title)}
                   </div>
                   <div className="min-w-0 flex-1 pt-0.5">
-                    <div className="mb-1 flex items-start justify-between gap-4">
+                    <div className="mb-1 flex items-start justify-between gap-3">
                       <span
-                        className={`text-[14px] font-bold leading-snug ${
-                          !notification.read ? "text-gray-900" : "text-gray-700"
+                        className={`text-sm font-bold leading-snug ${
+                          !notification.read ? "text-foreground" : "text-foreground-muted"
                         }`}
                       >
                         {title}
                       </span>
-                      <span className="mt-0.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                      <span className="mt-0.5 whitespace-nowrap text-[9px] font-semibold uppercase tracking-wider text-muted">
                         {formatRelativeTime(locale, notification.createdAt)}
                       </span>
                     </div>
                     <p
-                      className={`text-[13px] leading-relaxed ${
-                        !notification.read ? "font-medium text-gray-600" : "text-gray-500"
+                      className={`text-xs leading-relaxed ${
+                        !notification.read ? "font-medium text-foreground-muted" : "text-muted"
                       }`}
                     >
                       {body}

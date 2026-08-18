@@ -40,18 +40,14 @@ export default function BottomNav() {
   }, [locale, navItems, router]);
 
   const isDetailPage = cleanPathname.startsWith("/item/") || cleanPathname.startsWith("/exchange/");
-
   if (isDetailPage) return null;
 
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom),10px)] pt-2 sm:px-5">
-
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 sm:px-6">
       <div className="pointer-events-auto mx-auto max-w-md">
-        <div className="relative overflow-visible rounded-[34px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.84))] px-2 pb-2.5 pt-1.5 shadow-[0_24px_60px_rgba(16,32,58,0.14)] backdrop-blur-2xl">
-
-          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
-          <div className="pointer-events-none absolute left-1/2 top-0 h-16 w-28 -translate-x-1/2 rounded-full bg-blue-100/55 blur-3xl" />
-          <div className="pointer-events-none absolute -left-3 bottom-0 h-16 w-16 rounded-full bg-[#ffb16a]/16 blur-2xl" />
+        <div className="relative overflow-visible rounded-[32px] border border-border bg-surface/85 px-2.5 pb-2 pt-1.5 shadow-lg backdrop-blur-2xl">
+          {/* Subtle Ambient Highlight */}
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
           <div className="flex items-end justify-between gap-1">
             {navItems.map((item) => {
@@ -64,25 +60,21 @@ export default function BottomNav() {
               if (item.isAction) {
                 return (
                   <Link key={item.href} href={href} prefetch className="flex flex-1 justify-center">
-                    <div className="relative -mt-3.5 flex flex-col items-center">
+                    <div className="relative -mt-4 flex flex-col items-center">
                       <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.92 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
                         className={cn(
-                          "relative flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-[24px] border-4 border-background bg-gradient-to-br shadow-[0_18px_42px_rgba(36,87,255,0.32)]",
-
-                          isActive
-                            ? "from-[#163fb8] via-[#2457ff] to-[#79b7ff]"
-                            : "from-[#2457ff] via-[#3d6bff] to-[#87c6ff]"
+                          "relative flex h-14 w-14 items-center justify-center rounded-[22px] border-4 border-surface bg-gradient-to-tr from-primary via-indigo-600 to-pink-500 shadow-cta"
                         )}
                       >
-                        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.35),_transparent_55%)]" />
                         <Plus className="relative z-10 h-7 w-7 text-white" strokeWidth={3} />
                       </motion.div>
                       <span
                         className={cn(
-                          "mt-1.5 text-[9px] font-black uppercase tracking-[0.14em] transition-colors",
-                          isActive ? "text-primary" : "text-slate-500"
+                          "mt-1 text-[8px] font-black uppercase tracking-widest transition-colors",
+                          isActive ? "text-primary" : "text-muted"
                         )}
                       >
                         {item.label}
@@ -99,47 +91,31 @@ export default function BottomNav() {
                   prefetch
                   className="group flex flex-1 items-end justify-center"
                 >
-                  <div
-                    className={cn(
-                      "relative flex w-full max-w-[70px] flex-col items-center gap-0.5 rounded-[20px] px-2 py-2 transition-all duration-300",
-                      isActive
-                        ? "bg-white/70 shadow-[0_14px_34px_rgba(16,32,58,0.08)]"
-                        : "hover:bg-white/50"
-
-                    )}
-                  >
-                    {isActive ? (
+                  <div className="relative flex w-full max-w-[68px] flex-col items-center gap-0.5 rounded-[20px] px-2 py-1.5 transition-all">
+                    {isActive && (
                       <motion.div
                         layoutId="bottom-nav-active-pill"
-                        className="absolute inset-0 rounded-[20px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(255,252,247,0.86))] shadow-[0_14px_34px_rgba(16,32,58,0.08)]"
-
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                        className="absolute inset-0 rounded-[20px] border border-primary/20 bg-primary/10 dark:border-primary/30 dark:bg-primary/15"
                       />
-                    ) : null}
+                    )}
 
-                    <div className="relative z-10 flex flex-col items-center gap-1">
+                    <div className="relative z-10 flex flex-col items-center gap-0.5">
                       <div
                         className={cn(
-                          "relative flex h-8.5 w-8.5 items-center justify-center rounded-[14px] transition-all duration-300",
-                          isActive ? "bg-primary/10 text-primary" : "text-muted group-hover:text-foreground"
-
+                          "relative flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200",
+                          isActive ? "text-primary scale-110" : "text-muted group-hover:text-foreground"
                         )}
                       >
                         <item.icon
                           className="h-4.5 w-4.5"
-                          strokeWidth={isActive ? 2.6 : 2.2}
+                          strokeWidth={isActive ? 2.6 : 2}
                         />
-                        {isActive ? (
-                          <motion.div
-                            layoutId="active-dot"
-                            className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full border border-background bg-primary"
-
-                          />
-                        ) : null}
                       </div>
                       <span
                         className={cn(
-                          "text-[8px] font-black uppercase tracking-[0.14em] transition-colors duration-300",
-                          isActive ? "text-primary" : "text-slate-500"
+                          "text-[8px] font-black uppercase tracking-wider transition-colors duration-200",
+                          isActive ? "text-primary" : "text-muted"
                         )}
                       >
                         {item.label}

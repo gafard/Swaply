@@ -64,21 +64,21 @@ export default function PhotoStep({
         scanSteps={scanSteps}
       />
 
-      {photoCount > 0 && photoCount < 2 ? (
+      {photoCount > 0 && photoCount < 2 && (
         <div className="flex items-center justify-center gap-2 animate-bounce">
           <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
             {addMoreLabel}
           </p>
         </div>
-      ) : null}
+      )}
 
-      {hasPendingPhotoUploads ? (
-        <div className="flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+      {hasPendingPhotoUploads && (
+        <div className="flex items-center justify-center gap-2 rounded-full border border-border bg-surface px-4 py-3 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted">
             {uploadingLabel}
           </p>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
