@@ -28,57 +28,64 @@ type DiscoveryFeedItem = Record<string, any> & {
 };
 
 async function getFallbackLocation() {
-  const country = await prisma.country.findFirst({
-    where: { isActive: true },
-    orderBy: { createdAt: "asc" },
-  });
+  try {
+    const country = await prisma.country.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "asc" },
+    });
 
-  if (!country) {
+    if (!country) {
+      return { countryId: null, cityId: null, zoneId: null, zoneName: null };
+    }
+
+    const city = await prisma.city.findFirst({
+      where: { countryId: country.id, isActive: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!city) {
+      return { countryId: country.id, cityId: null, zoneId: null, zoneName: null };
+    }
+
+    const zone = await prisma.zone.findFirst({
+      where: { cityId: city.id, isActive: true },
+      orderBy: { name: "asc" },
+    });
+
+    return {
+      countryId: country.id,
+      cityId: city.id,
+      zoneId: zone?.id ?? null,
+      zoneName: zone?.name ?? null,
+    };
+  } catch (err) {
+    console.error("[getFallbackLocation] DB error:", err);
     return { countryId: null, cityId: null, zoneId: null, zoneName: null };
   }
-
-  const city = await prisma.city.findFirst({
-    where: { countryId: country.id, isActive: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  if (!city) {
-    return { countryId: country.id, cityId: null, zoneId: null, zoneName: null };
-  }
-
-  const zone = await prisma.zone.findFirst({
-    where: { cityId: city.id, isActive: true },
-    orderBy: { name: "asc" },
-  });
-
-  return {
-    countryId: country.id,
-    cityId: city.id,
-    zoneId: zone?.id ?? null,
-    zoneName: zone?.name ?? null,
-  };
 }
 
 export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
-  const user = await getCurrentUser();
-  const fallbackLocation = await getFallbackLocation();
-  const activeCountryId = user?.countryId ?? fallbackLocation.countryId;
-  const activeCityId = user?.cityId ?? fallbackLocation.cityId;
-  const activeZoneId = user?.zoneId ?? fallbackLocation.zoneId;
-  const userZoneName =
-    user?.zone?.name ??
-    user?.city?.name ??
-    user?.country?.name ??
-    fallbackLocation.zoneName ??
-    "Marche local";
-  const cacheKey = CacheKeys.discoveryFeed(
-    activeZoneId ?? activeCityId ?? activeCountryId ?? "global"
-  );
-  const cached = await getFromCache<DiscoveryFeed>(cacheKey);
+  try {
+    const user = await getCurrentUser();
+    const fallbackLocation = await getFallbackLocation();
+    const activeCountryId = user?.countryId ?? fallbackLocation.countryId;
+    const activeCityId = user?.cityId ?? fallbackLocation.cityId;
+    const activeZoneId = user?.zoneId ?? fallbackLocation.zoneId;
+    const userZoneName =
+      user?.zone?.name ??
+      user?.city?.name ??
+      user?.country?.name ??
+      fallbackLocation.zoneName ??
+      "Marché local";
+    const cacheKey = CacheKeys.discoveryFeed(
+      activeZoneId ?? activeCityId ?? activeCountryId ?? "global"
+    );
+    const cached = await getFromCache<DiscoveryFeed>(cacheKey);
 
-  if (cached) {
-    return cached;
-  }
+    if (cached) {
+      return cached;
+    }
+
 
   const itemInclude = {
     owner: {
@@ -277,4 +284,14 @@ export async function getDiscoveryFeed(): Promise<DiscoveryFeed> {
 
   await setInCache(cacheKey, result, 5 * 60 * 1000);
   return result;
+} catch (error) {
+  console.error("[getDiscoveryFeed] Database unreachable, serving fallback feed:", error);
+  return {
+    nearby: [],
+    popular: [],
+    deals: [],
+    userZone: "Marché local",
+  };
 }
+}
+

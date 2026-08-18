@@ -184,44 +184,54 @@ async function ensureCurrentUser(authUser: {
 }
 
 export async function getCurrentUserResolution(): Promise<CurrentUserResolution> {
-  const supabase = await createClient();
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
 
-  if (!authUser) {
+    if (!authUser) {
+      return { status: "unauthenticated" };
+    }
+
+    const user = await ensureCurrentUser({
+      id: authUser.id,
+      email: authUser.email,
+      userMetadata: authUser.user_metadata,
+    });
+
+    if (!user) {
+      return { status: "unauthenticated" };
+    }
+
+    if (!user.acceptedTermsAt) {
+      return { status: "missing_terms" };
+    }
+
+    const regularSwaps = user.wallet?.balanceSwaps ?? 0;
+    const promoSwaps = user.wallet?.promoSwaps ?? 0;
+
+    return {
+      status: "ok",
+      user: {
+        ...user,
+        swaps: regularSwaps,
+        promoSwaps,
+        availableSwaps: regularSwaps + promoSwaps,
+      },
+    };
+  } catch (error) {
+    console.error("[getCurrentUserResolution] Database/Auth connection error:", error);
     return { status: "unauthenticated" };
   }
-
-  const user = await ensureCurrentUser({
-    id: authUser.id,
-    email: authUser.email,
-    userMetadata: authUser.user_metadata,
-  });
-
-  if (!user) {
-    return { status: "unauthenticated" };
-  }
-
-  if (!user.acceptedTermsAt) {
-    return { status: "missing_terms" };
-  }
-
-  const regularSwaps = user.wallet?.balanceSwaps ?? 0;
-  const promoSwaps = user.wallet?.promoSwaps ?? 0;
-
-  return {
-    status: "ok",
-    user: {
-      ...user,
-      swaps: regularSwaps,
-      promoSwaps,
-      availableSwaps: regularSwaps + promoSwaps,
-    },
-  };
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const resolution = await getCurrentUserResolution();
-  return resolution.status === "ok" ? resolution.user : null;
+  try {
+    const resolution = await getCurrentUserResolution();
+    return resolution.status === "ok" ? resolution.user : null;
+  } catch {
+    return null;
+  }
 }
+
