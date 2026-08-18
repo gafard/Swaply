@@ -12,7 +12,6 @@ import { routing } from "@/i18n/routing";
 import { getCurrentUser } from "@/lib/auth";
 import SwapGainListener from "@/components/wallet/SwapGainListener";
 
-
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -75,9 +74,7 @@ export default async function LocaleLayout({
     <NextIntlClientProvider messages={messages}>
       <OnboardingStatusSync hasCompletedOnboarding={user?.hasCompletedOnboarding ?? null} />
       <PreferredLanguageSync preferredLanguage={user?.preferredLanguage ?? null} />
-      <div className="relative mx-auto min-h-screen max-w-md overflow-x-hidden bg-background shadow-[0_30px_100px_rgba(16,32,58,0.18)] lg:border-x lg:border-white/70">
-
-
+      <div className="relative mx-auto min-h-screen w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl overflow-x-hidden bg-background shadow-2xl lg:border-x lg:border-border">
         <Toaster
           position="top-center"
           reverseOrder={false}
@@ -85,12 +82,13 @@ export default async function LocaleLayout({
           toastOptions={{
             duration: 4000,
             style: {
-              background: "#fff",
-              color: "#0f172a",
-              borderRadius: "16px",
+              background: "var(--surface)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              borderRadius: "20px",
               fontSize: "14px",
               fontWeight: "600",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+              boxShadow: "var(--glass-shadow)",
               maxWidth: "400px",
               padding: "12px 20px",
             },
@@ -102,7 +100,7 @@ export default async function LocaleLayout({
             },
             error: {
               iconTheme: {
-                primary: "#f43f5e",
+                primary: "#ef4444",
                 secondary: "#fff",
               },
             },
