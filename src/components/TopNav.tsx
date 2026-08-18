@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, Search, Sparkles, Wallet } from "lucide-react";
+import { Bell, Search, Sparkles, Wallet, Flame } from "lucide-react";
 
 import AppLogo from "@/components/AppLogo";
 import NumberTicker from "@/components/ui/NumberTicker";
@@ -63,24 +63,27 @@ export default function TopNav({
     <motion.header
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="sticky top-0 z-40 px-4 pb-3 pt-3 backdrop-blur-2xl sm:px-6 sm:pb-4 sm:pt-4"
+      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+      className="sticky top-0 z-40 px-4 pb-2 pt-3 backdrop-blur-2xl sm:px-6"
     >
       <div className="mx-auto max-w-md space-y-2.5">
-        <div className="relative overflow-hidden rounded-[28px] border border-border bg-surface/85 p-3.5 shadow-md backdrop-blur-2xl">
+        <div className="relative overflow-hidden rounded-[30px] border border-border bg-surface/90 p-3.5 shadow-md backdrop-blur-2xl">
           {/* Top highlight glow */}
-          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
 
           <div className="relative flex items-center justify-between gap-3">
             <Link href={localizeHref(locale, "/")} prefetch className="min-w-0 flex-1 group">
               <div className="flex items-center gap-3">
-                <AppLogo size={38} className="shrink-0" priority />
+                <AppLogo size={42} className="shrink-0" priority />
                 <div className="min-w-0">
-                  <span className="block text-[9px] font-black uppercase tracking-[0.2em] text-primary">
-                    Swaply
-                  </span>
-                  <p className="truncate font-display text-[1.1rem] font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-                    {user?.username ? `${t("hello")}, ${user.username}` : "Swaply"}
+                  <div className="flex items-center gap-1">
+                    <span className="font-display text-lg font-black tracking-tight text-foreground group-hover:text-emerald-500 transition-colors">
+                      Swaply
+                    </span>
+                    <span className="text-xs">✨</span>
+                  </div>
+                  <p className="truncate text-[10px] font-bold text-muted">
+                    {user?.username ? `Hey ${user.username} !` : "Troc & Économie Circulaire"}
                   </p>
                 </div>
               </div>
@@ -91,12 +94,12 @@ export default function TopNav({
                 <Link
                   href={localizeHref(locale, "/notifications")}
                   prefetch
-                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-surface-raised/80 text-foreground transition-all hover:border-primary/40 active:scale-95 shadow-sm"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl border border-border bg-surface-raised text-foreground transition-all hover:border-emerald-500/40 active:scale-95 shadow-sm"
                   aria-label="Notifications"
                 >
-                  <Bell className="h-4 w-4" />
+                  <Bell className="h-4.5 w-4.5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full border-2 border-surface bg-danger px-1 py-0.2 text-[8px] font-black text-white shadow-sm">
+                    <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full border-2 border-surface bg-rose-500 px-1 py-0.2 text-[8px] font-black text-white shadow-sm animate-bounce">
                       {notificationLabel}
                     </span>
                   )}
@@ -104,10 +107,10 @@ export default function TopNav({
                 <Link
                   href={localizeHref(locale, "/profile")}
                   prefetch
-                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-indigo-600 to-pink-500 text-sm font-black uppercase text-white shadow-cta transition-transform hover:scale-105 active:scale-95"
+                  className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-purple-600 text-sm font-black uppercase text-white shadow-cta transition-transform hover:scale-105 active:scale-95"
                 >
                   {user?.username?.charAt(0) || "S"}
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-success" />
+                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface bg-emerald-400 ring-2 ring-emerald-500/20" />
                 </Link>
               </div>
             ) : hasGuestActions ? (
@@ -115,14 +118,14 @@ export default function TopNav({
                 <Link
                   href={localizeHref(locale, "/login")}
                   prefetch
-                  className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-foreground-muted shadow-sm hover:text-foreground transition-colors"
+                  className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-muted hover:text-foreground transition-colors shadow-sm"
                 >
                   {t("login")}
                 </Link>
                 <Link
                   href={localizeHref(locale, "/signup")}
                   prefetch
-                  className="rounded-full bg-primary px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-white shadow-cta hover:bg-primary-hover transition-all"
+                  className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-white shadow-cta hover:brightness-105 transition-all"
                 >
                   {t("signup")}
                 </Link>
@@ -130,37 +133,38 @@ export default function TopNav({
             ) : null}
           </div>
 
+          {/* Interactive Balance Pill */}
           {showBalance && user && (
             <Link
               href={localizeHref(locale, "/profile/wallet")}
-              className="group relative mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[20px] border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3.5 py-2.5 transition-all hover:border-amber-500/40"
+              className="group relative mt-3 flex items-center justify-between gap-3 overflow-hidden rounded-[22px] border border-emerald-500/30 bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-purple-500/10 px-3.5 py-2.5 transition-all hover:border-emerald-500/50 shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm">
-                  <Wallet className="h-4 w-4" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-sm">
+                  <Wallet className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                    {t("balance")}
-                  </p>
-                  <div className="mt-0.5 flex items-baseline gap-1.5">
-                    <span className="font-display text-xl font-bold leading-none tracking-tight text-foreground">
+                  <span className="block text-[8px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                    Solde Swaps
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-display text-xl font-black text-foreground">
                       <NumberTicker value={balance} />
                     </span>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      Swaps
+                    <span className="text-[9px] font-black uppercase text-emerald-600 dark:text-emerald-400">
+                      SWAPS
                     </span>
                   </div>
                 </div>
               </div>
 
               {promoSwaps > 0 ? (
-                <div className="flex items-center gap-1 rounded-full border border-amber-500/25 bg-amber-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                <div className="flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/15 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-purple-600 dark:text-purple-300">
                   <Sparkles className="h-3 w-3" />
                   +{promoSwaps} bonus
                 </div>
               ) : (
-                <span className="text-[10px] font-bold text-muted group-hover:text-primary transition-colors">
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform">
                   Recharger &rarr;
                 </span>
               )}
@@ -171,26 +175,26 @@ export default function TopNav({
         {showSearch && (
           <form
             onSubmit={handleSearchSubmit}
-            className="flex items-center gap-2.5 rounded-[22px] border border-border bg-surface/80 px-3.5 py-2 shadow-sm backdrop-blur-xl transition-all focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
+            className="flex items-center gap-2.5 rounded-[22px] border border-border bg-surface/85 px-4 py-2.5 shadow-sm backdrop-blur-xl transition-all focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/15"
           >
             <Search className="h-4 w-4 text-muted shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-foreground outline-none placeholder:text-muted"
+              placeholder="Que veux-tu troquer aujourd'hui ? 👟📱"
+              className="min-w-0 flex-1 bg-transparent text-xs font-bold text-foreground outline-none placeholder:text-muted/70"
             />
             <button
               type="submit"
               className={cn(
-                "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider transition-all",
+                "rounded-full px-3.5 py-1 text-[10px] font-black uppercase tracking-wider transition-all",
                 query.trim()
-                  ? "bg-primary text-white shadow-cta"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-cta scale-105"
                   : "bg-surface-raised text-muted"
               )}
             >
-              OK
+              Go 🚀
             </button>
           </form>
         )}

@@ -1,107 +1,84 @@
 @import "tailwindcss";
 
 :root {
-  /* Alabaster Silk (Light Theme) */
-  --background: #F8F9FC;
+  /* Swaply Youthful & Fun Palette (Light Theme) */
+  --background: #F8FAFC;
   --surface: #FFFFFF;
-  --surface-raised: #F1F3F9;
-  --foreground: #0A0D14;
-  --foreground-muted: #525C76;
+  --surface-raised: #F1F5F9;
+  --foreground: #0F172A;
+  --foreground-muted: #475569;
   --muted: #64748B;
-  
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --primary-glow: rgba(37, 99, 235, 0.25);
-  
-  --accent: #F59E0B;
-  --accent-glow: rgba(245, 158, 11, 0.25);
-  
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  
-  --border: rgba(15, 23, 42, 0.08);
-  --border-focus: rgba(37, 99, 235, 0.4);
-  --border-subtle: rgba(15, 23, 42, 0.04);
-  
-  --glass-bg: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.9);
-  --glass-shadow: 0 20px 50px rgba(10, 13, 20, 0.06);
 
-  /* Card and Panel Shadows */
-  --shadow-sm: 0 2px 8px rgba(10, 13, 20, 0.04);
-  --shadow-md: 0 12px 30px rgba(10, 13, 20, 0.06);
-  --shadow-lg: 0 24px 60px rgba(10, 13, 20, 0.09);
-  --shadow-glow: 0 0 40px var(--primary-glow);
+  /* Brand Vibrant Duotone (Green/Cyan -> Purple/Pink) */
+  --primary: #10B981;
+  --primary-hover: #059669;
+  --primary-glow: rgba(16, 185, 129, 0.25);
+  
+  --secondary: #8B5CF6;
+  --secondary-hover: #7C3AED;
+  --secondary-glow: rgba(139, 92, 246, 0.25);
+
+  --accent-pink: #EC4899;
+  --accent-cyan: #06B6D4;
+  --accent-yellow: #FBBF24;
+  --accent-orange: #F97316;
+
+  --success: #10B981;
+  --warning: #FBBF24;
+  --danger: #F43F5E;
+
+  --border: rgba(15, 23, 42, 0.08);
+  --border-focus: rgba(16, 185, 129, 0.45);
+  --border-subtle: rgba(15, 23, 42, 0.04);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.1);
+  --shadow-cta: 0 12px 28px rgba(16, 185, 129, 0.35);
 }
 
 .dark {
-  /* Deep OLED Obsidian (Dark Theme) */
-  --background: #06080D;
-  --surface: #0D111A;
-  --surface-raised: #141A26;
+  /* Swaply Youthful Dark Mode (Deep Navy with Neon Pops) */
+  --background: #080C16;
+  --surface: #0F1626;
+  --surface-raised: #162035;
   --foreground: #F8FAFC;
   --foreground-muted: #94A3B8;
   --muted: #64748B;
-  
-  --primary: #3B82F6;
-  --primary-hover: #60A5FA;
-  --primary-glow: rgba(59, 130, 246, 0.35);
-  
-  --accent: #FBBF24;
-  --accent-glow: rgba(251, 191, 36, 0.3);
-  
+
+  --primary: #10B981;
+  --primary-hover: #34D399;
+  --primary-glow: rgba(16, 185, 129, 0.35);
+
+  --secondary: #A78BFA;
+  --secondary-hover: #C4B5FD;
+  --secondary-glow: rgba(167, 139, 250, 0.35);
+
+  --accent-pink: #F472B6;
+  --accent-cyan: #22D3EE;
+  --accent-yellow: #FCD34D;
+  --accent-orange: #FB923C;
+
   --success: #34D399;
-  --warning: #FBBF24;
-  --danger: #F87171;
-  
-  --border: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(59, 130, 246, 0.5);
+  --warning: #FCD34D;
+  --danger: #FB7185;
+
+  --border: rgba(255, 255, 255, 0.09);
+  --border-focus: rgba(16, 185, 129, 0.5);
   --border-subtle: rgba(255, 255, 255, 0.04);
-  
-  --glass-bg: rgba(13, 17, 26, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+
+  --glass-bg: rgba(15, 22, 38, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 14px 35px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 50px var(--primary-glow);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: #06080D;
-    --surface: #0D111A;
-    --surface-raised: #141A26;
-    --foreground: #F8FAFC;
-    --foreground-muted: #94A3B8;
-    --muted: #64748B;
-    
-    --primary: #3B82F6;
-    --primary-hover: #60A5FA;
-    --primary-glow: rgba(59, 130, 246, 0.35);
-    
-    --accent: #FBBF24;
-    --accent-glow: rgba(251, 191, 36, 0.3);
-    
-    --success: #34D399;
-    --warning: #FBBF24;
-    --danger: #F87171;
-    
-    --border: rgba(255, 255, 255, 0.08);
-    --border-focus: rgba(59, 130, 246, 0.5);
-    --border-subtle: rgba(255, 255, 255, 0.04);
-    
-    --glass-bg: rgba(13, 17, 26, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
-
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 14px 35px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 50px var(--primary-glow);
-  }
+  --shadow-cta: 0 12px 30px rgba(16, 185, 129, 0.4);
 }
 
 @theme inline {
@@ -113,7 +90,10 @@
   --color-muted: var(--muted);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-  --color-accent: var(--accent);
+  --color-secondary: var(--secondary);
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-yellow: var(--accent-yellow);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -121,8 +101,8 @@
   --color-border-focus: var(--border-focus);
   --color-border-subtle: var(--border-subtle);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
-  --font-display: "Space Grotesk", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-display: "SF Pro Rounded", "Space Grotesk", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 body {
@@ -132,76 +112,51 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ambient Radial Mesh Background */
+/* Ambient Colorful Mesh Gradients */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image: 
-    radial-gradient(ellipse 60% 40% at 50% -10%, var(--primary-glow), transparent 70%),
-    radial-gradient(ellipse 40% 30% at 100% 30%, var(--accent-glow), transparent 60%);
+    radial-gradient(ellipse 65% 45% at 20% -10%, rgba(16, 185, 129, 0.18), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 85% 15%, rgba(236, 72, 153, 0.15), transparent 60%),
+    radial-gradient(ellipse 45% 35% at 50% 60%, rgba(139, 92, 246, 0.12), transparent 70%);
   z-index: 0;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 .dark body::before {
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
-/* Glassmorphism Utilities */
 @layer utilities {
   .glass-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
   }
 
-  .glass-nav {
-    background: var(--glass-bg);
-    backdrop-filter: blur(32px) saturate(190%);
-    -webkit-backdrop-filter: blur(32px) saturate(190%);
-    border: 1px solid var(--border);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, var(--foreground) 0%, var(--foreground-muted) 100%);
+  .text-brand-gradient {
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 40%, #8B5CF6 75%, #EC4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  .text-gradient-primary {
-    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+  .text-gradient-purple-pink {
+    background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  .text-gradient-gold {
-    background: linear-gradient(135deg, #F59E0B 0%, #FCD34D 50%, #D97706 100%);
+  .text-gradient-green-cyan {
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-  }
-
-  .glow-border {
-    position: relative;
-  }
-  
-  .glow-border::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 50%, rgba(59,130,246,0.3));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -211,25 +166,4 @@ body::before {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-}
-
-/* Interactive Animations */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.98); }
-}
-
-@keyframes scan-beam {
-  0% { top: 0%; opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
-}
-
-.animate-scan {
-  animation: scan-beam 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 4s ease-in-out infinite;
 }

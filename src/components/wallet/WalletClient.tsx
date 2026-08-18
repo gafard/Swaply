@@ -86,20 +86,20 @@ export default function WalletClient({ userData, topupPackages }: Props) {
           </HoloBadge>
         </AnimatedContainer>
 
-        {/* 3D Luxury Metallic Card */}
-        <AnimatedContainer delay={0.05} className="relative overflow-hidden rounded-[32px] border border-white/20 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl">
-          {/* Ambient Card Glow */}
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/30 blur-3xl" />
-          <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-amber-500/20 blur-3xl" />
+        {/* 3D Luxury Metallic Card with Official Gradient */}
+        <AnimatedContainer delay={0.05} className="relative overflow-hidden rounded-[32px] border border-white/20 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl">
+          {/* Ambient Card Glow with Official Palette */}
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/30 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-pink-500/25 blur-3xl" />
 
           <div className="relative z-10 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="h-6 w-8 rounded-md bg-gradient-to-r from-amber-400 to-amber-600 shadow-sm" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/70">
-                Swaply Card
+              <div className="h-6 w-8 rounded-md bg-gradient-to-r from-emerald-400 via-teal-500 to-purple-500 shadow-sm" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/80">
+                Swaply Card ✨
               </span>
             </div>
-            <Sparkles className="h-5 w-5 text-amber-400" />
+            <Sparkles className="h-5 w-5 text-amber-400 animate-pulse" />
           </div>
 
           <div className="relative z-10 mt-6">
@@ -107,10 +107,10 @@ export default function WalletClient({ userData, topupPackages }: Props) {
               {t("availableNow")}
             </p>
             <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white">
+              <span className="font-display text-4xl sm:text-5xl font-black tracking-tight text-white">
                 <NumberTicker value={availableSwaps} />
               </span>
-              <span className="text-sm font-black uppercase tracking-widest text-amber-400">
+              <span className="text-sm font-black uppercase tracking-widest text-emerald-400">
                 SWAPS
               </span>
             </div>
@@ -131,6 +131,7 @@ export default function WalletClient({ userData, topupPackages }: Props) {
             </div>
           </div>
         </AnimatedContainer>
+
 
         {/* Dual Balances Breakdown */}
         <div className="mt-4 grid grid-cols-2 gap-3">

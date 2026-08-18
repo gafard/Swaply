@@ -45,9 +45,9 @@ export default function BottomNav() {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 sm:px-6">
       <div className="pointer-events-auto mx-auto max-w-md">
-        <div className="relative overflow-visible rounded-[32px] border border-border bg-surface/85 px-2.5 pb-2 pt-1.5 shadow-lg backdrop-blur-2xl">
-          {/* Subtle Ambient Highlight */}
-          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="relative overflow-visible rounded-[32px] border border-border bg-surface/90 px-2.5 pb-2 pt-1.5 shadow-xl backdrop-blur-2xl">
+          {/* Subtle Highlight Glow */}
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
 
           <div className="flex items-end justify-between gap-1">
             {navItems.map((item) => {
@@ -62,19 +62,19 @@ export default function BottomNav() {
                   <Link key={item.href} href={href} prefetch className="flex flex-1 justify-center">
                     <div className="relative -mt-4 flex flex-col items-center">
                       <motion.div
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.92 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        whileTap={{ scale: 0.9, rotate: -5 }}
+                        transition={{ type: "spring", stiffness: 450, damping: 18 }}
                         className={cn(
-                          "relative flex h-14 w-14 items-center justify-center rounded-[22px] border-4 border-surface bg-gradient-to-tr from-primary via-indigo-600 to-pink-500 shadow-cta"
+                          "relative flex h-14 w-14 items-center justify-center rounded-[22px] border-4 border-surface bg-gradient-to-tr from-emerald-400 via-teal-500 to-purple-600 shadow-cta"
                         )}
                       >
-                        <Plus className="relative z-10 h-7 w-7 text-white" strokeWidth={3} />
+                        <Plus className="relative z-10 h-7 w-7 text-white" strokeWidth={3.5} />
                       </motion.div>
                       <span
                         className={cn(
                           "mt-1 text-[8px] font-black uppercase tracking-widest transition-colors",
-                          isActive ? "text-primary" : "text-muted"
+                          isActive ? "text-emerald-500" : "text-muted"
                         )}
                       >
                         {item.label}
@@ -95,8 +95,8 @@ export default function BottomNav() {
                     {isActive && (
                       <motion.div
                         layoutId="bottom-nav-active-pill"
-                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                        className="absolute inset-0 rounded-[20px] border border-primary/20 bg-primary/10 dark:border-primary/30 dark:bg-primary/15"
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        className="absolute inset-0 rounded-[20px] border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-500/15"
                       />
                     )}
 
@@ -104,18 +104,18 @@ export default function BottomNav() {
                       <div
                         className={cn(
                           "relative flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200",
-                          isActive ? "text-primary scale-110" : "text-muted group-hover:text-foreground"
+                          isActive ? "text-emerald-500 scale-110" : "text-muted group-hover:text-foreground"
                         )}
                       >
                         <item.icon
                           className="h-4.5 w-4.5"
-                          strokeWidth={isActive ? 2.6 : 2}
+                          strokeWidth={isActive ? 2.8 : 2}
                         />
                       </div>
                       <span
                         className={cn(
                           "text-[8px] font-black uppercase tracking-wider transition-colors duration-200",
-                          isActive ? "text-primary" : "text-muted"
+                          isActive ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-muted"
                         )}
                       >
                         {item.label}
