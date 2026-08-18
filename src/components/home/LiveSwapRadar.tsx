@@ -1,27 +1,41 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Compass, MapPin, Sparkles, Zap, ArrowRight, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
+import { Compass, MapPin, Sparkles, RefreshCw, Package } from "lucide-react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { localizeHref } from "@/lib/i18n/pathnames";
 
-interface LiveSwapRadarProps {
-  userZone?: string;
-  itemsCount?: number;
+interface RealItemNode {
+  id: string;
+  title: string;
+  creditValue: number;
+  images?: Array<{ url: string }> | null;
+  locationZone?: string;
 }
 
-export default function LiveSwapRadar({ userZone = "Lomé Centre", itemsCount = 10 }: LiveSwapRadarProps) {
+interface LiveSwapRadarProps {
+  userZone?: string;
+  items?: RealItemNode[];
+}
+
+export default function LiveSwapRadar({ userZone = "Lomé Centre", items = [] }: LiveSwapRadarProps) {
   const locale = useLocale();
   const [pulseKey, setPulseKey] = useState(0);
 
-  const radarNodes = [
-    { id: 1, label: "AirPods Pro", swaps: "45 SC", x: "18%", y: "24%", emoji: "🎧", delay: 0 },
-    { id: 2, label: "Nike Dunk Low", swaps: "60 SC", x: "78%", y: "20%", emoji: "👟", delay: 0.4 },
-    { id: 3, label: "PS5 Controller", swaps: "35 SC", x: "22%", y: "74%", emoji: "🎮", delay: 0.8 },
-    { id: 4, label: "iPhone 13", swaps: "120 SC", x: "74%", y: "70%", emoji: "📱", delay: 1.2 },
+  // Position coordinates for up to 4 real items in the radar ring
+  const positions = [
+    { x: "18%", y: "22%" },
+    { x: "80%", y: "24%" },
+    { x: "20%", y: "76%" },
+    { x: "78%", y: "74%" },
   ];
+
+  const activeNodes = items.slice(0, 4).map((item, idx) => ({
+    ...item,
+    pos: positions[idx] || { x: "50%", y: "20%" },
+  }));
 
   return (
     <div className="relative overflow-hidden rounded-[38px] border-2 border-border bg-gradient-to-b from-surface via-surface to-emerald-500/10 p-6 shadow-2xl backdrop-blur-2xl">
@@ -54,9 +68,9 @@ export default function LiveSwapRadar({ userZone = "Lomé Centre", itemsCount = 
         </button>
       </div>
 
-      {/* Central Radar Stage with Floating Items */}
+      {/* Central Radar Stage with REAL Items from DB */}
       <div className="relative z-10 my-4 h-48 w-full select-none">
-        {/* Center Orb (The User / Match Engine) */}
+        {/* Center Orb (The User Zone) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
           <motion.div
             animate={{ scale: [1, 1.08, 1] }}
@@ -72,26 +86,44 @@ export default function LiveSwapRadar({ userZone = "Lomé Centre", itemsCount = 
           </span>
         </div>
 
-        {/* Floating Neighbor Nodes */}
-        {radarNodes.map((node) => (
-          <motion.div
-            key={`${node.id}-${pulseKey}`}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1, y: [0, -6, 0] }}
-            transition={{
-              scale: { delay: node.delay, type: "spring", stiffness: 400 },
-              y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: node.delay },
-            }}
-            style={{ left: node.x, top: node.y }}
-            className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 rounded-2xl border border-border bg-surface/90 px-2.5 py-1.5 shadow-md backdrop-blur-xl"
-          >
-            <span className="text-base">{node.emoji}</span>
-            <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-foreground leading-none">{node.label}</span>
-              <span className="text-[8px] font-black text-emerald-500 leading-tight">{node.swaps}</span>
-            </div>
-          </motion.div>
-        ))}
+        {/* Real Item Nodes */}
+        {activeNodes.map((node, i) => {
+          const img = node.images?.[0]?.url;
+          return (
+            <Link
+              key={`${node.id}-${pulseKey}`}
+              href={localizeHref(locale, `/item/${node.id}`)}
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-20 group"
+              style={{ left: node.pos.x, top: node.pos.y }}
+            >
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1, y: [0, -5, 0] }}
+                transition={{
+                  scale: { delay: i * 0.15, type: "spring", stiffness: 400 },
+                  y: { duration: 2.5 + i * 0.5, repeat: Infinity, ease: "easeInOut" },
+                }}
+                className="flex items-center gap-2 rounded-2xl border border-border bg-surface/95 p-1.5 pr-3 shadow-md backdrop-blur-xl group-hover:border-emerald-500 transition-colors"
+              >
+                <div className="h-8 w-8 rounded-xl overflow-hidden bg-background shrink-0 flex items-center justify-center">
+                  {img ? (
+                    <img src={img} alt={node.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <Package className="h-4 w-4 text-muted" />
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0 max-w-[85px]">
+                  <span className="text-[9px] font-bold text-foreground leading-tight truncate">
+                    {node.title}
+                  </span>
+                  <span className="text-[8px] font-black text-emerald-500 leading-tight">
+                    {node.creditValue} SC
+                  </span>
+                </div>
+              </motion.div>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Slogan Banner */}
@@ -100,7 +132,7 @@ export default function LiveSwapRadar({ userZone = "Lomé Centre", itemsCount = 
           Trouve ton swap en 1 clic 🎯
         </h2>
         <p className="text-xs font-semibold text-muted max-w-xs mx-auto">
-          Des dizaines d'objets prêts à être échangés autour de toi sans jamais payer en espèces.
+          Des objets réels prêts à être échangés autour de toi sans jamais payer en espèces.
         </p>
       </div>
 

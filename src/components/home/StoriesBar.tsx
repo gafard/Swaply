@@ -2,64 +2,37 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Flame, Zap, Crown, Gift, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { localizeHref } from "@/lib/i18n/pathnames";
 
-interface StoryItem {
-  id: string;
-  title: string;
+interface StoryCategory {
+  name: string;
   emoji: string;
   gradient: string;
-  isSpecial?: boolean;
   tag?: string;
 }
 
-const STORIES: StoryItem[] = [
-  {
-    id: "drop",
-    title: "Drops Flash",
-    emoji: "🔥",
-    gradient: "from-amber-500 via-orange-500 to-rose-500",
-    tag: "LIVE",
-  },
-  {
-    id: "bonus",
-    title: "+60 Swaps",
-    emoji: "🎁",
-    gradient: "from-purple-500 via-pink-500 to-rose-500",
-    isSpecial: true,
-    tag: "CADEAU",
-  },
-  {
-    id: "tech",
-    title: "Tech & Geek",
-    emoji: "📱",
-    gradient: "from-emerald-400 via-teal-500 to-cyan-500",
-  },
-  {
-    id: "sneakers",
-    title: "Streetwear",
-    emoji: "👟",
-    gradient: "from-blue-500 via-indigo-500 to-purple-500",
-  },
-  {
-    id: "vip",
-    title: "Top Troqueurs",
-    emoji: "👑",
-    gradient: "from-yellow-400 via-amber-500 to-orange-500",
-    tag: "PRO",
-  },
-];
+const CATEGORY_MAP: Record<string, { emoji: string; gradient: string; tag?: string }> = {
+  "Électronique": { emoji: "📱", gradient: "from-emerald-400 via-teal-500 to-cyan-500", tag: "POPULAIRE" },
+  "Chaussures": { emoji: "👟", gradient: "from-blue-500 via-indigo-500 to-purple-500", tag: "TENDANCE" },
+  "Informatique": { emoji: "💻", gradient: "from-purple-500 via-pink-500 to-rose-500" },
+  "Vêtements": { emoji: "👕", gradient: "from-amber-400 via-orange-500 to-rose-500" },
+  "Accessoires": { emoji: "🎒", gradient: "from-teal-400 via-emerald-500 to-lime-400" },
+};
 
-export default function StoriesBar() {
+interface StoriesBarProps {
+  categories?: string[];
+}
+
+export default function StoriesBar({ categories = ["Électronique", "Chaussures", "Informatique", "Vêtements", "Accessoires"] }: StoriesBarProps) {
   const locale = useLocale();
 
   return (
     <div className="relative -mx-4 px-4 overflow-x-auto no-scrollbar py-1 select-none">
       <div className="flex items-center gap-3.5 min-w-max">
-        {/* Story "+ Créer" Button */}
+        {/* Story "+ Déposer" Button */}
         <Link href={localizeHref(locale, "/publish")} className="group flex flex-col items-center gap-1.5">
           <motion.div
             whileHover={{ scale: 1.06 }}
@@ -75,38 +48,44 @@ export default function StoriesBar() {
           </span>
         </Link>
 
-        {/* Stories Items */}
-        {STORIES.map((story, i) => (
-          <Link
-            key={story.id}
-            href={`${localizeHref(locale, "/discover")}?story=${story.id}`}
-            className="group flex flex-col items-center gap-1.5"
-          >
-            <motion.div
-              whileHover={{ scale: 1.08, rotate: i % 2 === 0 ? 3 : -3 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: "spring", stiffness: 450, damping: 18 }}
-              className="relative p-[2.5px] rounded-[24px] bg-gradient-to-tr from-emerald-400 via-teal-500 to-purple-600 shadow-md group-hover:shadow-lg group-hover:shadow-emerald-500/20 transition-all"
+        {/* Real Dynamic Category Stories */}
+        {categories.map((catName, i) => {
+          const info = CATEGORY_MAP[catName] || {
+            emoji: "✨",
+            gradient: "from-emerald-400 via-teal-500 to-purple-600",
+          };
+
+          return (
+            <Link
+              key={catName}
+              href={`${localizeHref(locale, "/discover")}?category=${encodeURIComponent(catName)}`}
+              className="group flex flex-col items-center gap-1.5"
             >
-              <div className="flex h-[3.8rem] w-[3.8rem] items-center justify-center rounded-[22px] bg-surface p-1">
-                <div className={`flex h-full w-full items-center justify-center rounded-[18px] bg-gradient-to-tr ${story.gradient} text-2xl shadow-inner`}>
-                  {story.emoji}
+              <motion.div
+                whileHover={{ scale: 1.08, rotate: i % 2 === 0 ? 3 : -3 }}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: "spring", stiffness: 450, damping: 18 }}
+                className="relative p-[2.5px] rounded-[24px] bg-gradient-to-tr from-emerald-400 via-teal-500 to-purple-600 shadow-md group-hover:shadow-lg group-hover:shadow-emerald-500/20 transition-all"
+              >
+                <div className="flex h-[3.8rem] w-[3.8rem] items-center justify-center rounded-[22px] bg-surface p-1">
+                  <div className={`flex h-full w-full items-center justify-center rounded-[18px] bg-gradient-to-tr ${info.gradient} text-2xl shadow-inner`}>
+                    {info.emoji}
+                  </div>
                 </div>
-              </div>
 
-              {/* Live/Special Badge */}
-              {story.tag && (
-                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-1.5 py-0.2 text-[7px] font-black uppercase tracking-wider text-white shadow-sm ring-2 ring-surface">
-                  {story.tag}
-                </span>
-              )}
-            </motion.div>
+                {info.tag && (
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-1.5 py-0.2 text-[7px] font-black uppercase tracking-wider text-white shadow-sm ring-2 ring-surface">
+                    {info.tag}
+                  </span>
+                )}
+              </motion.div>
 
-            <span className="text-[10px] font-black tracking-tight text-foreground group-hover:text-emerald-500 transition-colors">
-              {story.title}
-            </span>
-          </Link>
-        ))}
+              <span className="text-[10px] font-black tracking-tight text-foreground group-hover:text-emerald-500 transition-colors">
+                {catName}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

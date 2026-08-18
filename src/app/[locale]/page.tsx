@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDiscoveryFeed } from "@/app/actions/item";
 import prisma from "@/lib/prisma";
@@ -12,17 +11,31 @@ import WelcomeBonusTrigger from "@/components/wallet/WelcomeBonusTrigger";
 export default async function Home() {
   const user = await getCurrentUser();
   const { nearby, popular, deals, userZone } = await getDiscoveryFeed();
-  const [locale, t] = await Promise.all([getLocale(), getTranslations("home")]);
+  const locale = await getLocale();
 
   let unreadCount = 0;
+  let categories: string[] = [];
   try {
     if (user) {
       unreadCount = await prisma.notification.count({
         where: { userId: user.id, read: false },
       });
     }
+
+    const rawCats = await prisma.item.findMany({
+      where: { status: "AVAILABLE", category: { not: null } },
+      select: { category: true },
+      distinct: ["category"],
+      take: 6,
+    });
+    categories = rawCats.map((c) => c.category!).filter(Boolean);
   } catch {
     unreadCount = 0;
+    categories = [];
+  }
+
+  if (categories.length === 0) {
+    categories = ["Électronique", "Chaussures", "Livres", "Accessoires"];
   }
 
   return (
@@ -32,13 +45,13 @@ export default async function Home() {
 
       {/* Main Dynamic Stage */}
       <div className="mx-auto max-w-md px-4 pt-2 space-y-6 sm:px-6">
-        {/* 1. Live Stories Tray */}
-        <StoriesBar />
+        {/* 1. Real Categories Stories Tray */}
+        <StoriesBar categories={categories} />
 
-        {/* 2. Interactive Live Swap Radar Canvas */}
-        <LiveSwapRadar userZone={userZone || "Lomé Centre"} itemsCount={nearby.length + popular.length} />
+        {/* 2. Interactive Live Swap Radar Canvas with REAL DB items */}
+        <LiveSwapRadar userZone={userZone || "Lomé Centre"} items={nearby} />
 
-        {/* 3. High-Vibe Bento Drop Grid */}
+        {/* 3. High-Vibe Bento Drop Grid with REAL DB items */}
         <BentoShowcase nearby={nearby} popular={popular} deals={deals} />
       </div>
 
