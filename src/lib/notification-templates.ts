@@ -12,6 +12,7 @@ export type NotificationTemplate =
   | "report_reviewed_without_action"
   | "reservation_expired_owner"
   | "reservation_expired_requester"
+  | "reservation_cancelled"
   | "wishlist_match_found";
 
 
@@ -45,6 +46,10 @@ export type NotificationPayloadMap = {
   };
   reservation_expired_requester: {
     itemTitle: string;
+  };
+  reservation_cancelled: {
+    itemTitle: string;
+    username: string;
   };
   wishlist_match_found: {
     itemTitle: string;
@@ -107,6 +112,10 @@ const COPY: Record<
       title: "Réservation expirée",
       body: 'Votre réservation pour "{itemTitle}" a expiré.',
     },
+    reservation_cancelled: {
+      title: "Réservation annulée",
+      body: '{username} a annulé la réservation pour "{itemTitle}".',
+    },
     wishlist_match_found: {
       title: "Trouvaille pour votre wishlist !",
       body: 'Un objet correspondant à votre recherche "{wishlistTitle}" est disponible : {itemTitle}.',
@@ -150,6 +159,10 @@ const COPY: Record<
     reservation_expired_requester: {
       title: "Reservation expired",
       body: 'Your reservation for "{itemTitle}" expired.',
+    },
+    reservation_cancelled: {
+      title: "Reservation cancelled",
+      body: '{username} cancelled the reservation for "{itemTitle}".',
     },
     wishlist_match_found: {
       title: "Match found for your wishlist!",
@@ -195,6 +208,10 @@ const COPY: Record<
       title: "Reserva expirada",
       body: 'Tu reserva de "{itemTitle}" expiró.',
     },
+    reservation_cancelled: {
+      title: "Reserva cancelada",
+      body: '{username} canceló la reserva de "{itemTitle}".',
+    },
     wishlist_match_found: {
       title: "¡Encontramos algo para tu wishlist!",
       body: 'Un artículo que coincide con tu búsqueda "{wishlistTitle}" está disponible: {itemTitle}.',
@@ -239,13 +256,17 @@ const COPY: Record<
       title: "Reserva expirada",
       body: 'Sua reserva de "{itemTitle}" expirou.',
     },
+    reservation_cancelled: {
+      title: "Reserva cancelada",
+      body: '{username} cancelou a reserva de "{itemTitle}".',
+    },
     wishlist_match_found: {
       title: "Encontramos algo para sua wishlist!",
       body: 'Um item correspondente à sua busca "{wishlistTitle}" está disponível: {itemTitle}.',
     },
   },
-
 };
+
 
 function interpolate(
   template: string,

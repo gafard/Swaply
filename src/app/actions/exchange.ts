@@ -149,10 +149,16 @@ export async function reserveItem(itemId: string, swapsBalance: number = 0) {
 
 export async function cancelReservation(exchangeId: string) {
   const currentUser = await getCurrentUser();
-  assert(!!currentUser, "Vous devez etre connecte.");
+  if (!currentUser) {
+    return actionFail("auth_required");
+  }
+
+  if (!exchangeId?.trim()) {
+    return actionFail("invalid_input");
+  }
 
   const exchange = await prisma.exchange.findUnique({
-    where: { id: exchangeId },
+    where: { id: exchangeId.trim() },
     include: {
       item: true,
       requester: true,
@@ -160,42 +166,70 @@ export async function cancelReservation(exchangeId: string) {
     },
   });
 
-  assert(!!exchange, "Echange introuvable.");
-  assert(exchange.status === ExchangeStatus.PENDING, "Reservation deja traitee.");
-  assert(
-    exchange.requesterId === currentUser.id || exchange.ownerId === currentUser.id,
-    "Action non autorisee."
-  );
+  if (!exchange) {
+    return actionFail("exchange_not_found");
+  }
 
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    await addSwaps(
-      exchange.requesterId,
-      exchange.requesterSwaps,
-      WalletTxnType.REFUND,
-      `Remboursement: ${exchange.item.title}`,
-      false,
-      tx
-    );
+  if (exchange.status !== ExchangeStatus.PENDING) {
+    return actionFail("exchange_not_pending");
+  }
 
-    await tx.item.update({
-      where: { id: exchange.item.id },
-      data: {
-        status: ItemStatus.AVAILABLE,
+  if (exchange.requesterId !== currentUser.id && exchange.ownerId !== currentUser.id) {
+    return actionFail("forbidden");
+  }
+
+  try {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (exchange.requesterSwaps > 0) {
+        await addSwaps(
+          exchange.requesterId,
+          exchange.requesterSwaps,
+          WalletTxnType.REFUND,
+          `Remboursement annulation: ${exchange.item.title}`,
+          false,
+          tx,
+          exchange.id
+        );
+      }
+
+      await tx.item.update({
+        where: { id: exchange.item.id },
+        data: {
+          status: ItemStatus.AVAILABLE,
+        },
+      });
+
+      await tx.exchange.update({
+        where: { id: exchange.id },
+        data: {
+          status: ExchangeStatus.CANCELLED,
+          reservedUntil: null,
+        },
+      });
+    });
+
+    const otherUser = exchange.ownerId === currentUser.id ? exchange.requester : exchange.owner;
+    await notifyUser({
+      userId: otherUser.id,
+      email: otherUser.email ?? undefined,
+      template: "reservation_cancelled",
+      payload: {
+        itemTitle: exchange.item.title,
+        username: currentUser.username,
       },
     });
 
-    await tx.exchange.update({
-      where: { id: exchange.id },
-      data: {
-        status: ExchangeStatus.CANCELLED,
-        reservedUntil: null,
-      },
-    });
-  });
-
-  revalidatePath("/");
-  revalidatePath("/profile");
+    revalidatePath("/");
+    revalidatePath("/profile");
+    revalidatePath(`/exchange/${exchangeId}`);
+    revalidatePath(`/item/${exchange.item.id}`);
+    return actionOk("reservation_cancelled");
+  } catch (error) {
+    console.error("[cancelReservation] Transaction error:", error);
+    return actionFail("unexpected_error");
+  }
 }
+
 
 export async function selectMeetingPoint(exchangeId: string, meetingPointId: string) {
   const currentUser = await getCurrentUser();

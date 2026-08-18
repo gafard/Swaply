@@ -1,7 +1,9 @@
-import prisma from "@/lib/prisma";
-import { ExchangeStatus, ItemStatus } from "@prisma/client";
+import { ExchangeStatus, ItemStatus, Prisma, WalletTxnType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 import { notifyUser } from "@/lib/notify";
+import { addSwaps } from "@/lib/swaps";
+import { invalidateCachePattern } from "@/lib/cache";
 
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -62,21 +64,42 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  await prisma.$transaction([
-    prisma.item.updateMany({
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // 1. Refund each requester their escrowed Swaps
+    for (const exchange of expiredExchanges) {
+      if (exchange.requesterSwaps > 0) {
+        await addSwaps(
+          exchange.requesterId,
+          exchange.requesterSwaps,
+          WalletTxnType.REFUND,
+          `Remboursement expiration reservation: ${exchange.item.title}`,
+          false,
+          tx,
+          exchange.id
+        );
+      }
+    }
+
+    // 2. Mark items as available again
+    await tx.item.updateMany({
       where: { id: { in: itemIds } },
       data: {
         status: ItemStatus.AVAILABLE,
       },
-    }),
-    prisma.exchange.updateMany({
+    });
+
+    // 3. Mark exchanges as expired
+    await tx.exchange.updateMany({
       where: { id: { in: expiredExchanges.map((exchange) => exchange.id) } },
       data: {
         status: ExchangeStatus.EXPIRED,
         reservedUntil: null,
       },
-    }),
-  ]);
+    });
+  });
+
+  await invalidateCachePattern("discovery:");
 
   return NextResponse.json({ ok: true, expired: itemIds.length });
 }
+
