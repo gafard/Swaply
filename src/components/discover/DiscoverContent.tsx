@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2, Package } from "lucide-react";
+import { Loader2, Package, Search, X } from "lucide-react";
 
 import DiscoveryStack from "@/components/DiscoveryStack";
-import SearchBar from "@/components/SearchBar";
 
 interface Item {
   id: string;
@@ -22,60 +21,32 @@ interface Item {
     level: number;
     xp: number;
   };
-
   status?: string;
-}
-
-interface FilterState {
-  country: string;
-  city: string;
-  zone: string;
-  category: string;
-  minPrice: string;
-  maxPrice: string;
 }
 
 export default function DiscoverContent() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters] = useState<FilterState>({
-    country: "",
-    city: "",
-    zone: "",
-    category: "",
-    minPrice: "",
-    maxPrice: "",
-  });
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("discover");
 
-  const fetchItems = useCallback(
-    async () => {
-      try {
-        setLoading(true);
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("q", searchQuery);
+      params.set("take", "50");
 
-        const params = new URLSearchParams();
-        if (searchQuery) params.set("q", searchQuery);
-        if (filters.country) params.set("country", filters.country);
-        if (filters.city) params.set("city", filters.city);
-        if (filters.zone) params.set("zone", filters.zone);
-        if (filters.category) params.set("category", filters.category);
-        if (filters.minPrice) params.set("minPrice", filters.minPrice);
-        if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
-        params.set("take", "50"); // Fetch more for swiping
-
-        const response = await fetch(`/api/search?${params}`);
-        const data = await response.json();
-
-        setItems(data.items);
-      } catch (error) {
-        console.error("Failed to fetch items:", error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [filters, searchQuery]
-  );
+      const response = await fetch(`/api/search?${params}`);
+      const data = await response.json();
+      setItems(data.items || []);
+    } catch (error) {
+      console.error("Failed to fetch items:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -84,45 +55,78 @@ export default function DiscoverContent() {
     return () => clearTimeout(debounce);
   }, [fetchItems]);
 
-  const mappedItems = items.map(item => ({
+  const mappedItems = items.map((item) => ({
     ...item,
-    imageUrl: item.images?.[0]?.url || null
+    imageUrl: item.images?.[0]?.url || null,
   }));
 
   return (
-    <div className="flex h-[calc(100vh-84px)] flex-col overflow-hidden px-4 pb-2 pt-3">
-      <div className="mb-3 shrink-0 overflow-hidden rounded-[26px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,251,246,0.88))] p-3.5 shadow-[0_18px_42px_rgba(16,32,58,0.06)]">
-        <div className="mb-2 flex items-center justify-between gap-3">
+    <div className="flex h-[calc(100dvh-5.5rem)] flex-col justify-between overflow-hidden px-3.5 pb-24 pt-1 sm:pb-28">
+      {/* Compact Top Bar */}
+      <div className="mb-2 flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-purple-600 text-xs shadow-sm">
+            🃏
+          </span>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted/70">{t("title")}</p>
-            <h1 className="mt-1 font-display text-[1.55rem] font-bold tracking-[-0.05em] text-foreground">
-              {t("heading")}
+            <h1 className="font-display text-base font-black tracking-tight text-foreground">
+              Découvrir
             </h1>
           </div>
-          <div className="rounded-full border border-[#dfe8ff] bg-[#eef4ff] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-            Swipe
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isSearchOpen ? (
+            <div className="flex items-center gap-1 rounded-full border border-border bg-surface px-3 py-1 shadow-sm">
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Rechercher..."
+                className="w-28 bg-transparent text-xs font-bold text-foreground outline-none sm:w-40"
+              />
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setIsSearchOpen(false);
+                }}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-sm hover:text-foreground"
+              aria-label="Recherche"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          )}
+
+          <div className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Swipe 2.0
           </div>
         </div>
-        <SearchBar onSearch={setSearchQuery} placeholder={t("searchPlaceholder")} />
       </div>
 
-      <div className="relative flex-1">
+      {/* Main Swiper Stage - Flex-1 takes remaining height cleanly */}
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium text-muted">{t("loading")}</p>
+          <div className="flex h-full flex-col items-center justify-center">
+            <Loader2 className="mb-4 h-8 w-8 animate-spin text-emerald-500" />
+            <p className="text-xs font-bold text-muted">{t("loading") || "Recherche des drops..."}</p>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <Package className="mb-4 h-16 w-16 text-muted/20" />
-            <h3 className="mb-1 text-lg font-bold text-foreground">{t("emptyTitle")}</h3>
-            <p className="text-center text-sm text-muted">{t("emptyBody")}</p>
+          <div className="flex h-full flex-col items-center justify-center text-center p-6 rounded-[32px] border border-dashed border-border bg-surface/50">
+            <Package className="mb-3 h-12 w-12 text-muted/30" />
+            <h3 className="text-sm font-bold text-foreground">{t("emptyTitle") || "Aucun objet trouvé"}</h3>
+            <p className="text-xs text-muted mt-1 max-w-xs">{t("emptyBody") || "Essaie de modifier tes filtres ou ta recherche."}</p>
           </div>
-
         ) : (
-          <div className="h-full">
-            <DiscoveryStack items={mappedItems} key={JSON.stringify(filters) + searchQuery} />
-          </div>
+          <DiscoveryStack items={mappedItems} key={searchQuery} />
         )}
       </div>
     </div>

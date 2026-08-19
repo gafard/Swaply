@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Heart, RefreshCw, Sparkles, X, Zap, Star } from "lucide-react";
+import { CheckCircle2, Heart, RefreshCw, Sparkles, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 import { reserveItem } from "@/app/actions/exchange";
@@ -99,7 +99,11 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
 
     try {
       const { saved } = await toggleSaveItem(currentItem.id);
-      setToastState({ show: true, text: saved ? "Objet ajouté aux favoris ❤️" : "Retiré des favoris", type: "SAVE" });
+      setToastState({
+        show: true,
+        text: saved ? "Objet ajouté aux favoris ❤️" : "Retiré des favoris",
+        type: "SAVE",
+      });
       window.setTimeout(() => setToastState((prev) => ({ ...prev, show: false })), 1800);
     } catch {
       toast.error(t("saveError"));
@@ -113,27 +117,27 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mx-auto flex h-full w-full max-w-md flex-col items-center justify-center px-6 py-12 text-center"
+        className="flex h-full w-full flex-col items-center justify-center p-6 text-center"
       >
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-cta animate-bounce">
-          <Sparkles className="h-10 w-10" />
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white shadow-cta animate-bounce">
+          <Sparkles className="h-8 w-8" />
         </div>
-        <h2 className="font-display text-3xl font-black tracking-tight text-foreground">
+        <h2 className="font-display text-2xl font-black tracking-tight text-foreground">
           {t("emptyTitle") || "Tu as tout vu ! 🎉"}
         </h2>
-        <p className="mt-2 text-xs font-semibold leading-relaxed text-muted max-w-xs">
-          {t("emptyBody") || "Reviens plus tard pour découvrir les nouvelles pépites déposées dans ta zone."}
+        <p className="mt-1.5 text-xs font-semibold leading-relaxed text-muted max-w-xs">
+          {t("emptyBody") || "Reviens plus tard pour découvrir les nouvelles pépites déposées."}
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-6 flex gap-3">
           <button
             onClick={() => setCurrentIndex(0)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-surface px-5 py-3 text-xs font-black text-foreground shadow-sm hover:border-emerald-500/40 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-surface px-4 py-2.5 text-xs font-black text-foreground shadow-sm active:scale-95"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
             Recommencer 🔄
           </button>
           <Link href={localizeHref(locale, "/")}>
-            <LiquidButton variant="primary" size="md" className="bg-gradient-to-r from-emerald-500 to-teal-500">
+            <LiquidButton variant="primary" size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500">
               {t("backHome") || "Accueil"}
             </LiquidButton>
           </Link>
@@ -143,35 +147,23 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden pb-4 px-2">
-      {/* Top Deck Progress Header */}
-      <div className="mb-3 flex items-center justify-between rounded-[24px] border border-border bg-surface/90 px-4 py-3 shadow-sm backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 font-black">
-            🃏
-          </div>
-          <div>
-            <span className="block text-[8px] font-black uppercase tracking-widest text-muted">
-              Découverte
-            </span>
-            <div className="flex items-baseline gap-1">
-              <span className="font-display text-lg font-black text-foreground">
-                {String(currentIndex + 1).padStart(2, "0")}
-              </span>
-              <span className="text-xs font-bold text-muted">
-                / {String(items.length).padStart(2, "0")}
-              </span>
-            </div>
-          </div>
+    <div className="flex h-full w-full flex-col justify-between overflow-hidden">
+      {/* Top Deck Counter Pill */}
+      <div className="mb-2 flex items-center justify-between px-1">
+        <div className="flex items-center gap-1.5 text-xs font-black text-foreground">
+          <span className="font-display text-base text-emerald-500">
+            {String(currentIndex + 1).padStart(2, "0")}
+          </span>
+          <span className="text-[10px] text-muted">/ {String(items.length).padStart(2, "0")}</span>
         </div>
 
-        <div className="rounded-full bg-purple-500/10 border border-purple-500/20 px-3 py-1 text-[10px] font-black text-purple-600 dark:text-purple-300">
+        <div className="rounded-full bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 text-[8px] font-black uppercase text-purple-600 dark:text-purple-300">
           {remaining} restants ⚡
         </div>
       </div>
 
-      {/* Main Swiper Stage */}
-      <div className="relative mb-4 flex-1 min-h-[32rem]">
+      {/* Main Swiper Stage - Strictly flex-1 min-h-0 fills exactly the space */}
+      <div className="relative flex-1 min-h-0 w-full mb-3">
         <AnimatePresence>
           {items
             .slice(currentIndex, currentIndex + 2)
@@ -191,39 +183,39 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
         </AnimatePresence>
       </div>
 
-      {/* Floating Youthful Action Cockpit */}
-      <div className="relative z-50 mx-auto flex w-full max-w-[19rem] items-center justify-center gap-4 rounded-[32px] border border-border bg-surface/95 px-5 py-3 shadow-xl backdrop-blur-2xl">
+      {/* Action Buttons Cockpit */}
+      <div className="relative z-30 mx-auto flex w-full max-w-[17rem] items-center justify-center gap-4 py-1">
         {/* Pass Button */}
         <motion.button
-          whileHover={{ scale: 1.12, rotate: -8 }}
-          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.1, rotate: -6 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleSwipeLeft}
-          className="flex h-13 w-13 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-950/40 text-rose-500 shadow-sm hover:bg-rose-500 hover:text-white transition-colors"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-300 bg-surface text-rose-500 shadow-md hover:bg-rose-500 hover:text-white transition-colors"
           aria-label={t("skip")}
         >
-          <X className="h-6 w-6" strokeWidth={3} />
+          <X className="h-5 w-5" strokeWidth={3} />
         </motion.button>
 
         {/* Save / Favorite Button */}
         <motion.button
-          whileHover={{ scale: 1.15, rotate: 6 }}
-          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.12, rotate: 6 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleSave}
-          className="flex h-15 w-15 items-center justify-center rounded-[22px] bg-gradient-to-tr from-amber-400 to-amber-500 text-white shadow-md active:scale-95"
+          className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-tr from-amber-400 to-amber-500 text-white shadow-md active:scale-95"
           aria-label={t("save")}
         >
-          <Heart className="h-7 w-7 fill-white" />
+          <Heart className="h-6 w-6 fill-white" />
         </motion.button>
 
         {/* Reserve / Swap Button */}
         <motion.button
-          whileHover={{ scale: 1.12, rotate: 8 }}
-          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.1, rotate: 6 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleSwipeRight}
-          className="flex h-13 w-13 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 shadow-sm hover:bg-emerald-500 hover:text-white transition-colors"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-300 bg-surface text-emerald-500 shadow-md hover:bg-emerald-500 hover:text-white transition-colors"
           aria-label={t("reserve")}
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-5 w-5" />
         </motion.button>
       </div>
 
@@ -234,23 +226,13 @@ export default function DiscoveryStack({ items: initialItems }: { items: Item[] 
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="pointer-events-none absolute inset-x-4 bottom-28 z-[60] flex justify-center"
+            className="pointer-events-none absolute inset-x-4 bottom-24 z-[60] flex justify-center"
           >
-            <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-xl">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-                <CheckCircle2 className="h-5 w-5" />
+            <div className="pointer-events-auto flex items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 py-2.5 shadow-xl">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-foreground">{toastState.text}</span>
-                {toastState.type === "RESERVE" && toastState.exchangeId && (
-                  <Link
-                    href={localizeHref(locale, `/exchange/${toastState.exchangeId}`)}
-                    className="text-[10px] font-black text-emerald-500 hover:underline"
-                  >
-                    Voir la salle d'échange &rarr;
-                  </Link>
-                )}
-              </div>
+              <span className="text-xs font-bold text-foreground">{toastState.text}</span>
             </div>
           </motion.div>
         )}
